@@ -670,11 +670,18 @@ setDateFinalSpot(null);
 setSpotDistance(null);
 
 if (choices.mood === 'デート') {
-await findDateCourse();
+await Promise.race([
+findDateCourse(),
+new Promise((resolve) => setTimeout(resolve, 10000)),
+]);
 return;
 }
 
-const spots = await getSpotsByMood();
+const spots = await Promise.race([
+getSpotsByMood(),
+new Promise<Spot[]>((resolve) => setTimeout(() => resolve([]), 10000)),
+]);
+
 const spotsInRange = getSpotsInRange(spots);
 const namedSpots = spotsInRange;
 
