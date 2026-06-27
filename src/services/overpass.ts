@@ -1,4 +1,4 @@
-type OverpassElement = {
+export type Spot = {
 type: string;
 id: number;
 lat?: number;
@@ -14,43 +14,36 @@ name?: string;
 };
 
 type OverpassResponse = {
-elements: OverpassElement[];
+elements: Spot[];
 };
 
 const OVERPASS_URLS = [
 'https://overpass.kumi.systems/api/interpreter',
 'https://overpass-api.de/api/interpreter',
-'https://overpass.openstreetmap.ru/api/interpreter',
 ];
 
-async function fetchOverpass(query: string): Promise<OverpassElement[]> {
-console.log("① Overpass開始");
-
+async function fetchOverpass(query: string): Promise<Spot[]> {
 for (const url of OVERPASS_URLS) {
-console.log("② 接続先:", url);
-
 try {
-const response = await fetch(url, {
-method: "POST",
-headers: {
-"Content-Type": "text/plain;charset=UTF-8",
-},
-body: query,
+const requestUrl = `${url}?data=${encodeURIComponent(query)}`;
+
+const response = await fetch(requestUrl, {
+method: 'GET',
 });
 
-console.log("③ ステータス", response.status);
+if (!response.ok) {
+throw new Error(`Overpass API error: ${response.status}`);
+}
 
 const data: OverpassResponse = await response.json();
 
-console.log("④ 件数", data.elements.length);
-
-return data.elements ?? [];
-} catch (e) {
-console.error("⑤ エラー", e);
+return (data.elements ?? []).filter(
+(spot) => spot.tags?.name && (spot.lat || spot.center)
+);
+} catch (error) {
+console.error(`Overpass fetch failed: ${url}`, error);
 }
 }
-
-console.log("⑥ 全部失敗");
 
 return [];
 }
@@ -85,37 +78,8 @@ radius: number
 const queryBody = `
 ${nodeAndWay('["leisure"="park"]', latitude, longitude, radius)}
 ${nodeAndWay('["leisure"="garden"]', latitude, longitude, radius)}
+${nodeAndWay('["leisure"="playground"]', latitude, longitude, radius)}
 `;
-
-return fetchOverpass(buildQuery(queryBody));
-}
-export async function getNearbyShrinesAndTemples(
-latitude: number,
-longitude: number,
-radius: number,
-genre: string
-) {
-let queryBody = '';
-
-if (genre === '御朱印巡り' || genre === 'おまかせ') {
-queryBody += `
-${nodeAndWay('["amenity"="place_of_worship"]["religion"="shinto"]', latitude, longitude, radius)}
-${nodeAndWay('["amenity"="place_of_worship"]["religion"="buddhist"]', latitude, longitude, radius)}
-`;
-}
-
-if (genre === '歴史散策') {
-queryBody += `
-${nodeAndWay('["historic"]', latitude, longitude, radius)}
-${nodeAndWay('["amenity"="place_of_worship"]', latitude, longitude, radius)}
-`;
-}
-
-if (genre === 'パワースポット') {
-queryBody += `
-${nodeAndWay('["amenity"="place_of_worship"]', latitude, longitude, radius)}
-`;
-}
 
 return fetchOverpass(buildQuery(queryBody));
 }
@@ -128,6 +92,7 @@ radius: number
 const queryBody = `
 ${nodeAndWay('["amenity"="cafe"]', latitude, longitude, radius)}
 ${nodeAndWay('["shop"="coffee"]', latitude, longitude, radius)}
+${nodeAndWay('["shop"="bakery"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
@@ -143,7 +108,8 @@ let queryBody = '';
 
 if (foodGenre === 'ラーメン') {
 queryBody = `
-${nodeAndWay('["amenity"="restaurant"]["cuisine"~"ramen|noodle"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="restaurant"]["cuisine"~"ramen|noodle|japanese"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="fast_food"]["cuisine"~"ramen|noodle|japanese"]', latitude, longitude, radius)}
 `;
 } else if (foodGenre === '中華') {
 queryBody = `
@@ -166,7 +132,6 @@ ${nodeAndWay('["amenity"="restaurant"]["cuisine"~"curry|indian"]', latitude, lon
 queryBody = `
 ${nodeAndWay('["shop"="confectionery"]', latitude, longitude, radius)}
 ${nodeAndWay('["shop"="bakery"]', latitude, longitude, radius)}
-${nodeAndWay('["shop"="pastry"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="cafe"]', latitude, longitude, radius)}
 `;
 } else if (foodGenre === '和食') {
@@ -176,8 +141,8 @@ ${nodeAndWay('["amenity"="restaurant"]["cuisine"~"japanese|sushi|soba|udon|tempu
 } else {
 queryBody = `
 ${nodeAndWay('["amenity"="restaurant"]', latitude, longitude, radius)}
-${nodeAndWay('["amenity"="cafe"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="fast_food"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="cafe"]', latitude, longitude, radius)}
 `;
 }
 
@@ -195,7 +160,6 @@ ${nodeAndWay('["amenity"="restaurant"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="fast_food"]', latitude, longitude, radius)}
 ${nodeAndWay('["shop"="bakery"]', latitude, longitude, radius)}
 ${nodeAndWay('["shop"="confectionery"]', latitude, longitude, radius)}
-${nodeAndWay('["shop"="pastry"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
@@ -210,6 +174,7 @@ const queryBody = `
 ${nodeAndWay('["tourism"="viewpoint"]', latitude, longitude, radius)}
 ${nodeAndWay('["tourism"="attraction"]', latitude, longitude, radius)}
 ${nodeAndWay('["historic"]', latitude, longitude, radius)}
+${nodeAndWay('["leisure"="park"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
@@ -224,26 +189,18 @@ eventGenre: string
 let queryBody = '';
 
 if (eventGenre === '水族館') {
-queryBody = `
-${nodeAndWay('["tourism"="aquarium"]', latitude, longitude, radius)}
-`;
+queryBody = `${nodeAndWay('["tourism"="aquarium"]', latitude, longitude, radius)}`;
 } else if (eventGenre === '動物園') {
-queryBody = `
-${nodeAndWay('["tourism"="zoo"]', latitude, longitude, radius)}
-`;
+queryBody = `${nodeAndWay('["tourism"="zoo"]', latitude, longitude, radius)}`;
 } else if (eventGenre === '博物館') {
-queryBody = `
-${nodeAndWay('["tourism"="museum"]', latitude, longitude, radius)}
-`;
+queryBody = `${nodeAndWay('["tourism"="museum"]', latitude, longitude, radius)}`;
 } else if (eventGenre === '美術館') {
 queryBody = `
 ${nodeAndWay('["tourism"="gallery"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="arts_centre"]', latitude, longitude, radius)}
 `;
 } else if (eventGenre === '展望台') {
-queryBody = `
-${nodeAndWay('["tourism"="viewpoint"]', latitude, longitude, radius)}
-`;
+queryBody = `${nodeAndWay('["tourism"="viewpoint"]', latitude, longitude, radius)}`;
 } else {
 queryBody = `
 ${nodeAndWay('["tourism"="aquarium"]', latitude, longitude, radius)}
@@ -266,11 +223,10 @@ radius: number
 const queryBody = `
 ${nodeAndWay('["leisure"="park"]', latitude, longitude, radius)}
 ${nodeAndWay('["leisure"="garden"]', latitude, longitude, radius)}
-${nodeAndWay('["amenity"="cinema"]', latitude, longitude, radius)}
-${nodeAndWay('["leisure"="spa"]', latitude, longitude, radius)}
-${nodeAndWay('["amenity"="public_bath"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="library"]', latitude, longitude, radius)}
 ${nodeAndWay('["amenity"="cafe"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="public_bath"]', latitude, longitude, radius)}
+${nodeAndWay('["leisure"="spa"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
@@ -287,6 +243,7 @@ ${nodeAndWay('["amenity"="cinema"]', latitude, longitude, radius)}
 
 return fetchOverpass(buildQuery(queryBody));
 }
+
 export async function getNearbyFreeRelaxSpots(
 latitude: number,
 longitude: number,
@@ -304,3 +261,36 @@ ${nodeAndWay('["historic"="memorial"]', latitude, longitude, radius)}
 return fetchOverpass(buildQuery(queryBody));
 }
 
+export async function getNearbyShrinesAndTemples(
+latitude: number,
+longitude: number,
+radius: number,
+shrineGenre: string
+) {
+let queryBody = '';
+
+if (shrineGenre === '御朱印巡り') {
+queryBody = `
+${nodeAndWay('["amenity"="place_of_worship"]["religion"="shinto"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="place_of_worship"]["religion"="buddhist"]', latitude, longitude, radius)}
+`;
+} else if (shrineGenre === '歴史散策') {
+queryBody = `
+${nodeAndWay('["historic"]', latitude, longitude, radius)}
+${nodeAndWay('["amenity"="place_of_worship"]', latitude, longitude, radius)}
+`;
+} else if (shrineGenre === 'パワースポット') {
+queryBody = `
+${nodeAndWay('["amenity"="place_of_worship"]', latitude, longitude, radius)}
+${nodeAndWay('["natural"="tree"]', latitude, longitude, radius)}
+${nodeAndWay('["tourism"="attraction"]', latitude, longitude, radius)}
+`;
+} else {
+queryBody = `
+${nodeAndWay('["amenity"="place_of_worship"]', latitude, longitude, radius)}
+${nodeAndWay('["historic"]', latitude, longitude, radius)}
+`;
+}
+
+return fetchOverpass(buildQuery(queryBody));
+}
