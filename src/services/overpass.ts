@@ -17,12 +17,20 @@ type OverpassResponse = {
 elements: OverpassElement[];
 };
 
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URLS = [
+'https://overpass.kumi.systems/api/interpreter',
+'https://overpass-api.de/api/interpreter',
+'https://overpass.openstreetmap.ru/api/interpreter',
+];
 
 async function fetchOverpass(query: string): Promise<OverpassElement[]> {
+for (const url of OVERPASS_URLS) {
 try {
-const response = await fetch(OVERPASS_URL, {
+const response = await fetch(url, {
 method: 'POST',
+headers: {
+'Content-Type': 'text/plain;charset=UTF-8',
+},
 body: query,
 });
 
@@ -31,13 +39,15 @@ throw new Error(`Overpass API error: ${response.status}`);
 }
 
 const data: OverpassResponse = await response.json();
-
 return data.elements ?? [];
 } catch (error) {
-console.error('Overpass fetch failed:', error);
+console.error(`Overpass fetch failed: ${url}`, error);
+}
+}
+
 return [];
 }
-}
+
 
 function buildQuery(queryBody: string): string {
 return `
