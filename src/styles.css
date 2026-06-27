@@ -1,0 +1,991 @@
+:root {
+  color: #4c3426;
+  background: #f7ead2;
+  font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(255, 196, 120, 0.34), transparent 28%),
+    linear-gradient(180deg, #fff4dd 0%, #f4dfbf 56%, #ead0a9 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 18px 18px 28px;
+}
+
+.title-screen,
+.next-screen {
+  min-height: calc(100dvh - 46px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+
+.town {
+  position: relative;
+  min-height: 230px;
+  padding: 34px 14px 22px;
+  border: 3px solid #8f613b;
+  border-radius: 26px 26px 18px 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 241, 199, 0.9) 0%, rgba(255, 229, 176, 0.72) 54%, rgba(210, 142, 77, 0.24) 55%),
+    #ffe6b6;
+  box-shadow: 0 12px 0 rgba(132, 86, 47, 0.12);
+}
+
+.sky-sun {
+  position: absolute;
+  top: 18px;
+  right: 28px;
+  width: 42px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f8b44b;
+  box-shadow: 0 0 0 9px rgba(248, 180, 75, 0.18);
+}
+
+.cloud {
+  position: absolute;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 250, 235, 0.92);
+}
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.cloud::before {
+  left: 10px;
+  width: 22px;
+  height: 22px;
+}
+
+.cloud::after {
+  right: 10px;
+  width: 18px;
+  height: 18px;
+}
+
+.cloud-left {
+  top: 25px;
+  left: 24px;
+  width: 74px;
+}
+
+.cloud-right {
+  top: 62px;
+  right: 64px;
+  width: 58px;
+}
+
+.street-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 0.6fr 1fr 1.08fr 0.94fr 0.42fr;
+  align-items: end;
+  gap: 7px;
+  min-height: 154px;
+}
+
+.building {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  min-width: 0;
+  border: 3px solid #7a4c2d;
+  border-bottom-width: 5px;
+  border-radius: 10px 10px 6px 6px;
+  color: #5c3b28;
+  font-size: clamp(0.58rem, 2.7vw, 0.78rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  box-shadow: inset 0 -8px rgba(93, 58, 36, 0.08);
+}
+
+.building strong {
+  width: 100%;
+  margin-top: 24px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.cafe {
+  height: 112px;
+  background: #f6c47b;
+}
+
+.library {
+  height: 132px;
+  background: #d99666;
+}
+
+.shop {
+  height: 104px;
+  background: #f2ad63;
+}
+
+.awning {
+  position: absolute;
+  top: 10px;
+  left: 7px;
+  right: 7px;
+  height: 17px;
+  border: 2px solid #7a4c2d;
+  border-radius: 8px 8px 4px 4px;
+  background: repeating-linear-gradient(90deg, #fff0cf 0 10px, #c96c40 10px 20px);
+}
+
+.stripes {
+  background: repeating-linear-gradient(90deg, #fff0cf 0 9px, #db8236 9px 18px);
+}
+
+.roof {
+  position: absolute;
+  top: -22px;
+  width: 76%;
+  height: 28px;
+  border: 3px solid #7a4c2d;
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  background: #a8603b;
+}
+
+.door,
+.window,
+.columns {
+  position: absolute;
+  bottom: 10px;
+}
+
+.door {
+  left: 12px;
+  width: 20px;
+  height: 32px;
+  border: 2px solid #7a4c2d;
+  border-radius: 9px 9px 3px 3px;
+  background: #7d4d32;
+}
+
+.window {
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #7a4c2d;
+  border-radius: 5px;
+  background: #ffe9a8;
+}
+
+.columns {
+  left: 10px;
+  right: 10px;
+  height: 52px;
+  border-top: 3px solid #7a4c2d;
+  border-bottom: 3px solid #7a4c2d;
+  background: repeating-linear-gradient(90deg, #f5d194 0 9px, transparent 9px 18px);
+}
+
+.tree,
+.lamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-top {
+  width: 46px;
+  aspect-ratio: 1;
+  border: 3px solid #6c5a34;
+  border-radius: 54% 46% 46% 54%;
+  background: #9cad65;
+}
+
+.tree-trunk {
+  width: 13px;
+  height: 45px;
+  margin-top: -4px;
+  border: 2px solid #6f452d;
+  background: #986234;
+}
+
+.lamp-light {
+  width: 25px;
+  height: 30px;
+  border: 3px solid #6f452d;
+  border-radius: 14px 14px 7px 7px;
+  background: #ffe69d;
+}
+
+.lamp-post {
+  width: 7px;
+  height: 74px;
+  background: #6f452d;
+}
+
+.treasure {
+  position: absolute;
+  left: 50%;
+  bottom: 13px;
+  z-index: 2;
+  width: 86px;
+  height: 62px;
+  transform: translateX(-50%);
+}
+
+.treasure-lid,
+.treasure-body {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border: 3px solid #623c29;
+}
+
+.treasure-lid {
+  top: 0;
+  height: 31px;
+  border-radius: 44px 44px 8px 8px;
+  background: linear-gradient(90deg, #c66a31 0 48%, #f8b650 48% 56%, #c66a31 56% 100%);
+}
+
+.treasure-body {
+  bottom: 0;
+  height: 38px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #9d5630 0 47%, #f8b650 47% 57%, #9d5630 57% 100%);
+}
+
+.treasure-lock {
+  position: absolute;
+  left: 50%;
+  bottom: 17px;
+  width: 18px;
+  height: 21px;
+  transform: translateX(-50%);
+  border: 3px solid #623c29;
+  border-radius: 5px;
+  background: #ffd565;
+}
+
+.intro {
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #8c5c35;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  color: #6a3f24;
+  font-size: clamp(2.45rem, 13vw, 3.7rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-shadow: 0 3px 0 #f8c36c;
+}
+
+.subtitle {
+  margin: 12px 0 0;
+  color: #6a3f24;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.description {
+  margin: 8px 0 0;
+  color: #78553c;
+  font-size: 0.98rem;
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.name-form label {
+  color: #65452f;
+  font-weight: 800;
+}
+
+.name-form input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border: 3px solid #8c5c35;
+  border-radius: 14px;
+  outline: none;
+  background: #fff8e9;
+  color: #4c3426;
+  font-size: 1rem;
+  box-shadow: inset 0 2px 0 rgba(106, 63, 36, 0.08);
+}
+
+.name-form input:focus {
+  border-color: #d97932;
+  box-shadow: 0 0 0 4px rgba(217, 121, 50, 0.18);
+}
+
+.name-form button {
+  width: 100%;
+  min-height: 56px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f79a38 0%, #d96f2f 100%);
+  color: #fffdf7;
+  font-size: 1.04rem;
+  font-weight: 900;
+  box-shadow: 0 8px 0 #9e4b27;
+  cursor: pointer;
+}
+
+.name-form button:disabled {
+  background: #c9ad8e;
+  color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 5px 0 #9c8268;
+  cursor: not-allowed;
+}
+
+.message-box {
+  padding: 26px 20px;
+  border: 3px solid #8c5c35;
+  border-radius: 20px;
+  background: rgba(255, 248, 233, 0.86);
+  color: #65452f;
+  text-align: center;
+  box-shadow: 0 10px 0 rgba(132, 86, 47, 0.14);
+}
+
+.message-box p {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 900;
+  line-height: 1.6;
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-inline: 12px;
+  }
+
+  .town {
+    padding-inline: 10px;
+  }
+
+  .street-row {
+    gap: 5px;
+  }
+
+  .treasure {
+    width: 78px;
+  }
+}
+.condition-screen {
+width: min(92vw, 430px);
+margin: 0 auto;
+padding: 28px 18px 40px;
+min-height: 100dvh;
+color: #5b351f;
+}
+
+.condition-header {
+text-align: center;
+margin-bottom: 22px;
+}
+
+.condition-header p {
+font-size: 20px;
+font-weight: 700;
+line-height: 1.6;
+}
+
+.choice-panel {
+display: grid;
+gap: 18px;
+}
+
+.choice-group {
+border: 2px solid rgba(177, 116, 54, 0.25);
+border-radius: 22px;
+padding: 18px 14px 16px;
+background: rgba(255, 250, 238, 0.9);
+box-shadow: 0 12px 30px rgba(117, 72, 28, 0.12);
+}
+
+.choice-group legend {
+padding: 0 10px;
+font-size: 18px;
+font-weight: 800;
+color: #7a421f;
+}
+
+.choice-buttons {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+margin-top: 10px;
+}
+
+.choice-button {
+border: 2px solid #e8c27c;
+border-radius: 999px;
+background: #fffaf0;
+color: #6b3a1f;
+padding: 10px 15px;
+font-size: 15px;
+font-weight: 700;
+box-shadow: 0 4px 0 rgba(170, 105, 38, 0.15);
+cursor: pointer;
+}
+
+.choice-button.selected {
+background: linear-gradient(135deg, #f6a623, #ff7a1a);
+color: white;
+border-color: #ff9a2f;
+box-shadow: 0 6px 14px rgba(255, 122, 26, 0.3);
+}
+
+.gacha-button {
+width: 100%;
+margin-top: 22px;
+border: none;
+border-radius: 22px;
+padding: 17px 20px;
+font-size: 20px;
+font-weight: 900;
+color: white;
+background: linear-gradient(135deg, #ffb21a, #ff6b1a);
+box-shadow: 0 10px 22px rgba(255, 112, 26, 0.28);
+cursor: pointer;
+}
+
+.gacha-button:disabled {
+opacity: 0.45;
+cursor: not-allowed;
+box-shadow: none;
+}
+.name-form button,
+.home-button,
+.gacha-button {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+}
+
+.name-form button svg,
+.home-button svg,
+.gacha-button svg {
+flex-shrink: 0;
+}
+.coin-screen {
+width: min(92vw, 430px);
+margin: 0 auto;
+padding: 36px 20px 44px;
+min-height: 100dvh;
+color: #5b351f;
+}
+
+.coin-screen h2 {
+text-align: center;
+font-size: 28px;
+margin-bottom: 28px;
+}
+
+.coin-list {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 14px;
+margin-bottom: 28px;
+}
+
+.coin {
+aspect-ratio: 1;
+border-radius: 50%;
+background: radial-gradient(circle at 30% 25%, #fff6b8, #f6a623 55%, #b86b1f);
+border: 4px solid #8f541f;
+box-shadow: 0 8px 0 #7b4519, 0 14px 24px rgba(117, 72, 28, 0.24);
+display: flex;
+align-items: center;
+justify-content: center;
+color: #5b351f;
+font-weight: 900;
+font-size: 20px;
+}
+.adventure-coin {
+width: 220px;
+height: 220px;
+margin: 30px auto;
+
+border-radius: 50%;
+border: 6px solid #8f541f;
+
+background: radial-gradient(
+circle at 30% 30%,
+#ffe8a3,
+#f6a623 70%
+);
+
+box-shadow:
+0 10px 0 #7b4519,
+0 15px 30px rgba(0,0,0,.15);
+
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+
+gap: 8px;
+font-weight: 900;
+}
+
+.adventure-coin p {
+margin: 0;
+font-size: 22px;
+}
+.coin-label {
+display: inline-block;
+margin-bottom: 6px;
+padding: 4px 12px;
+border-radius: 999px;
+background: rgba(255, 255, 255, 0.45);
+color: #7a421f;
+font-size: 14px;
+font-weight: 900;
+border: 1px solid rgba(122, 66, 31, 0.25);
+}
+
+.adventure-coin {
+position: relative;
+}
+
+.adventure-coin::after {
+content: "";
+position: absolute;
+inset: 14px;
+border-radius: 50%;
+border: 2px dashed rgba(122, 66, 31, 0.28);
+pointer-events: none;
+}
+.coin-subtitle {
+text-align: center;
+margin-top: -8px;
+margin-bottom: 20px;
+color: #8c5c35;
+font-size: 14px;
+}
+.gacha-machine {
+width: 260px;
+margin: 0 auto 24px;
+text-align: center;
+animation: shake 0.8s infinite;
+}
+
+.gacha-sign {
+display: inline-block;
+padding: 10px 18px;
+margin-bottom: 10px;
+border: 3px solid #8f541f;
+border-radius: 14px;
+background: #fff4dd;
+color: #6a3f24;
+font-weight: 900;
+box-shadow: 0 5px 0 #b97632;
+}
+
+.gacha-globe {
+position: relative;
+width: 190px;
+height: 150px;
+margin: 0 auto;
+border: 5px solid #8f541f;
+border-radius: 50% 50% 42% 42%;
+background: rgba(255, 255, 255, 0.45);
+overflow: hidden;
+}
+
+.capsule {
+position: absolute;
+width: 44px;
+height: 32px;
+border-radius: 999px;
+border: 3px solid #8f541f;
+background: #f6a623;
+}
+
+.capsule-a { left: 28px; top: 62px; }
+.capsule-b { left: 78px; top: 82px; background: #ffcc66; }
+.capsule-c { right: 25px; top: 58px; background: #f08a5d; }
+.capsule-d { left: 55px; top: 28px; background: #ffe08a; }
+.capsule-e { right: 56px; top: 24px; background: #f7b267; }
+
+.gacha-body {
+position: relative;
+width: 210px;
+height: 135px;
+margin: -8px auto 0;
+border: 5px solid #8f541f;
+border-radius: 18px;
+background: linear-gradient(180deg, #d58a44, #9b542b);
+box-shadow: 0 8px 0 #6f3b1f;
+}
+
+.gacha-slot {
+position: absolute;
+top: 24px;
+left: 50%;
+width: 62px;
+height: 32px;
+transform: translateX(-50%);
+border-radius: 999px;
+background: #6a3f24;
+}
+
+.gacha-handle {
+position: absolute;
+right: -34px;
+top: 38px;
+width: 46px;
+height: 46px;
+border: 6px solid #8f541f;
+border-radius: 50%;
+background: #f6a623;
+}
+
+.gacha-chest {
+position: absolute;
+left: 50%;
+bottom: 12px;
+width: 86px;
+height: 44px;
+transform: translateX(-50%);
+border: 4px solid #5b351f;
+border-radius: 14px 14px 8px 8px;
+background: linear-gradient(180deg, #c76d35, #8f4a25);
+}
+
+@keyframes shake {
+0% { transform: rotate(-2deg); }
+50% { transform: rotate(2deg); }
+100% { transform: rotate(-2deg); }
+}
+.result-screen .gacha-button,
+.result-screen .back-button {
+width: 100%;
+margin-top: 14px;
+display: flex;
+justify-content: center;
+align-items: center;
+text-align: center;
+}
+a.gacha-button {
+display: flex;
+justify-content: center;
+align-items: center;
+text-decoration: none;
+}
+.exp-bar {
+width: 100%;
+height: 12px;
+background: #e5e7eb;
+border-radius: 999px;
+overflow: hidden;
+margin: 8px 0;
+}
+
+.exp-bar-fill {
+height: 100%;
+background: linear-gradient(90deg, #22c55e, #facc15);
+transition: width 0.3s ease;
+}
+.level-up-box {
+margin-top: 16px;
+padding: 16px;
+border-radius: 16px;
+background: linear-gradient(135deg, #fff7ed, #fef3c7);
+border: 2px solid #f59e0b;
+font-weight: 700;
+text-align: center;
+animation: popLevelUp 0.4s ease;
+}
+
+@keyframes popLevelUp {
+0% {
+transform: scale(0.9);
+opacity: 0;
+}
+100% {
+transform: scale(1);
+opacity: 1;
+}
+}
+.treasure-box-card {
+margin: 20px 0;
+padding: 20px;
+border-radius: 24px;
+background: linear-gradient(135deg, #fff7ed, #fef3c7);
+border: 2px solid #fbbf24;
+text-align: center;
+box-shadow: 0 12px 30px rgba(180, 83, 9, 0.18);
+}
+
+.treasure-box-icon {
+font-size: 64px;
+margin-bottom: 8px;
+animation: treasureFloat 2.4s ease-in-out infinite;
+}
+
+.treasure-box-card h3 {
+margin: 8px 0;
+font-size: 1.4rem;
+}
+
+.treasure-box-card p {
+font-weight: 700;
+margin: 8px 0;
+}
+
+.treasure-box-card small {
+display: block;
+line-height: 1.7;
+color: #92400e;
+}
+
+@keyframes treasureFloat {
+0% {
+transform: translateY(0);
+}
+50% {
+transform: translateY(-6px);
+}
+100% {
+transform: translateY(0);
+}
+}
+.takaran-next {
+margin-top: 12px;
+padding: 10px 12px;
+border-radius: 999px;
+background: rgba(251, 191, 36, 0.22);
+color: #92400e;
+font-weight: 700;
+}
+.takaran-next {
+margin-top: 12px;
+padding: 10px 14px;
+border-radius: 999px;
+background: rgba(255, 215, 0, 0.18);
+color: #8b5a00;
+font-weight: bold;
+}
+.rank-next {
+margin-top: 8px;
+padding: 8px 12px;
+border-radius: 999px;
+background: rgba(34, 197, 94, 0.15);
+color: #166534;
+font-weight: 700;
+}
+.achievement-popup {
+margin-top: 16px;
+padding: 16px;
+border-radius: 16px;
+background: linear-gradient(135deg, #eff6ff, #dbeafe);
+border: 2px solid #3b82f6;
+font-weight: 700;
+text-align: center;
+animation: popLevelUp 0.4s ease;
+}
+.spot-card-list {
+display: flex;
+flex-direction: column;
+gap: 16px;
+margin: 20px 0;
+}
+
+.spot-card {
+background: #ffffff;
+border-radius: 20px;
+padding: 18px;
+box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+border: 2px solid #ececec;
+}
+
+.main-spot {
+border: 2px solid #f59e0b;
+background: linear-gradient(135deg, #fff8e7, #fff1c7);
+}
+
+.spot-card-label {
+font-size: 0.9rem;
+color: #666;
+margin-bottom: 8px;
+}
+
+.spot-card h3 {
+margin: 8px 0;
+font-size: 1.3rem;
+}
+
+.route-arrow {
+text-align: center;
+font-size: 2rem;
+color: #f59e0b;
+}
+
+.mission-card {
+margin-top: 20px;
+padding: 18px;
+border-radius: 20px;
+background: #eef8ff;
+border: 2px solid #8ec5ff;
+}
+
+.arrival-card {
+margin: 20px 0;
+padding: 18px;
+border-radius: 20px;
+background: #ecfff1;
+border: 2px solid #7ddc96;
+text-align: center;
+}
+
+.clear-card {
+margin-top: 20px;
+padding: 20px;
+border-radius: 20px;
+background: linear-gradient(135deg, #fff8d8, #ffe9a8);
+text-align: center;
+border: 2px solid #fbbf24;
+}
+<section className="condition-screen" aria-live="polite">
+<div className="condition-hero">
+<p className="result-kicker">🎒 冒険の準備</p>
+<h2>{trimmedName}さん、今日の宝物を探しに行こう</h2>
+<p>条件を選ぶと、冒険コインが作られます。</p>
+</div>
+
+<div className="choice-panel adventure-choice-panel">
+{choiceGroups
+.filter(
+(group) =>
+(group.key !== 'foodGenre' || choices.mood === 'グルメ') &&
+(group.key !== 'dateGenre' || choices.mood === 'デート') &&
+(group.key !== 'eventGenre' || choices.mood === 'イベント') &&
+(group.key !== 'shrineGenre' || choices.mood === '神社・お寺')
+)
+.map((group) => (
+<fieldset className="choice-group adventure-choice-card" key={group.key}>
+<legend>{group.label}</legend>
+
+<div className="choice-buttons">
+{group.options.map((option) => (
+<button
+className={
+choices[group.key] === option
+? 'choice-button selected'
+: 'choice-button'
+}
+key={option}
+onClick={() => selectChoice(group.key, option)}
+type="button"
+>
+{option}
+</button>
+))}
+</div>
+</fieldset>
+))}
+</div>
+
+<div className="selected-condition-card">
+<p className="result-label">🪙 今日の冒険コイン</p>
+<p>
+{choices.distance || '距離未選択'}・
+{choices.mood || '気分未選択'}・
+{choices.budget || '予算未選択'}・
+{choices.time || '時間未選択'}
+</p>
+</div>
+
+<button
+className="gacha-button"
+type="button"
+disabled={!canProceedToGacha}
+onClick={() => {
+setSearchExpandLevel(0);
+setCourseStep(1);
+setScreen('coin');
+}}
+>
+<Compass size={20} />
+冒険コインを作る
+</button>
+</section>
+.choice-button {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+}
+
+.choice-icon {
+font-size: 1.1rem;
+}
+.coin-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 14px;
+margin-top: 16px;
+}
+
+.coin-item {
+padding: 16px;
+border-radius: 18px;
+background: #ffffff;
+border: 2px solid rgba(251, 191, 36, 0.35);
+box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+text-align: center;
+}
+
+.coin-title {
+display: block;
+font-size: 0.8rem;
+color: #92400e;
+margin-bottom: 8px;
+font-weight: 700;
+}
+
+.coin-item strong {
+display: block;
+font-size: 1.15rem;
+}
+.coin-wide {
+grid-column: 1 / -1;
+}
