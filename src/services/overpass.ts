@@ -51,7 +51,7 @@ return [];
 
 function buildQuery(queryBody: string): string {
 return `
-[out:json][timeout:25];
+[out:json][timeout:8];
 (
 ${queryBody}
 );
