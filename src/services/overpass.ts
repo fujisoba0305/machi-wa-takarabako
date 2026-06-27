@@ -24,30 +24,36 @@ const OVERPASS_URLS = [
 ];
 
 async function fetchOverpass(query: string): Promise<OverpassElement[]> {
+console.log("① Overpass開始");
+
 for (const url of OVERPASS_URLS) {
+console.log("② 接続先:", url);
+
 try {
 const response = await fetch(url, {
-method: 'POST',
+method: "POST",
 headers: {
-'Content-Type': 'text/plain;charset=UTF-8',
+"Content-Type": "text/plain;charset=UTF-8",
 },
 body: query,
 });
 
-if (!response.ok) {
-throw new Error(`Overpass API error: ${response.status}`);
-}
+console.log("③ ステータス", response.status);
 
 const data: OverpassResponse = await response.json();
+
+console.log("④ 件数", data.elements.length);
+
 return data.elements ?? [];
-} catch (error) {
-console.error(`Overpass fetch failed: ${url}`, error);
+} catch (e) {
+console.error("⑤ エラー", e);
 }
 }
+
+console.log("⑥ 全部失敗");
 
 return [];
 }
-
 
 function buildQuery(queryBody: string): string {
 return `
