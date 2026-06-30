@@ -20,6 +20,7 @@ return res.status(400).json({ error: 'Query is missing' });
 const urls = [
 'https://overpass.kumi.systems/api/interpreter',
 'https://overpass-api.de/api/interpreter',
+'https://overpass.osm.ch/api/interpreter',
 ];
 
 for (const url of urls) {
