@@ -18,8 +18,8 @@ return res.status(400).json({ error: 'Query is missing' });
 }
 
 const urls = [
-'https://overpass-api.de/api/interpreter',
 'https://overpass.kumi.systems/api/interpreter',
+'https://overpass-api.de/api/interpreter',
 ];
 
 for (const url of urls) {
@@ -27,14 +27,18 @@ const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
 try {
+const formData = new URLSearchParams();
+formData.set('data', query);
+
 const response = await fetch(url, {
 method: 'POST',
 headers: {
-'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-'User-Agent': 'machi-wa-takarabako/1.0 contact:fujisoba0305',
-Accept: 'application/json',
+'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+'User-Agent':
+'machi-wa-takarabako/1.0 (+https://machi-wa-takarabako.vercel.app)',
+Referer: 'https://machi-wa-takarabako.vercel.app',
 },
-body: `data=${encodeURIComponent(query)}`,
+body: formData.toString(),
 signal: controller.signal,
 });
 
@@ -42,18 +46,15 @@ clearTimeout(timeoutId);
 
 if (!response.ok) {
 const errorText = await response.text();
-
 console.error('Overpass response error:', {
 url,
 status: response.status,
 body: errorText.slice(0, 500),
 });
-
 continue;
 }
 
 const data = await response.json();
-
 return res.status(200).json(data);
 } catch (error) {
 clearTimeout(timeoutId);
@@ -61,12 +62,8 @@ console.error('Overpass proxy failed:', url, error);
 }
 }
 
-return res.status(500).json({
-error: 'Overpass failed',
-});
+return res.status(500).json({ error: 'Overpass failed' });
 } catch (error) {
-return res.status(500).json({
-error: String(error),
-});
+return res.status(500).json({ error: String(error) });
 }
 }
