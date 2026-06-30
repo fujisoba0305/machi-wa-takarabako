@@ -3,11 +3,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 export const config = {
 regions: ['hnd1'],
 };
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 if (req.method !== 'POST') {
 return res.status(405).json({ error: 'Method not allowed' });
 }
 
+try {
 const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
 const query = body?.query;
 
@@ -21,14 +23,16 @@ const urls = [
 ];
 
 for (const url of urls) {
-try {
 const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
+try {
 const response = await fetch(url, {
 method: 'POST',
 headers: {
 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+'User-Agent': 'machi-wa-takarabako/1.0 contact:fujisoba0305',
+Accept: 'application/json',
 },
 body: `data=${encodeURIComponent(query)}`,
 signal: controller.signal,
@@ -49,15 +53,20 @@ continue;
 }
 
 const data = await response.json();
+
 return res.status(200).json(data);
 } catch (error) {
+clearTimeout(timeoutId);
 console.error('Overpass proxy failed:', url, error);
 }
 }
 
 return res.status(500).json({
 error: 'Overpass failed',
-hint: 'Check Vercel logs for Overpass response error',
 });
-
+} catch (error) {
+return res.status(500).json({
+error: String(error),
+});
+}
 }
