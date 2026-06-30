@@ -685,10 +685,6 @@ const spots = await getSpotsByMood();
 
 const namedSpots = getNamedSpots(spots);
 
-console.log('取得:', spots.length);
-console.log('名前あり:', namedSpots.length);
-
-
 if (namedSpots.length > 0) {
 const spot = randomItem(namedSpots);
 setNearbySpot(spot);
