@@ -34,6 +34,14 @@ signal: controller.signal,
 clearTimeout(timeoutId);
 
 if (!response.ok) {
+const errorText = await response.text();
+
+console.error('Overpass response error:', {
+url,
+status: response.status,
+body: errorText.slice(0, 500),
+});
+
 continue;
 }
 
@@ -44,5 +52,9 @@ console.error('Overpass proxy failed:', url, error);
 }
 }
 
-return res.status(500).json({ error: 'Overpass failed' });
+return res.status(500).json({
+error: 'Overpass failed',
+hint: 'Check Vercel logs for Overpass response error',
+});
+
 }
