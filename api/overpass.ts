@@ -1,54 +1,48 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(
-req: VercelRequest,
-res: VercelResponse
-) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
 if (req.method !== 'POST') {
 return res.status(405).json({ error: 'Method not allowed' });
 }
 
-try {
-const { query } = req.body;
-console.log('API query received:',Boolean(query));
+const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+const query = body?.query;
 
 if (!query) {
-return res.status(400).json({ error: 'Query is required' });
+return res.status(400).json({ error: 'Query is missing' });
 }
 
 const urls = [
-'https://overpass.kumi.systems/api/interpreter',
 'https://overpass-api.de/api/interpreter',
+'https://overpass.kumi.systems/api/interpreter',
 ];
 
 for (const url of urls) {
 try {
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 25000);
+
 const response = await fetch(url, {
 method: 'POST',
 headers: {
-'Content-Type':
-'application/x-www-form-urlencoded;charset=UTF-8',
+'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
 },
 body: `data=${encodeURIComponent(query)}`,
+signal: controller.signal,
 });
 
-if (!response.ok) continue;
+clearTimeout(timeoutId);
+
+if (!response.ok) {
+continue;
+}
 
 const data = await response.json();
-console.log('API elements:',data.elements?.lenght);
-
 return res.status(200).json(data);
-} catch {
-// 次のOverpassへ
+} catch (error) {
+console.error('Overpass proxy failed:', url, error);
 }
 }
 
-return res.status(500).json({
-error: 'All Overpass servers failed',
-});
-} catch (error) {
-return res.status(500).json({
-error: String(error),
-});
-}
+return res.status(500).json({ error: 'Overpass failed' });
 }
