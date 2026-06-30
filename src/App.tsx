@@ -1309,6 +1309,15 @@ style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
 : '現在地はまだ取得していません'}
 </p>
 </div>
+
+<button
+className="home-button secondary"
+type="button"
+onClick={getCurrentLocation}
+>
+<MapPinned size={24} />
+現在地を取得
+</button>
 </div>
 
 <div className="recent-card">
