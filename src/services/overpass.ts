@@ -24,35 +24,25 @@ const OVERPASS_URLS = [
 ];
 
 async function fetchOverpass(query: string): Promise<Spot[]> {
-for (const url of OVERPASS_URLS) {
-const controller = new AbortController();
-const timeoutId = setTimeout(() => controller.abort(), 20000);
-
 try {
-const response = await fetch(url, {
+const response = await fetch('/api/overpass', {
 method: 'POST',
 headers: {
-'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+'Content-Type': 'application/json',
 },
-body: `data=${encodeURIComponent(query)}`,
-signal: controller.signal,
+body: JSON.stringify({ query }),
 });
 
-clearTimeout(timeoutId);
-
 if (!response.ok) {
-throw new Error(`Overpass API error: ${response.status}`);
+throw new Error(`API error: ${response.status}`);
 }
 
 const data: OverpassResponse = await response.json();
 return data.elements ?? [];
 } catch (error) {
-clearTimeout(timeoutId);
-console.error(`Overpass fetch failed: ${url}`, error);
-}
-}
-
+console.error('Overpass API proxy failed:', error);
 return [];
+}
 }
 
 function buildQuery(queryBody: string): string {
