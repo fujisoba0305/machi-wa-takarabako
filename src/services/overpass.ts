@@ -47,11 +47,11 @@ return [];
 
 function buildQuery(queryBody: string): string {
 return `
-[out:json][timeout:8];
+[out:json][timeout:12];
 (
 ${queryBody}
 );
-out center tags;
+out center;
 `;
 }
 
