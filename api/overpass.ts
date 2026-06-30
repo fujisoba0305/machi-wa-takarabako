@@ -10,6 +10,7 @@ return res.status(405).json({ error: 'Method not allowed' });
 
 try {
 const { query } = req.body;
+console.log('API query received:',Boolean(query));
 
 if (!query) {
 return res.status(400).json({ error: 'Query is required' });
@@ -34,6 +35,7 @@ body: `data=${encodeURIComponent(query)}`,
 if (!response.ok) continue;
 
 const data = await response.json();
+console.log('API elements:',data.elements?.lenght);
 
 return res.status(200).json(data);
 } catch {
