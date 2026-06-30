@@ -1026,3 +1026,6 @@ line-height: 1;
 .bottom-nav small {
 font-size: 11px;
 }
+.app-shell {
+padding-bottom: 110px;
+}
