@@ -18,8 +18,8 @@ return res.status(400).json({ error: 'Query is missing' });
 }
 
 const urls = [
-'https://overpass.kumi.systems/api/interpreter',
 'https://overpass-api.de/api/interpreter',
+'https://overpass.kumi.systems/api/interpreter',
 'https://overpass.osm.ch/api/interpreter',
 ];
 
@@ -28,18 +28,15 @@ const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
 try {
-const formData = new URLSearchParams();
-formData.set('data', query);
+const requestUrl = `${url}?data=${encodeURIComponent(query)}`;
 
-const response = await fetch(url, {
-method: 'POST',
+const response = await fetch(requestUrl, {
+method: 'GET',
 headers: {
-'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 'User-Agent':
 'machi-wa-takarabako/1.0 (+https://machi-wa-takarabako.vercel.app)',
-Referer: 'https://machi-wa-takarabako.vercel.app',
+Accept: 'application/json',
 },
-body: formData.toString(),
 signal: controller.signal,
 });
 
