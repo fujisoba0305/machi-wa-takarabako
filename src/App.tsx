@@ -345,26 +345,32 @@ if (choices.distance === '10km') return 10000;
 return 3000;
 }
 
-function getDistanceRange() {
-const expand = searchExpandLevel;
+function getSpotsInRange(spots: Spot[]) {
+if (!currentLocation) return [];
 
-if (choices.distance === '1km') {
-return { min: 0, max: 1 + expand };
-}
+const range = getDistanceRange();
 
-if (choices.distance === '3km') {
-return { min: Math.max(0, 2 - expand), max: 4 + expand };
-}
+return getNamedSpots(spots).filter((spot) => {
+const location = getSpotLocation(spot);
 
-if (choices.distance === '5km') {
-return { min: Math.max(0, 4 - expand), max: 6 + expand };
-}
+if (!location) return false;
 
-if (choices.distance === '10km') {
-return { min: Math.max(0, 8 - expand), max: 12 + expand };
-}
+const distance = calculateDistance(
+currentLocation.latitude,
+currentLocation.longitude,
+location.lat,
+location.lon
+);
 
-return { min: 0, max: 999 };
+console.log(
+spot.tags?.name,
+distance,
+range.min,
+range.max
+);
+
+return distance >= range.min && distance <= range.max;
+});
 }
 
 function getNamedSpots(spots: Spot[]) {
@@ -392,25 +398,26 @@ tags.shop === 'coffee';
 return !isPaidLike;
 });
 }
-function getSpotsInRange(spots: Spot[]) {
-if (!currentLocation) return [];
+function getDistanceRange() {
+const expand = searchExpandLevel;
 
-const range = getDistanceRange();
+if (choices.distance === '1km') {
+return { min: 0, max: 1.5 + expand };
+}
 
-return getNamedSpots(spots).filter((spot) => {
-const location = getSpotLocation(spot);
+if (choices.distance === '3km') {
+return { min: 0, max: 4 + expand };
+}
 
-if (!location) return false;
+if (choices.distance === '5km') {
+return { min: 0, max: 6 + expand };
+}
 
-const distance = calculateDistance(
-currentLocation.latitude,
-currentLocation.longitude,
-location.lat,
-location.lon
-);
+if (choices.distance === '10km') {
+return { min: 0, max: 12 + expand };
+}
 
-return distance >= range.min && distance <= range.max;
-});
+return { min: 0, max: 999 };
 }
 
 function setSelectedSpot(spot: Spot | null) {
@@ -670,26 +677,39 @@ setDateFinalSpot(null);
 setSpotDistance(null);
 
 if (choices.mood === 'デート') {
-await Promise.race([
-findDateCourse(),
-new Promise((resolve) => setTimeout(resolve, 10000)),
-]);
+await findDateCourse();
 return;
 }
 
-const spots = await Promise.race([
-getSpotsByMood(),
-new Promise<Spot[]>((resolve) => setTimeout(() => resolve([]), 10000)),
-]);
+const spots = await getSpotsByMood();
 
-const spotsInRange = getSpotsInRange(spots);
-const namedSpots = spotsInRange;
+const namedSpots = getNamedSpots(spots);
+
+console.log('取得:', spots.length);
+console.log('名前あり:', namedSpots.length);
+
 
 if (namedSpots.length > 0) {
-setSelectedSpot(randomItem(namedSpots));
-} else {
-setSelectedSpot(null);
+const spot = randomItem(namedSpots);
+setNearbySpot(spot);
+setSelectedSpot(spot);
+
+const location = getSpotLocation(spot);
+if (location && currentLocation) {
+const distance = calculateDistance(
+currentLocation.latitude,
+currentLocation.longitude,
+location.lat,
+location.lon
+);
+setSpotDistance(distance);
 }
+} else {
+setNearbySpot(null);
+setSelectedSpot(null);
+setSpotDistance(null);
+}
+
 } catch (error) {
 console.error(error);
 setNearbySpot(null);
