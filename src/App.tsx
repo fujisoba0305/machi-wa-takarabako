@@ -684,7 +684,6 @@ return;
 const spots = await getSpotsByMood();
 
 const namedSpots = getNamedSpots(spots);
-alert(`取得:${spots.length} 名前あり:${namedSpots.length}`);
 
 console.log('取得:', spots.length);
 console.log('名前あり:', namedSpots.length);
