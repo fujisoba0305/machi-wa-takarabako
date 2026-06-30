@@ -1744,6 +1744,28 @@ setScreen('condition');
 </button>
 </section>
 )}
+<nav className="bottom-nav">
+<button type="button" onClick={() => setScreen('home')}>
+<span>🏠</span>
+<small>ホーム</small>
+</button>
+
+<button type="button">
+<span>📖</span>
+<small>図鑑</small>
+</button>
+
+<button type="button" onClick={() => setScreen('condition')}>
+<span>📦</span>
+<small>宝箱</small>
+</button>
+
+<button type="button">
+<span>👤</span>
+<small>マイページ</small>
+</button>
+</nav>
+
 </main>
 );
 }

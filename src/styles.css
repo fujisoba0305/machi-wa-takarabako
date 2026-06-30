@@ -989,3 +989,40 @@ font-size: 1.15rem;
 .coin-wide {
 grid-column: 1 / -1;
 }
+.bottom-nav {
+position: fixed;
+left: 50%;
+bottom: 14px;
+transform: translateX(-50%);
+width: min(420px, calc(100% - 24px));
+padding: 10px 12px;
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 8px;
+border-radius: 24px;
+background: rgba(255, 255, 255, 0.92);
+box-shadow: 0 16px 40px rgba(60, 45, 20, 0.18);
+backdrop-filter: blur(14px);
+z-index: 50;
+}
+
+.bottom-nav button {
+border: none;
+background: transparent;
+color: #6f5530;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 3px;
+font-weight: 700;
+cursor: pointer;
+}
+
+.bottom-nav span {
+font-size: 22px;
+line-height: 1;
+}
+
+.bottom-nav small {
+font-size: 11px;
+}
