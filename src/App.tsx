@@ -1305,49 +1305,10 @@ style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
 <div>
 <p>
 {currentLocation
-? `現在地取得済み：${currentLocation.latitude.toFixed(
-3
-)}, ${currentLocation.longitude.toFixed(3)}`
+? `現在地取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
 : '現在地はまだ取得していません'}
 </p>
 </div>
-
-<button
-className="home-button"
-type="button"
-onClick={() => {
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('condition');
-}}
->
-<Compass size={24} />
-ガチャを引く
-</button>
-
-<button
-className="home-button secondary"
-type="button"
-onClick={getCurrentLocation}
->
-<MapPinned size={24} />
-現在地を取得
-</button>
-
-<button className="home-button secondary" type="button">
-<BookOpen size={24} />
-図鑑を見る
-</button>
-
-<button className="home-button secondary" type="button">
-<MapPinned size={24} />
-宝物マップ
-</button>
-
-<button className="home-button secondary" type="button">
-<UserRound size={24} />
-マイページ
-</button>
 </div>
 
 <div className="recent-card">
