@@ -885,147 +885,18 @@ background: linear-gradient(135deg, #fff8d8, #ffe9a8);
 text-align: center;
 border: 2px solid #fbbf24;
 }
-<section className="condition-screen" aria-live="polite">
-<div className="condition-hero">
-<p className="result-kicker">🎒 冒険の準備</p>
-<h2>{trimmedName}さん、今日の宝物を探しに行こう</h2>
-<p>条件を選ぶと、冒険コインが作られます。</p>
-</div>
-
-<div className="choice-panel adventure-choice-panel">
-{choiceGroups
-.filter(
-(group) =>
-(group.key !== 'foodGenre' || choices.mood === 'グルメ') &&
-(group.key !== 'dateGenre' || choices.mood === 'デート') &&
-(group.key !== 'eventGenre' || choices.mood === 'イベント') &&
-(group.key !== 'shrineGenre' || choices.mood === '神社・お寺')
-)
-.map((group) => (
-<fieldset className="choice-group adventure-choice-card" key={group.key}>
-<legend>{group.label}</legend>
-
-<div className="choice-buttons">
-{group.options.map((option) => (
-<button
-className={
-choices[group.key] === option
-? 'choice-button selected'
-: 'choice-button'
-}
-key={option}
-onClick={() => selectChoice(group.key, option)}
-type="button"
->
-{option}
-</button>
-))}
-</div>
-</fieldset>
-))}
-</div>
-
-<div className="selected-condition-card">
-<p className="result-label">🪙 今日の冒険コイン</p>
-<p>
-{choices.distance || '距離未選択'}・
-{choices.mood || '気分未選択'}・
-{choices.budget || '予算未選択'}・
-{choices.time || '時間未選択'}
-</p>
-</div>
-
-<button
-className="gacha-button"
-type="button"
-disabled={!canProceedToGacha}
-onClick={() => {
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('coin');
-}}
->
-<Compass size={20} />
-冒険コインを作る
-</button>
-</section>
-.choice-button {
-display: inline-flex;
-align-items: center;
-gap: 6px;
-}
-
-.choice-icon {
-font-size: 1.1rem;
-}
-.coin-grid {
-display: grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 14px;
-margin-top: 16px;
-}
-
-.coin-item {
-padding: 16px;
-border-radius: 18px;
-background: #ffffff;
-border: 2px solid rgba(251, 191, 36, 0.35);
-box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-text-align: center;
-}
-
-.coin-title {
-display: block;
-font-size: 0.8rem;
-color: #92400e;
-margin-bottom: 8px;
-font-weight: 700;
-}
-
-.coin-item strong {
-display: block;
-font-size: 1.15rem;
-}
-.coin-wide {
-grid-column: 1 / -1;
-}
-.bottom-nav {
-position: fixed;
-left: 50%;
-bottom: 14px;
-transform: translateX(-50%);
-width: min(420px, calc(100% - 24px));
-padding: 10px 12px;
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 8px;
+.home-start-card {
+width: 100%;
+padding: 20px;
 border-radius: 24px;
-background: rgba(255, 255, 255, 0.92);
-box-shadow: 0 16px 40px rgba(60, 45, 20, 0.18);
-backdrop-filter: blur(14px);
-z-index: 50;
+background: rgba(255, 255, 255, 0.9);
+box-shadow: 0 16px 40px rgba(60, 45, 20, 0.12);
+text-align: center;
+display: grid;
+gap: 12px;
 }
 
-.bottom-nav button {
-border: none;
-background: transparent;
-color: #6f5530;
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 3px;
-font-weight: 700;
-cursor: pointer;
-}
-
-.bottom-nav span {
-font-size: 22px;
-line-height: 1;
-}
-
-.bottom-nav small {
-font-size: 11px;
-}
-.app-shell {
-padding-bottom: 110px;
+.home-button:disabled {
+opacity: 0.45;
+cursor: not-allowed;
 }

@@ -1226,89 +1226,24 @@ autoComplete="name"
 <p>今日はどんな宝物を探しますか？</p>
 </div>
 
-<div className="home-stat-card">
-<Gem size={28} />
 <div className="treasure-box-card">
-<div className="treasure-box-icon">
-{takaran.icon}
-</div>
-<div className="home-stat-card">
-<Gem size={28} />
-<div>
-<p>見つけた宝物</p>
-<strong>{adventureCount}個</strong>
-</div>
-</div>
-
-<div className="home-stat-card">
-<Gem size={28} />
-<div>
-<p>実績</p>
-<strong>{achievements.length}個</strong>
-
-{achievements.length > 0 ? (
-achievements.map((achievement) => (
-<p key={achievement}>{achievement}</p>
-))
-) : (
-<p>まだ実績はありません</p>
-)}
-</div>
-</div>
-
-<h3>
-たからん Lv{takaran.level}
-</h3>
-
-<p>{takaranMessage}</p>
-
-
-<small>
-まだ眠っている宝箱。
-街で宝物を見つけると少しずつ目覚めます。
-</small>
-
-{takaranNextInfo.remainingExp > 0 ? (
-<p className="takaran-next">
-🌟 進化まであと {takaranNextInfo.remainingExp} EXP
-</p>
-) : (
-<p className="takaran-next">
-🎉 たからんは最高レベルです！
-</p>
-)}
-</div>
-
-<div>
-<p>現在のランク</p>
-<strong>{walkRankInfo.rank}</strong>
-<p>
-{walkRankInfo.current} / {walkRankInfo.next} EXP
-</p>
-
-<div className="exp-bar">
-<div
-className="exp-bar-fill"
-style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
-/>
-</div>
-
-<p>次のランク：{walkRankInfo.nextRank}</p>
-<p className="rank-next">
-⭐ あと {walkRankInfo.next - walkRankInfo.current} EXPで
-{walkRankInfo.nextRank}
-</p>
-</div>
-</div>
-
-<div className="home-actions">
-<div>
+<div className="treasure-box-icon">{takaran.icon}</div>
+<h2>たからん Lv{takaran.level}</h2>
 <p>
 {currentLocation
-? `現在地取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
-: '現在地はまだ取得していません'}
+? '準備完了！今日も宝物を探しに行こう！'
+: '今いる場所を教えて！'}
 </p>
 </div>
+
+<div className="home-start-card">
+<p className="result-label">📍 現在地</p>
+<h2>{currentLocation ? '現在地取得完了！' : 'まずは現在地を取得しよう'}</h2>
+<p>
+{currentLocation
+? `取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
+: '街の宝物は、あなたの現在地を基準に探します。'}
+</p>
 
 <button
 className="home-button secondary"
@@ -1316,17 +1251,32 @@ type="button"
 onClick={getCurrentLocation}
 >
 <MapPinned size={24} />
-現在地を取得
+{currentLocation ? '現在地を更新する' : '現在地を取得する'}
 </button>
 </div>
 
-<div className="recent-card">
-<div className="recent-title">
-<Sparkles size={20} />
-<span>最近発見された宝物</span>
-</div>
-<h2>ピカチュウポスト</h2>
-<p>桜木町で見つかった小さな宝物</p>
+<div className="home-start-card">
+<p className="result-label">🧭 冒険</p>
+<h2>街にはまだ知らない宝物が眠っています。</h2>
+<p>
+{currentLocation
+? '条件を選んで、今日の冒険コインを作ろう。'
+: '冒険を始めるには、先に現在地を取得してください。'}
+</p>
+
+<button
+className="home-button"
+type="button"
+disabled={!currentLocation}
+onClick={() => {
+setSearchExpandLevel(0);
+setCourseStep(1);
+setScreen('condition');
+}}
+>
+<Compass size={24} />
+冒険を始める
+</button>
 </div>
 </section>
 ) : screen === 'condition' ? (
