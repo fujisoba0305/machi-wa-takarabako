@@ -1679,6 +1679,7 @@ setScreen('condition');
 </button>
 </section>
 )}
+{hasStarted && (
 <nav className="bottom-nav">
 <button type="button" onClick={() => setScreen('home')}>
 <span>🏠</span>
@@ -1700,6 +1701,7 @@ setScreen('condition');
 <small>マイページ</small>
 </button>
 </nav>
+)}
 
 </main>
 );
