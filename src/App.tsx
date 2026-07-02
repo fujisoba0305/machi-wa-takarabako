@@ -1221,9 +1221,15 @@ autoComplete="name"
 ) : screen === 'home' ? (
 <section className="home-screen">
 <div className="home-header">
-<p className="home-kicker">おかえりなさい</p>
-<h1>{trimmedName}さん</h1>
-<p>今日はどんな宝物を探しますか？</p>
+<p className="home-kicker">🚶 好奇心を増やすお散歩アプリ</p>
+
+<h1>📦 街は宝箱</h1>
+
+<p>
+{trimmedName}さん、
+<br />
+今日も街の宝物を探しに行こう！
+</p>
 </div>
 
 <div className="treasure-box-card">
@@ -1231,8 +1237,8 @@ autoComplete="name"
 <h2>たからん Lv{takaran.level}</h2>
 <p>
 {currentLocation
-? '準備完了！今日も宝物を探しに行こう！'
-: '今いる場所を教えて！'}
+? '✨ 準備完了！今日はどんな宝物が待っているかな？'
+: '😊 まずは今いる場所を教えて！'}
 </p>
 </div>
 
@@ -1240,9 +1246,18 @@ autoComplete="name"
 <p className="result-label">📍 現在地</p>
 <h2>{currentLocation ? '現在地取得完了！' : 'まずは現在地を取得しよう'}</h2>
 <p>
-{currentLocation
-? `取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
-: '街の宝物は、あなたの現在地を基準に探します。'}
+{currentLocation ? (
+`取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
+) : (
+<>
+街の宝物は、あなたの現在地をもとに探します。
+<br />
+<br />
+まずは位置情報を取得して
+<br />
+冒険の準備をしよう！
+</>
+)}
 </p>
 
 <button
