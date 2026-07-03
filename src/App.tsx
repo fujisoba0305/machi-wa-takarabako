@@ -237,7 +237,9 @@ return R * c;
 export default function App() {
 const [name, setName] = useState('');
 const [hasStarted, setHasStarted] = useState(false);
-
+const [takaranSpeech, setTakaranSpeech] = useState(
+"😊 まずは僕を押してね！"
+);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
 >('home');
@@ -314,9 +316,13 @@ setChoices((currentChoices) => ({
 
 function getCurrentLocation() {
 if (!navigator.geolocation) {
+setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
 alert('このブラウザでは現在地取得が使えません。');
 return;
 }
+
+// ←追加
+setTakaranSpeech("🔍 現在地を探してるよ...");
 
 navigator.geolocation.getCurrentPosition(
 (position) => {
@@ -324,9 +330,16 @@ setCurrentLocation({
 latitude: position.coords.latitude,
 longitude: position.coords.longitude,
 });
+
+// ←追加
+setTakaranSpeech("🎉 よし！冒険に行こう！");
 },
 (error) => {
 console.error(error);
+
+// ←追加
+setTakaranSpeech("😢 現在地が見つからなかったよ...");
+
 alert('現在地を取得できませんでした。ブラウザの位置情報許可を確認してください。');
 },
 {
@@ -1242,9 +1255,7 @@ onClick={!currentLocation ? getCurrentLocation : undefined}
 <h2>たからん Lv{takaran.level}</h2>
 
 <p>
-{currentLocation
-? "✨ 見つけたよ！冒険の準備完了！"
-: "😊 まずは僕を押してね！"}
+{takaranSpeech}
 </p>
 
 <small>
