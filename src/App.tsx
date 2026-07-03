@@ -1290,34 +1290,6 @@ style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
 </div>
 </button>
 
-<div className="home-start-card">
-<p className="result-label">📍 現在地</p>
-<h2>{currentLocation ? '現在地取得完了！' : 'まずは現在地を取得しよう'}</h2>
-<p>
-{currentLocation ? (
-`取得済み：${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
-) : (
-<>
-街の宝物は、あなたの現在地をもとに探します。
-<br />
-<br />
-まずは位置情報を取得して
-<br />
-冒険の準備をしよう！
-</>
-)}
-</p>
-
-<button
-className="home-button secondary"
-type="button"
-onClick={getCurrentLocation}
->
-<MapPinned size={24} />
-{currentLocation ? '現在地を更新する' : '現在地を取得する'}
-</button>
-</div>
-
 </section>
 ) : screen === 'condition' ? (
 <section className="condition-screen" aria-live="polite">
