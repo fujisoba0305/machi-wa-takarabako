@@ -1232,15 +1232,63 @@ autoComplete="name"
 </p>
 </div>
 
-<div className="treasure-box-card">
+<button
+className="treasure-box-card"
+type="button"
+onClick={!currentLocation ? getCurrentLocation : undefined}
+>
 <div className="treasure-box-icon">{takaran.icon}</div>
+
 <h2>たからん Lv{takaran.level}</h2>
+
 <p>
 {currentLocation
-? '✨ 準備完了！今日はどんな宝物が待っているかな？'
-: '😊 まずは今いる場所を教えて！'}
+? "✨ 見つけたよ！冒険の準備完了！"
+: "😊 まずは僕を押してね！"}
 </p>
+
+<small>
+{currentLocation ? (
+"🧭 冒険に出発しよう！"
+) : (
+<>
+📍 現在地を取得します
+<br />
+君の近くに眠る宝物を探すため、
+<br />
+現在地を取得します。
+<br />
+<br />
+※位置情報は宝物を探すためだけに利用します。
+</>
+)}
+</small>
+
+{takaranNextInfo.remainingExp > 0 ? (
+<p className="takaran-next">
+🌟 進化まであと {takaranNextInfo.remainingExp} EXP
+</p>
+) : (
+<p className="takaran-next">🎉 たからんは最高レベルです！</p>
+)}
+
+<div>
+<p>現在のランク</p>
+<strong>{walkRankInfo.rank}</strong>
+<p>
+{walkRankInfo.current} / {walkRankInfo.next} EXP
+</p>
+
+<div className="exp-bar">
+<div
+className="exp-bar-fill"
+style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
+/>
 </div>
+
+<p>次のランク：{walkRankInfo.nextRank}</p>
+</div>
+</button>
 
 <div className="home-start-card">
 <p className="result-label">📍 現在地</p>
