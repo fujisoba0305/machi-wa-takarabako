@@ -1688,7 +1688,20 @@ setScreen('condition');
 <small>図鑑</small>
 </button>
 
-<button type="button" onClick={() => setScreen('condition')}>
+<button
+type="button"
+onClick={() => {
+if (!currentLocation) {
+alert('まずはたからんを押して、現在地を取得してね！');
+setScreen('home');
+return;
+}
+
+setSearchExpandLevel(0);
+setCourseStep(1);
+setScreen('condition');
+}}
+>
 <span>📦</span>
 <small>宝箱</small>
 </button>
