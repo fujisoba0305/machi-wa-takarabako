@@ -1318,29 +1318,6 @@ onClick={getCurrentLocation}
 </button>
 </div>
 
-<div className="home-start-card">
-<p className="result-label">🧭 冒険</p>
-<h2>街にはまだ知らない宝物が眠っています。</h2>
-<p>
-{currentLocation
-? '条件を選んで、今日の冒険コインを作ろう。'
-: '冒険を始めるには、先に現在地を取得してください。'}
-</p>
-
-<button
-className="home-button"
-type="button"
-disabled={!currentLocation}
-onClick={() => {
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('condition');
-}}
->
-<Compass size={24} />
-冒険を始める
-</button>
-</div>
 </section>
 ) : screen === 'condition' ? (
 <section className="condition-screen" aria-live="polite">
