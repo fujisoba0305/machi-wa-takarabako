@@ -316,6 +316,38 @@ setChoices((currentChoices) => ({
 }
 
 function getCurrentLocation() {
+alert('たからん押された！');
+
+if (!navigator.geolocation) {
+setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
+alert('このブラウザでは現在地取得が使えません。');
+return;
+}
+
+setTakaranSpeech("🔍 現在地を探してるよ...");
+
+navigator.geolocation.getCurrentPosition(
+(position) => {
+setCurrentLocation({
+latitude: position.coords.latitude,
+longitude: position.coords.longitude,
+});
+
+setTakaranSpeech("🎉 よし！冒険に行こう！");
+},
+(error) => {
+console.error(error);
+setTakaranSpeech("😢 現在地が見つからなかったよ...");
+alert('現在地を取得できませんでした。ブラウザの位置情報許可を確認してください。');
+},
+{
+enableHighAccuracy: true,
+timeout: 10000,
+maximumAge: 0,
+}
+);
+}
+
 useEffect(() => {
 if (screen !== 'gacha') return;
 
@@ -332,40 +364,6 @@ clearTimeout(timer2);
 clearTimeout(timer3);
 };
 }, [screen]);
-if (!navigator.geolocation) {
-setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
-alert('このブラウザでは現在地取得が使えません。');
-return;
-}
-
-// ←追加
-setTakaranSpeech("🔍 現在地を探してるよ...");
-
-navigator.geolocation.getCurrentPosition(
-(position) => {
-setCurrentLocation({
-latitude: position.coords.latitude,
-longitude: position.coords.longitude,
-});
-
-// ←追加
-setTakaranSpeech("🎉 よし！冒険に行こう！");
-},
-(error) => {
-console.error(error);
-
-// ←追加
-setTakaranSpeech("😢 現在地が見つからなかったよ...");
-
-alert('現在地を取得できませんでした。ブラウザの位置情報許可を確認してください。');
-},
-{
-enableHighAccuracy: true,
-timeout: 10000,
-maximumAge: 0,
-}
-);
-}
 
 function getRadius() {
 if (choices.distance === '1km') return 1000;
