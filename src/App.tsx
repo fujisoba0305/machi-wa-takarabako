@@ -1442,30 +1442,36 @@ setScreen('capsule');
 
 </section>
 ) : screen === 'gacha' ? (
-<section className="gacha-screen">
+<section className="gacha-screen gacha-stage">
 <div className="gacha-title-card">
 <p className="result-kicker">🎰 街の宝ガチャ</p>
 <h2>宝物を探しています</h2>
-<p>たからんが、今日の目的地を探しているよ…！</p>
+<p>たからんが街の中から、今日の宝物を探しているよ…！</p>
 </div>
 
-<div className="gacha-machine gacha-shaking">
-<div className="gacha-sign">街の宝ガチャ</div>
+<div className="gacha-machine-v2">
+<div className="gacha-top-sign">街の宝ガチャ</div>
 
-<div className="gacha-globe">
-<span className="capsule capsule-a" />
-<span className="capsule capsule-b" />
-<span className="capsule capsule-c" />
-<span className="capsule capsule-d" />
-<span className="capsule capsule-e" />
+<div className="gacha-glass-v2">
+<span className="gacha-ball ball-red" />
+<span className="gacha-ball ball-blue" />
+<span className="gacha-ball ball-yellow" />
+<span className="gacha-ball ball-green" />
+<span className="gacha-ball ball-purple" />
+<span className="gacha-ball ball-orange" />
 </div>
 
-<div className="gacha-body">
-<div className="gacha-slot" />
-<div className="gacha-handle handle-moving" />
-<div className="gacha-chest" />
+<div className="gacha-panel-v2">
+<div className="gacha-window-v2">宝物探索中</div>
+<div className="gacha-lever-v2">
+<span className="lever-stick" />
+<span className="lever-knob" />
+</div>
+<div className="gacha-drop-hole" />
 </div>
 </div>
+
+<div className="gacha-light" />
 
 <div className="takaran-search-card">
 <div className="treasure-box-icon">📦💫</div>
@@ -1480,6 +1486,7 @@ onClick={() => setScreen('capsule')}
 カプセルを受け取る
 </button>
 </section>
+
 ) : screen === 'capsule' ? (
 <section className="capsule-screen">
 <div className="treasure-capsule">
