@@ -946,58 +946,48 @@ position: relative;
 overflow: hidden;
 gap: 18px;
 }
-
-.gacha-scene-title {
+.gacha-main-title {
 text-align: center;
-padding: 18px;
-border-radius: 24px;
-background: rgba(255, 255, 255, 0.92);
-box-shadow: 0 14px 34px rgba(80, 45, 10, 0.14);
+font-size: 28px;
+color: #6b3f16;
+margin-bottom: 8px;
 }
 
-.gacha-scene-title p {
-font-weight: 900;
-color: #8a4b12;
-}
-
-.gacha-scene-title h2 {
-margin: 8px 0;
-color: #5b3418;
+.gacha-sub {
+text-align: center;
+font-weight: 700;
+color: #5b3b24;
+margin-bottom: 18px;
 }
 
 .treasure-gacha-machine {
 position: relative;
-width: min(330px, 94%);
-margin: 0 auto;
-padding: 16px 16px 24px;
+width: min(320px, 92%);
+margin: 0 auto 24px;
+padding: 18px 18px 28px;
 border-radius: 34px;
-background: linear-gradient(180deg, #f9d16a, #d88428);
-border: 5px solid #744315;
+background: linear-gradient(180deg, #ffe08a, #f59e0b);
+border: 5px solid #7c4a14;
 box-shadow:
-0 20px 0 #5a2f0b,
-0 28px 44px rgba(80, 40, 10, 0.35);
-animation: machineShake 0.42s infinite;
+0 18px 0 #5b3418,
+0 28px 45px rgba(60, 35, 10, 0.35);
+animation: machineShake 0.45s infinite;
+}
+
+.treasure-gacha-machine.gacha-found {
+animation: foundFlash 0.7s infinite;
 }
 
 .gacha-sign-board {
-display: grid;
-gap: 4px;
-width: 88%;
-margin: 0 auto 12px;
+width: 82%;
+margin: 0 auto 14px;
 padding: 12px;
-border-radius: 18px;
-background: #fff6da;
-border: 4px solid #7a4717;
-color: #6b3d12;
+border-radius: 999px;
+background: #fff8dc;
+border: 4px solid #7c4a14;
 text-align: center;
-}
-
-.gacha-sign-board strong {
-font-size: 22px;
-}
-
-.gacha-sign-board small {
-font-size: 12px;
+color: #6b3f16;
+font-weight: 900;
 }
 
 .gacha-glass-dome {
@@ -1006,39 +996,39 @@ height: 180px;
 border-radius: 48% 48% 38% 38%;
 background:
 radial-gradient(circle at 30% 20%, rgba(255,255,255,0.95), transparent 18%),
-linear-gradient(145deg, rgba(255,255,255,0.82), rgba(153, 221, 235, 0.48));
-border: 5px solid #7a4717;
+linear-gradient(145deg, rgba(255,255,255,0.85), rgba(125,211,252,0.45));
+border: 5px solid #7c4a14;
 overflow: hidden;
-box-shadow: inset 0 0 22px rgba(255,255,255,0.7);
+box-shadow: inset 0 0 24px rgba(255,255,255,0.85);
 }
 
 .gacha-orb {
 position: absolute;
-width: 54px;
-height: 54px;
+width: 52px;
+height: 52px;
 border-radius: 50%;
 display: grid;
 place-items: center;
 font-size: 22px;
-border: 3px solid rgba(100, 65, 20, 0.25);
+border: 3px solid rgba(80, 45, 10, 0.28);
 box-shadow: inset -8px -8px 0 rgba(0,0,0,0.12);
 animation: orbJump 0.9s infinite ease-in-out;
 }
 
-.orb-1 { left: 26px; top: 80px; background: #fca5a5; }
-.orb-2 { left: 92px; top: 48px; background: #93c5fd; animation-delay: .1s; }
-.orb-3 { right: 36px; top: 74px; background: #fde68a; animation-delay: .2s; }
-.orb-4 { left: 54px; bottom: 22px; background: #86efac; animation-delay: .3s; }
-.orb-5 { right: 88px; bottom: 20px; background: #c4b5fd; animation-delay: .4s; }
-.orb-6 { right: 24px; bottom: 50px; background: #fdba74; animation-delay: .5s; }
+.orb-1 { left: 24px; top: 82px; background: #fca5a5; }
+.orb-2 { left: 88px; top: 48px; background: #93c5fd; animation-delay: .1s; }
+.orb-3 { right: 34px; top: 78px; background: #fde68a; animation-delay: .2s; }
+.orb-4 { left: 54px; bottom: 20px; background: #86efac; animation-delay: .3s; }
+.orb-5 { right: 88px; bottom: 22px; background: #c4b5fd; animation-delay: .4s; }
+.orb-6 { right: 24px; bottom: 52px; background: #fdba74; animation-delay: .5s; }
 
 .gacha-base {
 position: relative;
 margin-top: 14px;
-height: 125px;
+height: 120px;
 border-radius: 24px;
-background: linear-gradient(180deg, #b45309, #7c2d12);
-border: 4px solid #451a03;
+background: linear-gradient(180deg, #f97316, #dc2626);
+border: 4px solid #7c2d12;
 }
 
 .gacha-door {
@@ -1046,27 +1036,26 @@ position: absolute;
 left: 50%;
 bottom: 16px;
 transform: translateX(-50%);
-width: 94px;
-height: 42px;
-border-radius: 999px 999px 16px 16px;
-background: #2b1605;
-border: 4px solid #facc15;
+width: 92px;
+height: 34px;
+border-radius: 999px;
+background: #3b1c08;
 }
 
 .gacha-lever {
 position: absolute;
-right: 22px;
-top: 16px;
-width: 62px;
-height: 80px;
+right: 24px;
+top: 20px;
+width: 60px;
+height: 74px;
 }
 
 .lever-arm {
 position: absolute;
-left: 28px;
+left: 27px;
 top: 18px;
 width: 8px;
-height: 58px;
+height: 55px;
 border-radius: 999px;
 background: #3b1c08;
 transform-origin: top center;
@@ -1075,7 +1064,7 @@ animation: leverMove 0.8s infinite;
 
 .lever-ball {
 position: absolute;
-left: 11px;
+left: 10px;
 top: 0;
 width: 40px;
 height: 40px;
@@ -1085,102 +1074,29 @@ border: 4px solid #3b1c08;
 animation: knobMove 0.8s infinite;
 }
 
-.gacha-gears {
-position: absolute;
-left: 22px;
-top: 22px;
-font-size: 38px;
-animation: gearSpin 1.2s linear infinite;
-}
-
 .gacha-capsule-drop {
 position: absolute;
 left: 50%;
-bottom: -26px;
+bottom: -34px;
 transform: translateX(-50%);
-font-size: 48px;
-animation: capsuleDrop 2.4s infinite;
+font-size: 50px;
+animation: capsuleDrop 0.9s ease-out;
 }
 
 .gacha-message-card {
 width: 100%;
 padding: 16px;
 border-radius: 24px;
-background: rgba(255, 255, 255, 0.92);
+background: rgba(255,255,255,0.94);
 text-align: center;
-box-shadow: 0 14px 34px rgba(80, 45, 10, 0.14);
-}
-
-.loading-dots {
-display: flex;
-justify-content: center;
-gap: 8px;
-margin-top: 10px;
-}
-
-.loading-dots span {
-width: 9px;
-height: 9px;
-border-radius: 50%;
-background: #14b8a6;
-animation: dotPulse 0.9s infinite;
-}
-
-.loading-dots span:nth-child(2) { animation-delay: .15s; }
-.loading-dots span:nth-child(3) { animation-delay: .3s; }
-
-.capsule-stage {
-text-align: center;
-gap: 22px;
-}
-
-.capsule-open-button {
-border: none;
-background: transparent;
-display: grid;
-place-items: center;
-gap: 18px;
-color: #5b3418;
 font-weight: 900;
+color: #5b3b24;
+box-shadow: 0 14px 34px rgba(60,45,20,0.14);
 }
 
-.big-capsule {
-position: relative;
-width: 170px;
-height: 170px;
-animation: capsuleWiggle 1.2s infinite ease-in-out;
-}
-
-.capsule-top,
-.capsule-bottom {
-position: absolute;
-left: 0;
-width: 170px;
-height: 85px;
-border: 5px solid #ffffff;
-box-shadow: 0 18px 40px rgba(40, 20, 10, 0.25);
-}
-
-.capsule-top {
-top: 0;
-border-radius: 999px 999px 0 0;
-background: rgba(255,255,255,0.85);
-}
-
-.capsule-bottom {
-bottom: 0;
-border-radius: 0 0 999px 999px;
-background: #ef4444;
-}
-
-.capsule-shine {
-position: absolute;
-left: 36px;
-top: 24px;
-width: 44px;
-height: 22px;
-border-radius: 999px;
-background: rgba(255,255,255,0.8);
+.gacha-button:disabled {
+opacity: 0.55;
+cursor: not-allowed;
 }
 
 @keyframes machineShake {
@@ -1188,6 +1104,17 @@ background: rgba(255,255,255,0.8);
 25% { transform: rotate(1.4deg) translateY(-2px); }
 50% { transform: rotate(0deg) translateY(1px); }
 75% { transform: rotate(-1.4deg) translateY(-2px); }
+}
+
+@keyframes foundFlash {
+0%, 100% {
+transform: scale(1);
+box-shadow: 0 18px 0 #5b3418, 0 0 28px rgba(250,204,21,0.3);
+}
+50% {
+transform: scale(1.03);
+box-shadow: 0 18px 0 #5b3418, 0 0 60px rgba(250,204,21,0.9);
+}
 }
 
 @keyframes orbJump {
@@ -1205,25 +1132,17 @@ background: rgba(255,255,255,0.8);
 50% { transform: translate(18px, 18px); }
 }
 
-@keyframes gearSpin {
-from { transform: rotate(0deg); }
-to { transform: rotate(360deg); }
-}
-
 @keyframes capsuleDrop {
-0%, 65% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
-78% { opacity: 1; transform: translate(-50%, 0) scale(1.1); }
-88% { transform: translate(-50%, -12px) scale(1); }
-100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+0% {
+opacity: 0;
+transform: translate(-50%, -80px) scale(0.7);
 }
-
-@keyframes dotPulse {
-0%, 100% { opacity: .35; transform: scale(.8); }
-50% { opacity: 1; transform: scale(1.2); }
+70% {
+opacity: 1;
+transform: translate(-50%, 0) scale(1.15);
 }
-
-@keyframes capsuleWiggle {
-0%, 100% { transform: rotate(0deg) scale(1); }
-25% { transform: rotate(3deg) scale(1.03); }
-75% { transform: rotate(-3deg) scale(1.03); }
+100% {
+opacity: 1;
+transform: translate(-50%, 0) scale(1);
+}
 }
