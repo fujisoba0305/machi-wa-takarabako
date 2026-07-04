@@ -1291,10 +1291,7 @@ onClick={getCurrentLocation}
 <button
 className="takaran-location-button"
 type="button"
-onClick={() => {
-alert('たからん押された！');
-getCurrentLocation();
-}}
+onClick={getCurrentLocation}
 >
 📍 たからんを押して現在地を取得
 </button>
