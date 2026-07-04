@@ -1535,10 +1535,17 @@ gachaStep >= 3 ? 'gacha-found' : ''
 <button
 className="gacha-button"
 type="button"
-disabled={!showCapsule}
+disabled={
+!showCapsule ||
+(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot))
+}
 onClick={() => setScreen('capsule')}
 >
-{showCapsule ? 'カプセルを受け取る' : '宝物を探しています…'}
+{showCapsule
+? choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
+? 'デートコースを整えています…'
+: 'カプセルを受け取る'
+: '宝物を探しています…'}
 </button>
 </section>
 
