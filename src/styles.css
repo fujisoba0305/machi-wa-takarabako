@@ -1453,3 +1453,25 @@ box-shadow: 0 8px 0 #b7791f;
 transform: translateY(4px);
 box-shadow: 0 4px 0 #b7791f;
 }
+.treasure-popup {
+position: absolute;
+inset: 0;
+display: grid;
+place-items: center;
+pointer-events: auto;
+}
+
+.treasure-found {
+position: absolute;
+top: 220px;
+font-size: 26px;
+font-weight: 900;
+color: #8b5a1f;
+text-shadow: 0 2px 0 white, 0 0 18px gold;
+}
+
+.treasure-result-button {
+position: absolute;
+top: 275px;
+padding: 14px 32px;
+}

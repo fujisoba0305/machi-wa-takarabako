@@ -1620,9 +1620,11 @@ setShowTreasureBox(false);
 </div>
 )}
 
+{!showTreasureBox && (
 <span className="tap-text">
 👆 タップして開ける
 </span>
+)}
 
 </button>
 
