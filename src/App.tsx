@@ -349,19 +349,35 @@ maximumAge: 0,
 useEffect(() => {
 if (screen !== 'gacha') return;
 
+let isCancelled = false;
+
+async function runGacha() {
 setGachaStep(1);
 setShowCapsule(false);
-
-findNearbySpot();
+setIsSearching(true);
 
 const timer1 = setTimeout(() => setGachaStep(2), 1600);
-const timer2 = setTimeout(() => setGachaStep(3), 3200);
-const timer3 = setTimeout(() => setShowCapsule(true), 4500);
+
+await findNearbySpot();
+
+if (isCancelled) return;
+
+clearTimeout(timer1);
+
+setGachaStep(3);
+
+setTimeout(() => {
+if (!isCancelled) {
+setShowCapsule(true);
+setIsSearching(false);
+}
+}, 1200);
+}
+
+runGacha();
 
 return () => {
-clearTimeout(timer1);
-clearTimeout(timer2);
-clearTimeout(timer3);
+isCancelled = true;
 };
 }, [screen]);
 
@@ -1522,7 +1538,7 @@ type="button"
 disabled={!showCapsule}
 onClick={() => setScreen('capsule')}
 >
-{showCapsule ? 'カプセルを受け取る' : '探しています…'}
+{showCapsule ? 'カプセルを受け取る' : '宝物を探しています…'}
 </button>
 </section>
 
