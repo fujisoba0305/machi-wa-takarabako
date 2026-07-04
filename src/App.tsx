@@ -243,6 +243,7 @@ const [takaranSpeech, setTakaranSpeech] = useState(
 const [gachaStep, setGachaStep] = useState(1);
 const [showCapsule, setShowCapsule] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
+const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
 >('home');
@@ -1570,9 +1571,14 @@ onClick={() => {
 setIsCapsuleOpening(true);
 
 setTimeout(() => {
+setShowTreasureBox(true);
+}, 700);
+
+setTimeout(() => {
 setScreen('result');
 setIsCapsuleOpening(false);
-}, 2000);
+setShowTreasureBox(false);
+}, 2200);
 }}
 >
 
@@ -1599,6 +1605,18 @@ isCapsuleOpening ? 'capsule-opening' : ''
 </span>
 
 </button>
+{showTreasureBox && (
+<div className="treasure-popup">
+<div className="treasure-light" />
+<div className="treasure-box">
+📦
+</div>
+
+<p className="treasure-found">
+宝物発見！！
+</p>
+</div>
+)}
 
 </section>
 
