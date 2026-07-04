@@ -352,6 +352,8 @@ if (screen !== 'gacha') return;
 setGachaStep(1);
 setShowCapsule(false);
 
+findNearbySpot();
+
 const timer1 = setTimeout(() => setGachaStep(2), 1600);
 const timer2 = setTimeout(() => setGachaStep(3), 3200);
 const timer3 = setTimeout(() => setShowCapsule(true), 4500);
@@ -1209,7 +1211,6 @@ window.open(
 return;
 }
 }
-
 openMapForSpot(nearbySpot, destination.mapQuery);
 }
 
