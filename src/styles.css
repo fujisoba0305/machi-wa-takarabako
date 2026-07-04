@@ -1297,28 +1297,36 @@ animation: capsuleTopOpen 1.5s forwards;
 .capsule-opening .capsule-bottom {
 animation: capsuleBottomOpen 1.5s forwards;
 }
-
 @keyframes capsuleTopOpen {
 0% {
-transform: translateY(0) rotate(0);
+transform: translateY(0) rotate(0) scale(1);
+opacity: 1;
+}
+
+60% {
+transform: translateY(-80px) rotate(-25deg) scale(1.08);
 opacity: 1;
 }
 
 100% {
-transform: translateY(-120px) rotate(-35deg);
+transform: translateY(-150px) rotate(-45deg) scale(0.9);
 opacity: 0;
 }
 }
 
 @keyframes capsuleBottomOpen {
 0% {
-transform: translateY(0);
+transform: translateY(0) scale(1);
+opacity: 1;
+}
+
+60% {
+transform: translateY(45px) scale(1.08);
 opacity: 1;
 }
 
 100% {
-transform: translateY(55px);
+transform: translateY(80px) scale(0.9);
 opacity: 0;
 }
 }
-

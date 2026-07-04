@@ -1572,7 +1572,7 @@ setIsCapsuleOpening(true);
 setTimeout(() => {
 setScreen('result');
 setIsCapsuleOpening(false);
-}, 1500);
+}, 2000);
 }}
 >
 
