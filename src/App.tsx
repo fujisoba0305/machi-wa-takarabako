@@ -1303,6 +1303,7 @@ setScreen('condition');
 >
 {currentLocation ? '📦 宝箱へ進む' : '📍 たからんを押して現在地を取得'}
 </button>
+<p>{currentLocation ? '現在地OK！' : 'まだ取得できてない'}</p>
 
 {takaranNextInfo.remainingExp > 0 ? (
 <p className="takaran-next">
