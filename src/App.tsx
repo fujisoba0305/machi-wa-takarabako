@@ -1290,9 +1290,18 @@ onClick={getCurrentLocation}
 <button
 className="takaran-location-button"
 type="button"
-onClick={getCurrentLocation}
+onClick={() => {
+if (!currentLocation) {
+getCurrentLocation();
+return;
+}
+
+setSearchExpandLevel(0);
+setCourseStep(1);
+setScreen('condition');
+}}
 >
-📍 たからんを押して現在地を取得
+{currentLocation ? '📦 宝箱へ進む' : '📍 たからんを押して現在地を取得'}
 </button>
 
 {takaranNextInfo.remainingExp > 0 ? (
