@@ -242,6 +242,7 @@ const [takaranSpeech, setTakaranSpeech] = useState(
 );
 const [gachaStep, setGachaStep] = useState(1);
 const [showCapsule, setShowCapsule] = useState(false);
+const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
 >('home');
@@ -1565,12 +1566,23 @@ onClick={() => setScreen('capsule')}
 <button
 className="capsule-open-button"
 type="button"
-onClick={() => setScreen('result')}
+onClick={() => {
+setIsCapsuleOpening(true);
+
+setTimeout(() => {
+setScreen('result');
+setIsCapsuleOpening(false);
+}, 800);
+}}
 >
 
 <div className="capsule-light" />
 
-<div className="big-capsule">
+<div
+className={`big-capsule ${
+isCapsuleOpening ? 'capsule-opening' : ''
+}`}
+>
 
 <div className="capsule-top" />
 

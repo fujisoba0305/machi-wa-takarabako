@@ -1290,4 +1290,37 @@ border-radius: 999px;
 background: rgba(255,255,255,0.85);
 z-index: 3;
 }
+.capsule-opening .capsule-top{
+animation:capsuleTopOpen .8s forwards;
+}
+
+.capsule-opening .capsule-bottom{
+animation:capsuleBottomOpen .8s forwards;
+}
+
+@keyframes capsuleTopOpen{
+
+0%{
+transform:translateY(0) rotate(0);
+}
+
+100%{
+transform:translateY(-90px) rotate(-28deg);
+opacity:0;
+}
+
+}
+
+@keyframes capsuleBottomOpen{
+
+0%{
+transform:translateY(0);
+}
+
+100%{
+transform:translateY(35px);
+opacity:0;
+}
+
+}
 
