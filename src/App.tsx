@@ -1262,11 +1262,12 @@ autoComplete="name"
 </p>
 </div>
 
-<button
+<div
 className="treasure-box-card"
-type="button"
+role="button"
+tabIndex={0}
 onClick={!currentLocation ? getCurrentLocation : undefined}
->
+></div>
 <div className="treasure-box-icon">{takaran.icon}</div>
 
 <h2>たからん Lv{takaran.level}</h2>
@@ -1316,7 +1317,6 @@ style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
 
 <p>次のランク：{walkRankInfo.nextRank}</p>
 </div>
-</button>
 
 </section>
 ) : screen === 'condition' ? (
