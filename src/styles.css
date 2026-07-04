@@ -1146,14 +1146,20 @@ opacity: 1;
 transform: translate(-50%, 0) scale(1);
 }
 }
-.takaran-tap-card {
+.takaran-location-button {
 width: 100%;
-border: none;
-cursor: pointer;
-appearance: none;
--webkit-appearance: none;
+margin: 16px 0 8px;
+padding: 14px 18px;
+border: 3px solid #f6bd16;
+border-radius: 999px;
+background: linear-gradient(180deg, #fff7c7, #ffd86b);
+color: #6b3f16;
+font-weight: 900;
+font-size: 16px;
+box-shadow: 0 8px 0 #c07a12;
 }
 
-.takaran-tap-card:active {
-transform: scale(0.98);
+.takaran-location-button:active {
+transform: translateY(4px);
+box-shadow: 0 4px 0 #c07a12;
 }

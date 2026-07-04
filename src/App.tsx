@@ -1262,9 +1262,8 @@ autoComplete="name"
 </p>
 </div>
 
-<button
+<div
 className="treasure-box-card takaran-tap-card"
-type="button"
 onClick={getCurrentLocation}
 >
 <div className="treasure-box-icon">{takaran.icon}</div>
@@ -1291,6 +1290,13 @@ onClick={getCurrentLocation}
 </>
 )}
 </small>
+<button
+className="takaran-location-button"
+type="button"
+onClick={getCurrentLocation}
+>
+📍 たからんを押して現在地を取得
+</button>
 
 {takaranNextInfo.remainingExp > 0 ? (
 <p className="takaran-next">
@@ -1317,7 +1323,7 @@ style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
 <p>次のランク：{walkRankInfo.nextRank}</p>
 
 </div>
-</button>
+</div>
 
 </section>
 ) : screen === 'condition' ? (
