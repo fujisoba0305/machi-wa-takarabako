@@ -1575,10 +1575,8 @@ setShowTreasureBox(true);
 }, 700);
 
 setTimeout(() => {
-setScreen('result');
-setIsCapsuleOpening(false);
-setShowTreasureBox(false);
-}, 2200);
+setShowTreasureBox(true);
+}, 700);
 }}
 >
 
@@ -1600,11 +1598,6 @@ isCapsuleOpening ? 'capsule-opening' : ''
 
 </div>
 
-<span className="tap-text">
-👆 タップして開ける
-</span>
-
-</button>
 {showTreasureBox && (
 <div className="treasure-popup">
 <div className="treasure-light" />
@@ -1615,8 +1608,27 @@ isCapsuleOpening ? 'capsule-opening' : ''
 <p className="treasure-found">
 宝物発見！！
 </p>
+
+<button
+className="treasure-result-button"
+type="button"
+onClick={() => {
+setScreen('result');
+setIsCapsuleOpening(false);
+setShowTreasureBox(false);
+}}
+>
+結果を見る
+</button>
+
 </div>
 )}
+
+<span className="tap-text">
+👆 タップして開ける
+</span>
+
+</button>
 
 </section>
 

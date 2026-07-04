@@ -1436,4 +1436,20 @@ opacity:1;
 }
 
 }
+.treasure-result-button {
+position: absolute;
+top: 230px;
+padding: 14px 28px;
+border: none;
+border-radius: 999px;
+background: linear-gradient(180deg, #fff7c7, #facc15);
+color: #6b3f16;
+font-weight: 900;
+font-size: 18px;
+box-shadow: 0 8px 0 #b7791f;
+}
 
+.treasure-result-button:active {
+transform: translateY(4px);
+box-shadow: 0 4px 0 #b7791f;
+}
