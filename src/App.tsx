@@ -240,10 +240,11 @@ const [hasStarted, setHasStarted] = useState(false);
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
+const [gachaStep, setGachaStep] = useState(1);
+const [showCapsule, setShowCapsule] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
 >('home');
-
 const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
 distance: '',
 mood: '',
@@ -315,6 +316,22 @@ setChoices((currentChoices) => ({
 }
 
 function getCurrentLocation() {
+useEffect(() => {
+if (screen !== 'gacha') return;
+
+setGachaStep(1);
+setShowCapsule(false);
+
+const timer1 = setTimeout(() => setGachaStep(2), 1600);
+const timer2 = setTimeout(() => setGachaStep(3), 3200);
+const timer3 = setTimeout(() => setShowCapsule(true), 4500);
+
+return () => {
+clearTimeout(timer1);
+clearTimeout(timer2);
+clearTimeout(timer3);
+};
+}, [screen]);
 if (!navigator.geolocation) {
 setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
 alert('このブラウザでは現在地取得が使えません。');
@@ -1443,16 +1460,18 @@ setScreen('capsule');
 </section>
 ) : screen === 'gacha' ? (
 <section className="gacha-screen treasure-gacha-stage">
-<div className="gacha-scene-title">
-<p>✨ 街の宝ガチャ ✨</p>
-<h2>宝物を探しています</h2>
-<span>たからんが街の中から、今日の宝物を探しているよ！</span>
-</div>
+<h1 className="gacha-main-title">✨ 街の宝ガチャ ✨</h1>
+<p className="gacha-sub">
+たからんが街の中から、今日の宝物を探しているよ…！
+</p>
 
-<div className="treasure-gacha-machine">
+<div
+className={`treasure-gacha-machine ${
+gachaStep >= 3 ? 'gacha-found' : ''
+}`}
+>
 <div className="gacha-sign-board">
 <strong>街の宝ガチャ</strong>
-<small>まだ見ぬ街の宝物を手に入れよう！</small>
 </div>
 
 <div className="gacha-glass-dome">
@@ -1470,27 +1489,26 @@ setScreen('capsule');
 <span className="lever-arm" />
 <span className="lever-ball" />
 </div>
-<div className="gacha-gears">⚙️</div>
 </div>
 
-<div className="gacha-capsule-drop">🔴</div>
+{showCapsule && <div className="gacha-capsule-drop">🔴</div>}
 </div>
 
 <div className="gacha-message-card">
-<p>📦「いい宝物を探してるよ〜！」</p>
-<div className="loading-dots">
-<span />
-<span />
-<span />
-</div>
+<p>
+{gachaStep === 1 && '宝物を探し中…'}
+{gachaStep === 2 && 'いい宝物を探してるよ〜！'}
+{gachaStep === 3 && 'あっ！見つけたかも！'}
+</p>
 </div>
 
 <button
 className="gacha-button"
 type="button"
+disabled={!showCapsule}
 onClick={() => setScreen('capsule')}
 >
-カプセルを受け取る
+{showCapsule ? 'カプセルを受け取る' : '探しています…'}
 </button>
 </section>
 
