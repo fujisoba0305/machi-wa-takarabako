@@ -366,6 +366,8 @@ clearTimeout(timer1);
 
 setGachaStep(3);
 
+const waitTime = choices.mood === 'デート' ? 2200 : 1200;
+
 setTimeout(() => {
 if (!isCancelled) {
 setShowCapsule(true);
