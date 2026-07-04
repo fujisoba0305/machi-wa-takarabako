@@ -941,3 +941,101 @@ font-size: 11px;
 line-height: 1.1;
 white-space: nowrap;
 }
+.gacha-machine {
+animation: gachaShake 0.28s infinite;
+}
+
+.gacha-globe {
+animation: gachaSpin 1.2s linear infinite;
+}
+
+.gacha-handle {
+animation: handleMove 1.2s ease-in-out infinite;
+}
+
+.gacha-loading-text {
+font-weight: 800;
+color: #8a5a22;
+animation: blinkText 1s ease-in-out infinite;
+}
+
+@keyframes gachaShake {
+0% { transform: translateX(0) rotate(0deg); }
+25% { transform: translateX(-2px) rotate(-1deg); }
+50% { transform: translateX(2px) rotate(1deg); }
+75% { transform: translateX(-1px) rotate(-0.5deg); }
+100% { transform: translateX(0) rotate(0deg); }
+}
+
+@keyframes gachaSpin {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+
+@keyframes handleMove {
+0%, 100% { transform: rotate(0deg); }
+50% { transform: rotate(28deg); }
+}
+
+@keyframes blinkText {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.45; }
+}
+.gacha-title-card,
+.takaran-search-card {
+width: 100%;
+padding: 18px;
+border-radius: 24px;
+background: rgba(255, 255, 255, 0.92);
+box-shadow: 0 16px 40px rgba(60, 45, 20, 0.12);
+text-align: center;
+}
+
+.gacha-shaking {
+animation: gachaShake 0.55s infinite;
+}
+
+.handle-moving {
+animation: handleMove 0.8s infinite;
+transform-origin: top center;
+}
+
+.gacha-globe .capsule {
+animation: capsuleFloat 1.2s infinite ease-in-out;
+}
+
+.capsule-b {
+animation-delay: 0.15s;
+}
+
+.capsule-c {
+animation-delay: 0.3s;
+}
+
+.capsule-d {
+animation-delay: 0.45s;
+}
+
+.capsule-e {
+animation-delay: 0.6s;
+}
+
+@keyframes gachaShake {
+0% { transform: rotate(0deg); }
+25% { transform: rotate(1.5deg); }
+50% { transform: rotate(0deg); }
+75% { transform: rotate(-1.5deg); }
+100% { transform: rotate(0deg); }
+}
+
+@keyframes handleMove {
+0% { transform: rotate(0deg); }
+50% { transform: rotate(28deg); }
+100% { transform: rotate(0deg); }
+}
+
+@keyframes capsuleFloat {
+0% { transform: translateY(0) rotate(0deg); }
+50% { transform: translateY(-8px) rotate(12deg); }
+100% { transform: translateY(0) rotate(0deg); }
+}

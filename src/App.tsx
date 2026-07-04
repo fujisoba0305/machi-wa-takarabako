@@ -1429,14 +1429,27 @@ setScreen('coin');
 <button
 className="gacha-button"
 type="button"
-onClick={() => setScreen('gacha')}
+onClick={() => {
+setScreen('gacha');
+
+setTimeout(() => {
+setScreen('capsule');
+}, 3500);
+}}
 >
 ガチャを回す
 </button>
+
 </section>
 ) : screen === 'gacha' ? (
 <section className="gacha-screen">
-<div className="gacha-machine">
+<div className="gacha-title-card">
+<p className="result-kicker">🎰 街の宝ガチャ</p>
+<h2>宝物を探しています</h2>
+<p>たからんが、今日の目的地を探しているよ…！</p>
+</div>
+
+<div className="gacha-machine gacha-shaking">
 <div className="gacha-sign">街の宝ガチャ</div>
 
 <div className="gacha-globe">
@@ -1449,13 +1462,15 @@ onClick={() => setScreen('gacha')}
 
 <div className="gacha-body">
 <div className="gacha-slot" />
-<div className="gacha-handle" />
+<div className="gacha-handle handle-moving" />
 <div className="gacha-chest" />
 </div>
 </div>
 
-<h2>ガチャ回転中...</h2>
-<p>街の宝物を探しています</p>
+<div className="takaran-search-card">
+<div className="treasure-box-icon">📦💫</div>
+<p>「いい宝物を探してるよ〜！」</p>
+</div>
 
 <button
 className="gacha-button"
