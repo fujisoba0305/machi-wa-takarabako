@@ -1573,10 +1573,6 @@ setIsCapsuleOpening(true);
 setTimeout(() => {
 setShowTreasureBox(true);
 }, 700);
-
-setTimeout(() => {
-setShowTreasureBox(true);
-}, 700);
 }}
 >
 
