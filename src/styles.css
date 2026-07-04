@@ -1146,3 +1146,14 @@ opacity: 1;
 transform: translate(-50%, 0) scale(1);
 }
 }
+.takaran-tap-card {
+width: 100%;
+border: none;
+cursor: pointer;
+appearance: none;
+-webkit-appearance: none;
+}
+
+.takaran-tap-card:active {
+transform: scale(0.98);
+}
