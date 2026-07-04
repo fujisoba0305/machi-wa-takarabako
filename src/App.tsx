@@ -1442,40 +1442,47 @@ setScreen('capsule');
 
 </section>
 ) : screen === 'gacha' ? (
-<section className="gacha-screen gacha-stage">
-<div className="gacha-title-card">
-<p className="result-kicker">🎰 街の宝ガチャ</p>
+<section className="gacha-screen treasure-gacha-stage">
+<div className="gacha-scene-title">
+<p>✨ 街の宝ガチャ ✨</p>
 <h2>宝物を探しています</h2>
-<p>たからんが街の中から、今日の宝物を探しているよ…！</p>
+<span>たからんが街の中から、今日の宝物を探しているよ！</span>
 </div>
 
-<div className="gacha-machine-v2">
-<div className="gacha-top-sign">街の宝ガチャ</div>
-
-<div className="gacha-glass-v2">
-<span className="gacha-ball ball-red" />
-<span className="gacha-ball ball-blue" />
-<span className="gacha-ball ball-yellow" />
-<span className="gacha-ball ball-green" />
-<span className="gacha-ball ball-purple" />
-<span className="gacha-ball ball-orange" />
+<div className="treasure-gacha-machine">
+<div className="gacha-sign-board">
+<strong>街の宝ガチャ</strong>
+<small>まだ見ぬ街の宝物を手に入れよう！</small>
 </div>
 
-<div className="gacha-panel-v2">
-<div className="gacha-window-v2">宝物探索中</div>
-<div className="gacha-lever-v2">
-<span className="lever-stick" />
-<span className="lever-knob" />
-</div>
-<div className="gacha-drop-hole" />
-</div>
+<div className="gacha-glass-dome">
+<span className="gacha-orb orb-1">☕</span>
+<span className="gacha-orb orb-2">🌳</span>
+<span className="gacha-orb orb-3">⛩️</span>
+<span className="gacha-orb orb-4">🍜</span>
+<span className="gacha-orb orb-5">📸</span>
+<span className="gacha-orb orb-6">💎</span>
 </div>
 
-<div className="gacha-light" />
+<div className="gacha-base">
+<div className="gacha-door" />
+<div className="gacha-lever">
+<span className="lever-arm" />
+<span className="lever-ball" />
+</div>
+<div className="gacha-gears">⚙️</div>
+</div>
 
-<div className="takaran-search-card">
-<div className="treasure-box-icon">📦💫</div>
-<p>「いい宝物を探してるよ〜！」</p>
+<div className="gacha-capsule-drop">🔴</div>
+</div>
+
+<div className="gacha-message-card">
+<p>📦「いい宝物を探してるよ〜！」</p>
+<div className="loading-dots">
+<span />
+<span />
+<span />
+</div>
 </div>
 
 <button
@@ -1488,28 +1495,24 @@ onClick={() => setScreen('capsule')}
 </section>
 
 ) : screen === 'capsule' ? (
-<section className="capsule-screen">
-<div className="treasure-capsule">
+<section className="capsule-screen capsule-stage">
+<h2>カプセルが出てきた！</h2>
+<p>タップして中を見てみよう。</p>
+
+<button
+className="capsule-open-button"
+type="button"
+onClick={() => setScreen('result')}
+>
+<div className="big-capsule">
 <div className="capsule-top" />
 <div className="capsule-bottom" />
 <div className="capsule-shine" />
 </div>
-
-<h2>宝箱カプセル出現！</h2>
-<p>中には、今日の冒険の目的地が入っています。</p>
-
-<button
-className="gacha-button"
-type="button"
-disabled={isSearching}
-onClick={async () => {
-await findNearbySpot();
-setScreen('result');
-}}
->
-{isSearching ? '目的地を探しています...' : 'カプセルを開く'}
+<span>カプセルを開ける</span>
 </button>
 </section>
+
 ) : (
 <section className="result-screen">
 <p className="result-kicker">今日の宝物が見つかりました</p>
