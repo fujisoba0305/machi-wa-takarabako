@@ -316,8 +316,6 @@ setChoices((currentChoices) => ({
 }
 
 function getCurrentLocation() {
-alert('たからん押された！');
-
 if (!navigator.geolocation) {
 setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
 alert('このブラウザでは現在地取得が使えません。');
