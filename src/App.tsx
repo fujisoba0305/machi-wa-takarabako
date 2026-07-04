@@ -1553,21 +1553,41 @@ onClick={() => setScreen('capsule')}
 
 ) : screen === 'capsule' ? (
 <section className="capsule-screen capsule-stage">
-<h2>カプセルが出てきた！</h2>
-<p>タップして中を見てみよう。</p>
+
+<h2 className="capsule-title">
+🔴 宝物カプセルを見つけた！
+</h2>
+
+<p className="capsule-text">
+タップして宝箱を開けよう！
+</p>
 
 <button
 className="capsule-open-button"
 type="button"
 onClick={() => setScreen('result')}
 >
+
+<div className="capsule-light" />
+
 <div className="big-capsule">
+
 <div className="capsule-top" />
+
 <div className="capsule-bottom" />
+
 <div className="capsule-shine" />
+
+<div className="capsule-shadow" />
+
 </div>
-<span>カプセルを開ける</span>
+
+<span className="tap-text">
+👆 タップして開ける
+</span>
+
 </button>
+
 </section>
 
 ) : (
