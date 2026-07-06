@@ -1459,19 +1459,49 @@ inset: 0;
 display: grid;
 place-items: center;
 pointer-events: auto;
+z-index: 10;
 }
 
 .treasure-found {
 position: absolute;
-top: 220px;
-font-size: 26px;
-font-weight: 900;
-color: #8b5a1f;
-text-shadow: 0 2px 0 white, 0 0 18px gold;
+top: 215px;
 }
 
 .treasure-result-button {
 position: absolute;
-top: 275px;
-padding: 14px 32px;
+top: 270px;
+z-index: 11;
+}
+.capsule-stage {
+min-height: calc(100vh - 120px);
+padding-bottom: 140px;
+}
+
+.treasure-popup {
+position: absolute;
+inset: 0;
+display: grid;
+place-items: center;
+pointer-events: auto;
+z-index: 10;
+}
+
+.treasure-box {
+position: absolute;
+top: 130px;
+font-size: 90px;
+}
+
+.treasure-found {
+position: absolute;
+top: 250px;
+font-size: 26px;
+font-weight: 900;
+color: #8b5a1f;
+}
+
+.treasure-result-button {
+position: absolute;
+top: 310px;
+z-index: 11;
 }
