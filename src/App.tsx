@@ -375,7 +375,7 @@ if (!isCancelled) {
 setShowCapsule(true);
 setIsSearching(false);
 }
-}, 1200);
+}, waitTime);
 }
 
 runGacha();
@@ -733,9 +733,12 @@ const spots = await getSpotsByMood();
 
 const namedSpots = getNamedSpots(spots);
 
+console.log('取得したspots数:', spots.length);
+console.log('名前ありspots数:', namedSpots.length);
+console.log('namedSpots:', namedSpots);
+
 if (namedSpots.length > 0) {
 const spot = randomItem(namedSpots);
-setNearbySpot(spot);
 setSelectedSpot(spot);
 
 const location = getSpotLocation(spot);
@@ -1161,8 +1164,10 @@ const takaranNextInfo = getTakaranNextInfo(exp);
 const takaranMessage = getRandomTakaranMessage(takaran.level);
 const achievements = getAchievements(adventureCount);
 const dateCourse = getDateCourse();
-const displayPlace = nearbySpot?.tags?.name || destination.place;
-
+const displayPlace =
+choices.mood === 'デート'
+? dateFinalSpot?.tags?.name || nearbySpot?.tags?.name || 'デートコースを探しています'
+: nearbySpot?.tags?.name || '宝物を探しています';
 function openMapForSpot(spot: Spot | null, fallbackQuery: string) {
 const location = spot ? getSpotLocation(spot) : null;
 
@@ -1541,13 +1546,16 @@ className="gacha-button"
 type="button"
 disabled={
 !showCapsule ||
-(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot))
+(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)) ||
+(choices.mood !== 'デート' && !nearbySpot)
 }
 onClick={() => setScreen('capsule')}
 >
 {showCapsule
 ? choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
 ? 'デートコースを整えています…'
+: choices.mood !== 'デート' && !nearbySpot
+? '宝物を探しています…'
 : 'カプセルを受け取る'
 : '宝物を探しています…'}
 </button>
@@ -1556,17 +1564,15 @@ onClick={() => setScreen('capsule')}
 ) : screen === 'capsule' ? (
 <section className="capsule-screen capsule-stage">
 
-<h2 className="capsule-title">
-🔴 宝物カプセルを見つけた！
-</h2>
+<h2 className="capsule-title">🔴 宝物カプセルを見つけた！</h2>
 
-<p className="capsule-text">
-タップして宝箱を開けよう！
-</p>
+<p className="capsule-text">タップして宝箱を開けよう！</p>
 
+<div className="capsule-open-area">
 <button
 className="capsule-open-button"
 type="button"
+disabled={showTreasureBox}
 onClick={() => {
 setIsCapsuleOpening(true);
 
@@ -1575,35 +1581,25 @@ setShowTreasureBox(true);
 }, 700);
 }}
 >
-
 <div className="capsule-light" />
 
-<div
-className={`big-capsule ${
-isCapsuleOpening ? 'capsule-opening' : ''
-}`}
->
-
+<div className={`big-capsule ${isCapsuleOpening ? 'capsule-opening' : ''}`}>
 <div className="capsule-top" />
-
 <div className="capsule-bottom" />
-
 <div className="capsule-shine" />
-
 <div className="capsule-shadow" />
-
 </div>
+
+{!showTreasureBox && (
+<span className="tap-text">👆 タップして開ける</span>
+)}
+</button>
 
 {showTreasureBox && (
 <div className="treasure-popup">
 <div className="treasure-light" />
-<div className="treasure-box">
-📦
-</div>
-
-<p className="treasure-found">
-宝物発見！！
-</p>
+<div className="treasure-box">📦</div>
+<p className="treasure-found">宝物発見！！</p>
 
 <button
 className="treasure-result-button"
@@ -1616,17 +1612,9 @@ setShowTreasureBox(false);
 >
 結果を見る
 </button>
-
 </div>
 )}
-
-{!showTreasureBox && (
-<span className="tap-text">
-👆 タップして開ける
-</span>
-)}
-
-</button>
+</div>
 
 </section>
 
@@ -1827,6 +1815,40 @@ setScreen('condition');
 <button className="gacha-button" type="button" onClick={openGoogleMap}>
 {choices.mood === 'デート' ? '全体の地図を開く' : '地図を開く'}
 </button>
+{choices.mood !== 'デート' && (
+<button
+className="gacha-button"
+type="button"
+onClick={() => {
+setExp((currentExp) => {
+const beforeRank = getWalkRank(currentExp);
+const nextExp = currentExp + 20;
+const afterRank = getWalkRank(nextExp);
+
+if (beforeRank !== afterRank) {
+setLevelUpMessage(`✨ LEVEL UP!! ${afterRank} になりました！`);
+}
+
+return nextExp;
+});
+
+setAdventureCount((count) => {
+const nextCount = count + 1;
+const newAchievement = getNewAchievement(nextCount);
+
+if (newAchievement) {
+setAchievementMessage(`🏆 実績解除！ ${newAchievement}`);
+}
+
+return nextCount;
+});
+
+alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
+}}
+>
+🎉 到着した！
+</button>
+)}
 </section>
 )}
 {hasStarted && (
