@@ -422,7 +422,13 @@ return distance >= range.min && distance <= range.max;
 }
 
 function getNamedSpots(spots: Spot[]) {
-return spots.filter((spot) => spot.tags?.name && getSpotLocation(spot));
+return spots.filter((spot) => {
+const name = spot.tags?.name;
+const lat = spot.lat ?? spot.center?.lat;
+const lon = spot.lon ?? spot.center?.lon;
+
+return Boolean(name && lat && lon);
+});
 }
 
 function filterFreeSpots(spots: Spot[]) {
@@ -740,6 +746,7 @@ console.log('namedSpots:', namedSpots);
 if (namedSpots.length > 0) {
 const spot = randomItem(namedSpots);
 setSelectedSpot(spot);
+setNearbySpot(spot);
 
 const location = getSpotLocation(spot);
 if (location && currentLocation) {

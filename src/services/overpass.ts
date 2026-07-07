@@ -18,33 +18,54 @@ elements: Spot[];
 };
 
 const OVERPASS_URLS = [
-'https://overpass.kumi.systems/api/interpreter',
 'https://overpass-api.de/api/interpreter',
 'https://overpass.osm.ch/api/interpreter',
 ];
 
+const overpassCache = new Map<string, Spot[]>();
+
 async function fetchOverpass(query: string): Promise<Spot[]> {
+const cacheKey = query;
+
+if (overpassCache.has(cacheKey)) {
+console.log('キャッシュから取得');
+return overpassCache.get(cacheKey) ?? [];
+}
+
+console.log('直接Overpassへ接続します');
+
+for (const url of OVERPASS_URLS) {
 try {
-const response = await fetch('/api/overpass', {
+console.log('試行中:', url);
+
+const response = await fetch(url, {
 method: 'POST',
 headers: {
-'Content-Type': 'application/json',
+'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
 },
-body: JSON.stringify({ query }),
+body: new URLSearchParams({
+data: query,
+}),
 });
 
-if (!response.ok) {
-const errorText = await response.text();
-alert(`APIエラー ${response.status}\n${errorText}`);
-throw new Error(`API error: ${response.status}: ${errorText}`);
-}
+console.log('Direct Overpass response:', response.status);
+
+if (!response.ok) continue;
 
 const data: OverpassResponse = await response.json();
-return data.elements ?? [];
+const elements = data.elements ?? [];
+
+console.log('Direct Overpass取得件数:', elements.length);
+
+overpassCache.set(cacheKey, elements);
+
+return elements;
 } catch (error) {
-console.error('Overpass API proxy failed:', error);
-return [];
+console.warn('Direct Overpass error:', url, error);
 }
+}
+
+return [];
 }
 
 function buildQuery(queryBody: string): string {
@@ -108,17 +129,57 @@ longitude: number,
 radius: number,
 foodGenre: string
 ) {
+const genre = foodGenre.replace('料理', '');
+
 let queryBody = '';
 
-if (foodGenre === 'スイーツ') {
+if (genre === '和食') {
+queryBody = `
+${nodeOnly('["amenity"="restaurant"]["cuisine"="japanese"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="restaurant"]["cuisine"="sushi"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="restaurant"]["cuisine"="soba"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="restaurant"]["cuisine"="udon"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="restaurant"]["cuisine"="izakaya"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="restaurant"]["cuisine"="yakitori"]', latitude, longitude, radius)}
+${nodeOnly('["name"~"寿司|鮨|すし|そば|蕎麦|うどん|和食|居酒屋|焼鳥|定食|食堂"]', latitude, longitude, radius)}
+`;
+} else if (genre === 'イタリアン') {
+queryBody = `
+${nodeOnly('["cuisine"="italian"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="pizza"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="pasta"]', latitude, longitude, radius)}
+`;
+} else if (genre === '中華') {
+queryBody = `
+${nodeOnly('["cuisine"="chinese"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="taiwanese"]', latitude, longitude, radius)}
+`;
+} else if (genre === '韓国') {
+queryBody = `
+${nodeOnly('["cuisine"="korean"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="barbecue"]', latitude, longitude, radius)}
+`;
+} else if (genre === 'ラーメン') {
+queryBody = `
+${nodeOnly('["cuisine"="ramen"]', latitude, longitude, radius)}
+`;
+} else if (genre === 'カレー') {
+queryBody = `
+${nodeOnly('["cuisine"="curry"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="indian"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="nepalese"]', latitude, longitude, radius)}
+`;
+} else if (genre === 'スイーツ') {
 queryBody = `
 ${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
 ${nodeOnly('["shop"="bakery"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="ice_cream"]', latitude, longitude, radius)}
 `;
 } else {
 queryBody = `
 ${nodeOnly('["amenity"="restaurant"]', latitude, longitude, radius)}
 ${nodeOnly('["amenity"="fast_food"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
 `;
 }
 
