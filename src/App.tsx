@@ -1645,7 +1645,6 @@ setScreen('condition');
 return;
 }
 
-
 setScreen('capsule');
 }}
 >
@@ -1705,7 +1704,6 @@ setShowTreasureBox(true);
 className="gacha-button"
 type="button"
 disabled={
-isSearching ||
 (choices.mood !== 'デート' && !nearbySpot) ||
 (choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot))
 }
@@ -1721,9 +1719,7 @@ setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 }}
 >
-{isSearching
-? '宝物を探しています...'
-: choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
+: {choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
 ? 'デートコースを整えています...'
 : choices.mood !== 'デート' && !nearbySpot
 ? '宝物を探しています...'
