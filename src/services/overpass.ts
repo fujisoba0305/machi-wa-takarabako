@@ -122,13 +122,13 @@ let queryBody = '';
 
 if (genre === '和食') {
 queryBody = `
-${nodeOnly('["amenity"="restaurant"]["cuisine"="japanese"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]["cuisine"="sushi"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]["cuisine"="soba"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]["cuisine"="udon"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]["cuisine"="izakaya"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]["cuisine"="yakitori"]', latitude, longitude, radius)}
-${nodeOnly('["name"~"寿司|鮨|すし|そば|蕎麦|うどん|和食|居酒屋|焼鳥|定食|食堂"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="japanese"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="sushi"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="soba"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="udon"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="izakaya"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="yakitori"]', latitude, longitude, radius)}
+${nodeOnly('["name"~"寿司|鮨|すし|そば|蕎麦|うどん|和食|居酒屋|焼鳥|焼き鳥|定食|食堂"]', latitude, longitude, radius)}
 `;
 } else if (genre === 'イタリアン') {
 queryBody = `
