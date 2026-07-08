@@ -1609,15 +1609,32 @@ setShowTreasureBox(true);
 <p className="treasure-found">宝物発見！！</p>
 
 <button
-className="treasure-result-button"
+className="gacha-button"
 type="button"
+disabled={
+isSearching ||
+(choices.mood !== 'デート' && !nearbySpot) ||
+(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot))
+}
 onClick={() => {
+if (choices.mood === 'デート') {
+if (!nearbySpot || !dateFinalSpot) return;
+} else {
+if (!nearbySpot) return;
+}
+
 setScreen('result');
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 }}
 >
-結果を見る
+{isSearching
+? '宝物を探しています...'
+: choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
+? 'デートコースを整えています...'
+: choices.mood !== 'デート' && !nearbySpot
+? '宝物を探しています...'
+: '結果を見る'}
 </button>
 </div>
 )}
