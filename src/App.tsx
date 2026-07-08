@@ -707,7 +707,11 @@ if (selectedCourse) {
 setNearbySpot(selectedCourse.waypoint);
 setDateFinalSpot(selectedCourse.finalSpot);
 setSpotDistance(selectedCourse.totalDistance);
+
+setGachaStep(3);
+setShowCapsule(true);
 } else {
+
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
@@ -747,6 +751,9 @@ if (namedSpots.length > 0) {
 const spot = randomItem(namedSpots);
 setSelectedSpot(spot);
 setNearbySpot(spot);
+
+setGachaStep(3);
+setShowCapsule(true);
 
 const location = getSpotLocation(spot);
 if (location && currentLocation) {
@@ -1492,12 +1499,16 @@ setScreen('coin');
 <button
 className="gacha-button"
 type="button"
-onClick={() => {
+onClick={async () => {
 setScreen('gacha');
+setShowCapsule(false);
+setGachaStep(1);
 
-setTimeout(() => {
-setScreen('capsule');
-}, 3500);
+if (choices.mood === 'デート') {
+await findDateCourse();
+} else {
+await findNearbySpot();
+}
 }}
 >
 ガチャを回す
@@ -1544,7 +1555,14 @@ gachaStep >= 3 ? 'gacha-found' : ''
 <p>
 {gachaStep === 1 && '宝物を探し中…'}
 {gachaStep === 2 && 'いい宝物を探してるよ〜！'}
-{gachaStep === 3 && 'あっ！見つけたかも！'}
+{gachaStep === 3 &&
+(choices.mood === 'デート'
+? nearbySpot && dateFinalSpot
+? 'あっ！見つけたかも！'
+: 'デートコースを整えています…'
+: nearbySpot
+? 'あっ！見つけたかも！'
+: 'もう少し探してるよ…')}
 </p>
 </div>
 
