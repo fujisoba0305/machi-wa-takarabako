@@ -241,6 +241,9 @@ const queryBody = `
 ${nodeAndWay('["leisure"="park"]', latitude, longitude, radius)}
 ${nodeOnly('["amenity"="library"]', latitude, longitude, radius)}
 ${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="internet_cafe"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="public_bath"]', latitude, longitude, radius)}
+${nodeOnly('["leisure"="sauna"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
