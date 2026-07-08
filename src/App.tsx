@@ -1561,7 +1561,6 @@ setSelectedSpot(null);
 setSpotDistance(null);
 setShowCapsule(false);
 setGachaStep(1);
-setIsSearching(false);
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 
@@ -1644,7 +1643,6 @@ setSelectedSpot(null);
 setSpotDistance(null);
 setShowCapsule(false);
 setGachaStep(1);
-setIsSearching(false);
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 setScreen('condition');
