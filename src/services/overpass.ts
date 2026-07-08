@@ -180,8 +180,8 @@ radius: number
 ) {
 const queryBody = `
 ${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
-${nodeOnly('["amenity"="restaurant"]', latitude, longitude, radius)}
 ${nodeOnly('["shop"="bakery"]', latitude, longitude, radius)}
+${nodeOnly('["amenity"="ice_cream"]', latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));

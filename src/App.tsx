@@ -612,6 +612,54 @@ choices.dateGenre === '食べ歩き'
 ? await getNearbyFoodWalkSpots(latitude, longitude, searchRadius)
 : await getNearbyCafes(latitude, longitude, searchRadius);
 }
+if (choices.dateGenre === '食べ歩き') {
+const foodWalkSpots = await getNearbyFoodWalkSpots(
+latitude,
+longitude,
+searchRadius
+);
+
+const namedFoodWalkSpots = getNamedSpots(foodWalkSpots);
+
+if (namedFoodWalkSpots.length >= 2) {
+const shuffledSpots = [...namedFoodWalkSpots].sort(() => Math.random() - 0.5);
+
+const waypoint = shuffledSpots[0];
+const finalSpot = shuffledSpots[1];
+
+const waypointLocation = getSpotLocation(waypoint);
+const finalLocation = getSpotLocation(finalSpot);
+
+if (waypointLocation && finalLocation) {
+const distanceToWaypoint = calculateDistance(
+latitude,
+longitude,
+waypointLocation.lat,
+waypointLocation.lon
+);
+
+const distanceWaypointToFinal = calculateDistance(
+waypointLocation.lat,
+waypointLocation.lon,
+finalLocation.lat,
+finalLocation.lon
+);
+
+setNearbySpot(waypoint);
+setDateFinalSpot(finalSpot);
+setSpotDistance(distanceToWaypoint + distanceWaypointToFinal);
+
+setGachaStep(3);
+setShowCapsule(true);
+return;
+}
+}
+
+setNearbySpot(null);
+setDateFinalSpot(null);
+setSpotDistance(null);
+return;
+}
 
 let finalSpots: Spot[] = [];
 
