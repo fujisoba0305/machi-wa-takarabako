@@ -242,6 +242,7 @@ const [takaranSpeech, setTakaranSpeech] = useState(
 );
 const [gachaStep, setGachaStep] = useState(1);
 const [showCapsule, setShowCapsule] = useState(false);
+const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
@@ -357,6 +358,7 @@ async function runGacha() {
 setGachaStep(1);
 setShowCapsule(false);
 setIsSearching(true);
+setSearchFailed(false);
 
 const timer1 = setTimeout(() => setGachaStep(2), 1600);
 
@@ -758,11 +760,13 @@ setSpotDistance(selectedCourse.totalDistance);
 
 setGachaStep(3);
 setShowCapsule(true);
-} else {
 
+} else {
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
+
+setSearchFailed(true);
 }
 }
 
@@ -817,6 +821,8 @@ setSpotDistance(distance);
 setNearbySpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
+
+setSearchFailed(true);
 }
 
 } catch (error) {
@@ -1603,14 +1609,13 @@ gachaStep >= 3 ? 'gacha-found' : ''
 <p>
 {gachaStep === 1 && '宝物を探し中…'}
 {gachaStep === 2 && 'いい宝物を探してるよ〜！'}
-{gachaStep === 3 &&
-(choices.mood === 'デート'
-? nearbySpot && dateFinalSpot
-? 'あっ！見つけたかも！'
-: 'デートコースを整えています…'
-: nearbySpot
-? 'あっ！見つけたかも！'
-: 'もう少し探してるよ…')}
+{searchFailed
+? '近くに宝物が見つからなかったよ💦'
+: gachaStep === 1
+? '宝物を探し中…'
+: gachaStep === 2
+? 'いい宝物を探してるよ〜！'
+: 'あっ！見つけたかも！'}
 </p>
 </div>
 
@@ -1622,14 +1627,25 @@ disabled={
 (choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)) ||
 (choices.mood !== 'デート' && !nearbySpot)
 }
-onClick={() => setScreen('capsule')}
+onClick={() => {
+if (searchFailed) {
+setScreen('condition');
+return;
+}
+
+setScreen('capsule');
+}}
 >
 {showCapsule
-? choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
+? searchFailed
+? '条件を変えてもう一度探す'
+: choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
 ? 'デートコースを整えています…'
 : choices.mood !== 'デート' && !nearbySpot
 ? '宝物を探しています…'
 : 'カプセルを受け取る'
+: searchFailed
+? '条件を変えてもう一度探す'
 : '宝物を探しています…'}
 </button>
 </section>
