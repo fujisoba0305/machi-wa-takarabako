@@ -1554,6 +1554,11 @@ setScreen('coin');
 className="gacha-button"
 type="button"
 onClick={async () => {
+setSearchFailed(false);
+setNearbySpot(null);
+setDateFinalSpot(null);
+setSpotDistance(null);
+
 setScreen('gacha');
 setShowCapsule(false);
 setGachaStep(1);
@@ -1630,9 +1635,16 @@ disabled={
 }
 onClick={() => {
 if (searchFailed) {
+setSearchFailed(false);
+setNearbySpot(null);
+setDateFinalSpot(null);
+setSpotDistance(null);
+setShowCapsule(false);
+setGachaStep(1);
 setScreen('condition');
 return;
 }
+
 
 setScreen('capsule');
 }}

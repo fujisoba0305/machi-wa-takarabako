@@ -160,7 +160,13 @@ ${nodeOnly('["cuisine"="nepalese"]', latitude, longitude, radius)}
 queryBody = `
 ${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
 ${nodeOnly('["shop"="bakery"]', latitude, longitude, radius)}
+${nodeOnly('["shop"="pastry"]', latitude, longitude, radius)}
+${nodeOnly('["shop"="confectionery"]', latitude, longitude, radius)}
 ${nodeOnly('["amenity"="ice_cream"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="cake"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="donut"]', latitude, longitude, radius)}
+${nodeOnly('["cuisine"="bubble_tea"]', latitude, longitude, radius)}
+${nodeOnly('["name"~"ケーキ|和菓子|団子|大福|どら焼き|ドーナツ|donut|Gong cha|ゴンチャ|タピオカ"]', latitude, longitude, radius)}
 `;
 } else {
 queryBody = `
