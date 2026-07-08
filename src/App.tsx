@@ -1557,11 +1557,13 @@ onClick={async () => {
 setSearchFailed(false);
 setNearbySpot(null);
 setDateFinalSpot(null);
+setSelectedSpot(null);
 setSpotDistance(null);
-
-setScreen('gacha');
 setShowCapsule(false);
 setGachaStep(1);
+setIsSearching(false);
+setIsCapsuleOpening(false);
+setShowTreasureBox(false);
 
 if (choices.mood === 'デート') {
 await findDateCourse();
@@ -1638,15 +1640,20 @@ if (searchFailed) {
 setSearchFailed(false);
 setNearbySpot(null);
 setDateFinalSpot(null);
+setSelectedSpot(null);
 setSpotDistance(null);
 setShowCapsule(false);
 setGachaStep(1);
+setIsSearching(false);
+setIsCapsuleOpening(false);
+setShowTreasureBox(false);
 setScreen('condition');
 return;
 }
 
 setScreen('capsule');
 }}
+
 >
 {searchFailed
 ? '条件を変えてもう一度探す'
