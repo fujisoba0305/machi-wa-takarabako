@@ -17,11 +17,6 @@ type OverpassResponse = {
 elements: Spot[];
 };
 
-const OVERPASS_URLS = [
-'https://overpass-api.de/api/interpreter',
-'https://overpass.osm.ch/api/interpreter',
-];
-
 const overpassCache = new Map<string, Spot[]>();
 
 async function fetchOverpass(query: string): Promise<Spot[]> {
@@ -32,40 +27,32 @@ console.log('キャッシュから取得');
 return overpassCache.get(cacheKey) ?? [];
 }
 
-console.log('直接Overpassへ接続します');
-
-for (const url of OVERPASS_URLS) {
 try {
-console.log('試行中:', url);
-
-const response = await fetch(url, {
+const response = await fetch('/api/overpass?v=20260708', {
 method: 'POST',
 headers: {
-'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+'Content-Type': 'application/json',
 },
-body: new URLSearchParams({
-data: query,
-}),
+body: JSON.stringify({ query }),
 });
 
-console.log('Direct Overpass response:', response.status);
-
-if (!response.ok) continue;
+if (!response.ok) {
+console.error('API Error:', response.status);
+return [];
+}
 
 const data: OverpassResponse = await response.json();
 const elements = data.elements ?? [];
 
-console.log('Direct Overpass取得件数:', elements.length);
+console.log('Proxy取得件数:', elements.length);
 
 overpassCache.set(cacheKey, elements);
 
 return elements;
 } catch (error) {
-console.warn('Direct Overpass error:', url, error);
-}
-}
-
+console.error('Proxy error:', error);
 return [];
+}
 }
 
 function buildQuery(queryBody: string): string {

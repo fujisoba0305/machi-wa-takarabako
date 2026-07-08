@@ -28,15 +28,17 @@ const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
 try {
-const requestUrl = `${url}?data=${encodeURIComponent(query)}`;
-
-const response = await fetch(requestUrl, {
-method: 'GET',
+const response = await fetch(url, {
+method: 'POST',
 headers: {
 'User-Agent':
 'machi-wa-takarabako/1.0 (+https://machi-wa-takarabako.vercel.app)',
+'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
 Accept: 'application/json',
 },
+body: new URLSearchParams({
+data: query,
+}),
 signal: controller.signal,
 });
 
