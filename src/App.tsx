@@ -1607,8 +1607,6 @@ gachaStep >= 3 ? 'gacha-found' : ''
 
 <div className="gacha-message-card">
 <p>
-{gachaStep === 1 && '宝物を探し中…'}
-{gachaStep === 2 && 'いい宝物を探してるよ〜！'}
 {searchFailed
 ? '近くに宝物が見つからなかったよ💦'
 : gachaStep === 1
@@ -1623,9 +1621,12 @@ gachaStep >= 3 ? 'gacha-found' : ''
 className="gacha-button"
 type="button"
 disabled={
+!searchFailed &&
+(
 !showCapsule ||
 (choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)) ||
 (choices.mood !== 'デート' && !nearbySpot)
+)
 }
 onClick={() => {
 if (searchFailed) {
@@ -1636,17 +1637,15 @@ return;
 setScreen('capsule');
 }}
 >
-{showCapsule
-? searchFailed
+{searchFailed
 ? '条件を変えてもう一度探す'
+: !showCapsule
+? '宝物を探しています…'
 : choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
 ? 'デートコースを整えています…'
 : choices.mood !== 'デート' && !nearbySpot
 ? '宝物を探しています…'
-: 'カプセルを受け取る'
-: searchFailed
-? '条件を変えてもう一度探す'
-: '宝物を探しています…'}
+: 'カプセルを受け取る'}
 </button>
 </section>
 
