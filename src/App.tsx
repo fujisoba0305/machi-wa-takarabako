@@ -1565,6 +1565,12 @@ setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 
 setScreen('gacha');
+
+if (choices.mood === 'デート') {
+findDateCourse();
+} else {
+findNearbySpot();
+}
 }}
 >
 ガチャを回す
