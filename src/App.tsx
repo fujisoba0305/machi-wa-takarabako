@@ -22,6 +22,7 @@ getNearbyShrinesAndTemples,
 } from './services/overpass';
 
 import takaranImage from './assets/takaran.png';
+import titleBackground from './assets/title-background.png';
 
 type ChoiceKey =
 | 'distance'
@@ -307,10 +308,12 @@ Boolean(choices.time) &&
 function handleSubmit(event: FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
-if (trimmedName) {
+if (!trimmedName) return;
+
+getCurrentLocation();
+
 setHasStarted(true);
 setScreen('home');
-}
 }
 
 function selectChoice(key: ChoiceKey, option: string) {
@@ -1313,18 +1316,38 @@ openMapForSpot(nearbySpot, destination.mapQuery);
 return (
 <main className="app-shell">
 {!hasStarted ? (
-<div className="title-screen">
-<TownIllustration />
-
+<div
+className="title-screen"
+style={{
+backgroundImage: `url(${titleBackground})`,
+backgroundSize: 'cover',
+backgroundPosition: 'center',
+backgroundRepeat: 'no-repeat',
+}}
+>
 <section className="intro" aria-labelledby="app-title">
-<p className="eyebrow">はじまりの街歩き</p>
-<h1 id="app-title">街は宝箱</h1>
-<p className="subtitle">街は、まだ知らない宝箱。</p>
-<p className="description">歩くだけで宝物が見つかる。</p>
+
+<p className="eyebrow">
+🌿 お散歩が、もっとワクワクする。
+</p>
+
+<h1 id="app-title">
+📦 街は宝箱
+</h1>
+
+<p className="subtitle">
+お散歩がもっと楽しくなる宝探しアプリ
+</p>
+
+<p className="description">
+街には、まだ見ぬ宝物が眠っている。<br />
+今日だけの景色、出会い、思い出を探しに行こう。
+</p>
+
 </section>
 
 <form className="name-form" onSubmit={handleSubmit}>
-<label htmlFor="player-name">名前を入力してください</label>
+<label htmlFor="player-name">君の名前を教えてね😊</label>
 <input
 id="player-name"
 name="player-name"
@@ -1336,7 +1359,7 @@ autoComplete="name"
 />
 <button type="submit" disabled={!trimmedName}>
 <Compass size={20} />
-冒険を始める
+現在地を取得して始める
 </button>
 </form>
 </div>
