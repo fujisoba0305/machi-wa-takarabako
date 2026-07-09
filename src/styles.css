@@ -1505,3 +1505,46 @@ position: absolute;
 top: 310px;
 z-index: 11;
 }
+.takaran-home-card {
+display: flex;
+align-items: center;
+gap: 14px;
+margin: 20px auto;
+padding: 16px;
+max-width: 340px;
+background: rgba(255, 248, 220, 0.95);
+border: 2px solid #e5c27a;
+border-radius: 24px;
+box-shadow: 0 8px 0 rgba(94, 58, 20, 0.15);
+}
+
+.takaran-home-image {
+width: 96px;
+height: auto;
+animation: takaranFloat 2.4s ease-in-out infinite;
+}
+
+.takaran-home-speech {
+flex: 1;
+color: #5b3a1e;
+font-weight: 700;
+line-height: 1.6;
+}
+
+.takaran-home-speech p {
+margin: 0;
+}
+
+@keyframes takaranFloat {
+0% {
+transform: translateY(0);
+}
+
+50% {
+transform: translateY(-8px);
+}
+
+100% {
+transform: translateY(0);
+}
+}

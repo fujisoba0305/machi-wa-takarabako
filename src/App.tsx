@@ -21,6 +21,8 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 
+import takaranImage from './assets/takaran.png';
+
 type ChoiceKey =
 | 'distance'
 | 'mood'
@@ -1350,6 +1352,15 @@ autoComplete="name"
 <br />
 今日も街の宝物を探しに行こう！
 </p>
+
+<div className="takaran-home-card">
+<img src={takaranImage} alt="たからん" className="takaran-home-image" />
+
+<div className="takaran-home-speech">
+<p>こんにちは！</p>
+<p>今日も一緒に宝物を探しに行こう！</p>
+</div>
+</div>
 </div>
 
 <div
