@@ -1553,7 +1553,7 @@ setScreen('coin');
 <button
 className="gacha-button"
 type="button"
-onClick={async () => {
+onClick={() => {
 setSearchFailed(false);
 setNearbySpot(null);
 setDateFinalSpot(null);
@@ -1564,11 +1564,7 @@ setGachaStep(1);
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 
-if (choices.mood === 'デート') {
-await findDateCourse();
-} else {
-await findNearbySpot();
-}
+setScreen('gacha');
 }}
 >
 ガチャを回す
