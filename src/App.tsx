@@ -1390,9 +1390,13 @@ disabled={!trimmedName}
 ) : screen === 'home' ? (
 <section className="home-screen">
 <div className="home-header">
-<p className="home-kicker">🚶 好奇心を増やすお散歩アプリ</p>
+<p className="home-welcome">
+🌿 {trimmedName}さん、おかえり！
+</p>
 
-<h1>📦 街は宝箱</h1>
+<h2 className="home-message">
+今日はどんな宝物を探しに行く？
+</h2>
 
 <p>
 {trimmedName}さん、
@@ -1414,11 +1418,25 @@ disabled={!trimmedName}
 className="treasure-box-card takaran-tap-card"
 onClick={getCurrentLocation}
 >
+<button
+type="button"
+className="takaran-character-button"
+onClick={(event) => {
+const button = event.currentTarget;
+
+button.classList.remove('is-bouncing');
+
+requestAnimationFrame(() => {
+button.classList.add('is-bouncing');
+});
+}}
+>
 <img
 src={takaranWelcome}
 alt="たからん"
 className="takaran-main-image"
 />
+</button>
 
 <div className="takaran-level-badge">
 🌟 Lv.{takaran.level}
@@ -1428,10 +1446,13 @@ className="takaran-main-image"
 たからん
 </h2>
 
-<p className="takaran-speech">
+<div className="takaran-speech-bubble">
+<span className="speech-sparkle">✨</span>
+
+<p>
 {takaranSpeech}
 </p>
-
+</div>
 
 <small>
 {currentLocation ? (
@@ -1465,32 +1486,77 @@ setScreen('condition');
 >
 {currentLocation ? '📦 宝箱へ進む' : '📍 たからんを押して現在地を取得'}
 </button>
-<p>{currentLocation ? '現在地OK！' : 'まだ取得できてない'}</p>
+<p>
+{currentLocation
+? '✅ 現在地取得完了！'
+: '📍 たからんを押して現在地を取得しよう！'}
+</p>
 
 {takaranNextInfo.remainingExp > 0 ? (
-<p className="takaran-next">
-🌟 進化まであと {takaranNextInfo.remainingExp} EXP
+<div className="takaran-evolution-card">
+<p className="takaran-next-title">
+⭐ 次の進化まであと
 </p>
+
+<strong className="takaran-next-exp">
+{takaranNextInfo.remainingExp} EXP
+</strong>
+
+<div className="takaran-exp-bar">
+<div
+className="takaran-exp-bar-fill"
+style={{
+width: `${Math.min(
+((100 - takaranNextInfo.remainingExp) / 100) * 100,
+100
+)}%`,
+}}
+/>
+</div>
+
+<p className="takaran-exp-label">
+{Math.max(100 - takaranNextInfo.remainingExp, 0)} / 100 EXP
+</p>
+</div>
 ) : (
-<p className="takaran-next">🎉 たからんは最高レベルです！</p>
+<div className="takaran-evolution-card">
+<p className="takaran-next-title">
+🎉 たからんは最高レベルです！
+</p>
+</div>
 )}
 
-<div>
-<p>現在のランク</p>
-<strong>{walkRankInfo.rank}</strong>
-<p>
-{walkRankInfo.current} / {walkRankInfo.next} EXP
+<div className="walk-rank-card">
+<p className="walk-rank-kicker">
+🏅 お散歩ランク
 </p>
+
+<strong className="walk-rank-name">
+{walkRankInfo.rank}
+</strong>
+
+<div className="walk-rank-exp-row">
+<span>
+{walkRankInfo.current} / {walkRankInfo.next} EXP
+</span>
+
+<span>
+{Math.min(Math.round(walkRankInfo.progress), 100)}%
+</span>
+</div>
 
 <div className="exp-bar">
 <div
 className="exp-bar-fill"
-style={{ width: `${Math.min(walkRankInfo.progress, 100)}%` }}
+style={{
+width: `${Math.min(walkRankInfo.progress, 100)}%`,
+}}
 />
 </div>
 
-<p>次のランク：{walkRankInfo.nextRank}</p>
-
+<p className="walk-rank-next">
+次のランク：🌱 {walkRankInfo.nextRank}
+</p>
 </div>
 </div>
 

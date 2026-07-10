@@ -804,22 +804,29 @@ transform: translateY(-6px);
 transform: translateY(0);
 }
 }
-.takaran-next {
-margin-top: 12px;
-padding: 10px 12px;
-border-radius: 999px;
-background: rgba(251, 191, 36, 0.22);
-color: #92400e;
-font-weight: 700;
+.takaran-next{
+margin:18px auto;
+padding:14px 18px;
+max-width:280px;
+
+background:linear-gradient(180deg,#fff9d8,#ffe889);
+border-radius:18px;
+
+text-align:center;
+font-size:1rem;
+line-height:1.6;
+color:#6b4b1b;
+
+box-shadow:0 4px 10px rgba(0,0,0,.08);
 }
-.takaran-next {
-margin-top: 12px;
-padding: 10px 14px;
-border-radius: 999px;
-background: rgba(255, 215, 0, 0.18);
-color: #8b5a00;
-font-weight: bold;
+
+.takaran-next strong{
+display:block;
+margin-top:4px;
+font-size:1.7rem;
+color:#7a4c00;
 }
+
 .rank-next {
 margin-top: 8px;
 padding: 8px 12px;
@@ -1767,7 +1774,7 @@ margin-left: 6px;
 width:220px;
 height:auto;
 display:block;
-margin:-15px auto 18px;
+margin:-35px auto 10px;
 filter:drop-shadow(0 12px 18px rgba(0,0,0,.18));
 }
 
@@ -1797,5 +1804,217 @@ text-align:center;
 line-height:1.7;
 font-size:1.1rem;
 color:#6b4b1b;
+}
+.home-welcome {
+margin: 8px 0 6px;
+text-align: center;
+color: #7a5228;
+font-size: 1.05rem;
+font-weight: 800;
+}
+
+.home-message {
+margin: 0 0 22px;
+text-align: center;
+color: #563617;
+font-size: 1.75rem;
+line-height: 1.35;
+font-weight: 900;
+}
+.takaran-speech-bubble {
+position: relative;
+width: calc(100% - 48px);
+max-width: 300px;
+margin: 12px auto 22px;
+padding: 16px 20px;
+
+background: rgba(255, 255, 255, 0.96);
+border: 3px solid #e7c574;
+border-radius: 22px;
+
+color: #644320;
+text-align: center;
+font-size: 1.05rem;
+font-weight: 800;
+line-height: 1.65;
+
+box-shadow:
+0 6px 0 rgba(151, 105, 37, 0.2),
+0 12px 24px rgba(71, 46, 14, 0.1);
+}
+
+.takaran-speech-bubble::before {
+content: "";
+position: absolute;
+top: -14px;
+left: 50%;
+width: 22px;
+height: 22px;
+
+background: rgba(255, 255, 255, 0.96);
+border-top: 3px solid #e7c574;
+border-left: 3px solid #e7c574;
+
+transform: translateX(-50%) rotate(45deg);
+}
+
+.takaran-speech-bubble p {
+position: relative;
+z-index: 1;
+margin: 0;
+}
+
+.speech-sparkle {
+position: absolute;
+top: -14px;
+right: 18px;
+font-size: 1.35rem;
+animation: speechSparkle 1.8s ease-in-out infinite;
+}
+
+@keyframes speechSparkle {
+0%,
+100% {
+transform: scale(0.85) rotate(-8deg);
+opacity: 0.65;
+}
+
+50% {
+transform: scale(1.15) rotate(8deg);
+opacity: 1;
+}
+}
+.takaran-evolution-card {
+width: calc(100% - 48px);
+max-width: 320px;
+margin: 18px auto;
+padding: 16px 18px;
+border-radius: 22px;
+background: linear-gradient(180deg, #fff9d7, #ffe99a);
+box-shadow:
+0 5px 0 rgba(184, 129, 28, 0.2),
+0 10px 20px rgba(91, 58, 12, 0.1);
+text-align: center;
+}
+
+.takaran-next-title {
+margin: 0 0 6px;
+color: #6e4a18;
+font-size: 1rem;
+font-weight: 800;
+}
+
+.takaran-next-exp {
+display: block;
+margin-bottom: 12px;
+color: #7c4d00;
+font-size: 1.8rem;
+}
+
+.takaran-exp-bar {
+width: 100%;
+height: 14px;
+overflow: hidden;
+border-radius: 999px;
+background: rgba(255, 255, 255, 0.75);
+box-shadow: inset 0 2px 4px rgba(105, 72, 18, 0.18);
+}
+
+.takaran-exp-bar-fill {
+height: 100%;
+border-radius: inherit;
+background: linear-gradient(90deg, #ffd94d, #ff9f2f);
+transition: width 0.4s ease;
+}
+
+.takaran-exp-label {
+margin: 8px 0 0;
+color: #7a5a24;
+font-size: 0.9rem;
+font-weight: 700;
+}
+.walk-rank-card {
+width: calc(100% - 48px);
+max-width: 320px;
+margin: 20px auto 28px;
+padding: 18px 20px;
+
+border: 3px solid #d8bd72;
+border-radius: 24px;
+background: linear-gradient(
+180deg,
+rgba(255, 255, 255, 0.96),
+rgba(255, 248, 218, 0.96)
+);
+
+text-align: center;
+box-shadow:
+0 6px 0 rgba(143, 101, 35, 0.18),
+0 12px 24px rgba(78, 51, 15, 0.1);
+}
+
+.walk-rank-kicker {
+margin: 0 0 8px;
+color: #7b5827;
+font-size: 0.95rem;
+font-weight: 800;
+}
+
+.walk-rank-name {
+display: block;
+margin-bottom: 14px;
+color: #5e3a18;
+font-size: 1.7rem;
+}
+
+.walk-rank-exp-row {
+display: flex;
+justify-content: space-between;
+margin-bottom: 8px;
+color: #72532b;
+font-size: 0.88rem;
+font-weight: 700;
+}
+
+.walk-rank-next {
+margin: 12px 0 0;
+color: #6c4c22;
+font-size: 0.95rem;
+font-weight: 700;
+}
+.takaran-character-button {
+display: block;
+margin: 0 auto;
+padding: 0;
+border: 0;
+background: transparent;
+cursor: pointer;
+-webkit-tap-highlight-color: transparent;
+}
+
+.takaran-character-button.is-bouncing {
+animation: takaranBounce 0.55s ease;
+}
+
+@keyframes takaranBounce {
+0% {
+transform: translateY(0) scale(1);
+}
+
+35% {
+transform: translateY(-22px) scale(1.05);
+}
+
+60% {
+transform: translateY(0) scale(0.97);
+}
+
+80% {
+transform: translateY(-7px) scale(1.02);
+}
+
+100% {
+transform: translateY(0) scale(1);
+}
 }
 
