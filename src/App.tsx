@@ -1327,34 +1327,62 @@ backgroundRepeat: 'no-repeat',
 }}
 >
 <section className="intro" aria-labelledby="app-title">
-
 <p className="eyebrow">
 🌿 お散歩が、もっとワクワクする。
 </p>
 
-<h1 id="app-title" className="title-logo">
+<div className="title-main-row">
 <img
 src={takaranImage}
 alt="たからん"
-className="title-logo-image"
+className="title-main-takaran"
 />
 
-<span>街は宝箱</span>
+<h1 id="app-title" className="title-main-text">
+<span>街は</span>
+<span>宝箱</span>
 </h1>
+</div>
 
 <p className="subtitle">
 お散歩がもっと楽しくなる宝探しアプリ
 </p>
 
+<div className="title-divider" />
+
 <p className="description">
 街には、まだ見ぬ宝物が眠っている。<br />
-今日だけの景色、出会い、思い出を探しに行こう。
+今日だけの景色、出会い、思い出を<br />
+探しに行こう。
 </p>
-
 </section>
 
 <form className="name-form" onSubmit={handleSubmit}>
-<label htmlFor="player-name">君の名前を教えてね😊</label>
+<label htmlFor="player-name" className="name-label">
+君の名前を教えてね😊
+</label>
+<div className="name-input-wrap">
+<span className="name-input-icon">🌿</span>
+
+<input
+id="player-name"
+name="player-name"
+type="text"
+value={name}
+onChange={(event) => setName(event.target.value)}
+placeholder="たから"
+autoComplete="name"
+/>
+</div>
+<button
+type="submit"
+className="start-location-button"
+disabled={!trimmedName}
+>
+<Compass size={24} />
+現在地を取得して始める
+<span className="button-sparkles">✨</span>
+</button>
 <input
 id="player-name"
 name="player-name"
