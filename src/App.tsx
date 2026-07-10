@@ -1332,8 +1332,14 @@ backgroundRepeat: 'no-repeat',
 🌿 お散歩が、もっとワクワクする。
 </p>
 
-<h1 id="app-title">
-📦 街は宝箱
+<h1 id="app-title" className="title-logo">
+<img
+src={takaranImage}
+alt="たからん"
+className="title-logo-image"
+/>
+
+<span>街は宝箱</span>
 </h1>
 
 <p className="subtitle">

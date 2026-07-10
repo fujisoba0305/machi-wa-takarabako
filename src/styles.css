@@ -299,7 +299,15 @@ gap: 22px;
 }
 
 .intro {
-  text-align: center;
+width: calc(100% - 32px);
+margin: 0 auto;
+padding: 18px 16px;
+
+border-radius: 24px;
+background: rgba(255, 255, 255, 0.68);
+backdrop-filter: blur(6px);
+
+box-sizing: border-box;
 }
 
 .eyebrow {
@@ -1567,9 +1575,23 @@ padding: 0;
 width: 100%;
 min-height: 100dvh;
 margin: 0;
-padding: 24px;
+padding: 8px 0 24px;
 box-sizing: border-box;
 background-size: cover;
 background-position: center;
 background-repeat: no-repeat;
+}
+.title-logo {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 14px;
+
+margin: 0;
+}
+
+.title-logo-image {
+width: 72px;
+height: 72px;
+object-fit: contain;
 }
