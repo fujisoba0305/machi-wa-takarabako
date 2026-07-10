@@ -1395,14 +1395,8 @@ disabled={!trimmedName}
 </p>
 
 <h2 className="home-message">
-今日はどんな宝物を探しに行く？
+今日だけの宝物を見つけに行こう！
 </h2>
-
-<p>
-{trimmedName}さん、
-<br />
-今日も街の宝物を探しに行こう！
-</p>
 
 <div className="takaran-home-card">
 <img src={takaranImage} alt="たからん" className="takaran-home-image" />
@@ -1484,11 +1478,11 @@ setCourseStep(1);
 setScreen('condition');
 }}
 >
-{currentLocation ? '📦 宝箱へ進む' : '📍 たからんを押して現在地を取得'}
+{currentLocation ? '✨ 宝物を探しに行く' : '📍 たからんを押して現在地を取得'}
 </button>
-<p>
+<p className="adventure-ready">
 {currentLocation
-? '✅ 現在地取得完了！'
+? '🧭 冒険の準備完了！'
 : '📍 たからんを押して現在地を取得しよう！'}
 </p>
 
