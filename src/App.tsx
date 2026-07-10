@@ -23,6 +23,7 @@ getNearbyShrinesAndTemples,
 
 import takaranImage from './assets/takaran.png';
 import titleBackground from './assets/title-background.png';
+import takaranWelcome from "./assets/takaran-welcome.png";
 
 type ChoiceKey =
 | 'distance'
@@ -1413,13 +1414,24 @@ disabled={!trimmedName}
 className="treasure-box-card takaran-tap-card"
 onClick={getCurrentLocation}
 >
-<div className="treasure-box-icon">{takaran.icon}</div>
+<img
+src={takaranWelcome}
+alt="たからん"
+className="takaran-main-image"
+/>
 
-<h2>たからん Lv{takaran.level}</h2>
+<div className="takaran-level-badge">
+🌟 Lv.{takaran.level}
+</div>
 
-<p>
+<h2 className="takaran-name">
+たからん
+</h2>
+
+<p className="takaran-speech">
 {takaranSpeech}
 </p>
+
 
 <small>
 {currentLocation ? (
