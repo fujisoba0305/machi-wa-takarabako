@@ -1383,19 +1383,7 @@ disabled={!trimmedName}
 現在地を取得して始める
 <span className="button-sparkles">✨</span>
 </button>
-<input
-id="player-name"
-name="player-name"
-type="text"
-value={name}
-onChange={(event) => setName(event.target.value)}
-placeholder="たから"
-autoComplete="name"
-/>
-<button type="submit" disabled={!trimmedName}>
-<Compass size={20} />
-現在地を取得して始める
-</button>
+
 </form>
 </div>
 ) : screen === 'home' ? (

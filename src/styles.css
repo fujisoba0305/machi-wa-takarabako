@@ -1678,44 +1678,41 @@ margin: 18px auto 0;
 
 .name-label {
 display: inline-block;
-margin: 0 0 10px 14px;
-padding: 10px 18px;
+margin: 0 0 12px 8px;
+padding: 12px 22px;
 border-radius: 999px;
-background: rgba(255, 250, 235, 0.95);
-color: #66391e;
-font-size: 1.1rem;
+background: rgba(255, 248, 230, 0.95);
+color: #6b3f1d;
+font-size: 1.2rem;
 font-weight: 900;
-box-shadow: 0 6px 16px rgba(93, 53, 20, 0.16);
+box-shadow: 0 6px 16px rgba(0,0,0,.12);
 }
 
-.name-input-wrap {
-position: relative;
+.name-input-wrap{
+position:relative;
 }
 
-.name-input-icon {
-position: absolute;
-top: 50%;
-left: 22px;
-transform: translateY(-50%);
-font-size: 1.35rem;
-z-index: 2;
+.name-input-icon{
+position:absolute;
+left:24px;
+top:50%;
+transform:translateY(-50%);
+font-size:1.4rem;
 }
 
-.name-input-wrap input {
-width: 100%;
-min-height: 88px;
-padding: 0 22px 0 66px;
-border: 5px solid #e6b546;
-border-radius: 28px;
-background: rgba(255, 255, 255, 0.95);
-color: #5d3a25;
-font-size: 1.35rem;
-box-sizing: border-box;
-outline: none;
-box-shadow:
-0 5px 0 #ae6f20,
-0 10px 22px rgba(102, 63, 21, 0.15);
+.name-input-wrap input{
+width:100%;
+height:78px;
+padding-left:68px;
+border-radius:24px;
+border:4px solid #f0bc4b;
+background:#fffefb;
+font-size:1.35rem;
+font-weight:700;
+box-sizing:border-box;
+box-shadow:0 6px 18px rgba(0,0,0,.15);
 }
+
 
 .name-input-wrap input:focus {
 border-color: #f0c75b;
@@ -1724,26 +1721,20 @@ box-shadow:
 0 0 0 5px rgba(255, 220, 116, 0.3);
 }
 
-.start-location-button {
-width: 100%;
-min-height: 92px;
-margin-top: 22px;
-border: 3px solid #dce9b2;
-border-radius: 28px;
-background: linear-gradient(180deg, #88c941, #4f941e);
-color: white;
-font-size: 1.35rem;
-font-weight: 900;
-box-shadow:
-0 7px 0 #2d6512,
-0 12px 24px rgba(42, 93, 17, 0.25);
+.start-location-button{
+border-radius:28px;
+background:linear-gradient(#7bc63f,#58a321);
+border:4px solid #d9efb3;
+color:white;
+font-size:1.35rem;
+font-weight:900;
+box-shadow:0 7px 0 #3c6f17;
+transition:.15s;
 }
 
-.start-location-button:active {
-transform: translateY(4px);
-box-shadow:
-0 3px 0 #2d6512,
-0 7px 14px rgba(42, 93, 17, 0.2);
+.start-location-button:active{
+transform:translateY(4px);
+box-shadow:0 3px 0 #3c6f17;
 }
 
 .start-location-button:disabled {
