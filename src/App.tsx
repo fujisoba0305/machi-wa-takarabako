@@ -1314,7 +1314,8 @@ openMapForSpot(nearbySpot, destination.mapQuery);
 
 
 return (
-<main className="app-shell">
+<main className={`app-shell ${!hasStarted ? 'title-mode' : ''}`}>
+
 {!hasStarted ? (
 <div
 className="title-screen full-screen"

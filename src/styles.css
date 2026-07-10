@@ -1555,12 +1555,21 @@ transform: translateY(-8px);
 transform: translateY(0);
 }
 }
-.full-screen {
-width: 100vw;
+.app-shell.title-mode {
+max-width: none;
+width: 100%;
 min-height: 100dvh;
-
-margin-left: calc(50% - 50vw);
-margin-right: calc(50% - 50vw);
-
+margin: 0;
 padding: 0;
+}
+
+.app-shell.title-mode .title-screen {
+width: 100%;
+min-height: 100dvh;
+margin: 0;
+padding: 24px;
+box-sizing: border-box;
+background-size: cover;
+background-position: center;
+background-repeat: no-repeat;
 }
