@@ -1317,7 +1317,7 @@ return (
 <main className="app-shell">
 {!hasStarted ? (
 <div
-className="title-screen"
+className="title-screen full-screen"
 style={{
 backgroundImage: `url(${titleBackground})`,
 backgroundSize: 'cover',

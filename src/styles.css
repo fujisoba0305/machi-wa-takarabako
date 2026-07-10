@@ -29,13 +29,20 @@ input {
   padding: 18px 18px 110px;
 }
 
-.title-screen,
+.title-screen {
+min-height: 100dvh;
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 22px;
+}
+
 .next-screen {
-  min-height: calc(100dvh - 46px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 22px;
+min-height: calc(100dvh - 46px);
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 22px;
 }
 
 .town {
@@ -1547,4 +1554,13 @@ transform: translateY(-8px);
 100% {
 transform: translateY(0);
 }
+}
+.full-screen {
+width: 100vw;
+min-height: 100dvh;
+
+margin-left: calc(50% - 50vw);
+margin-right: calc(50% - 50vw);
+
+padding: 0;
 }
