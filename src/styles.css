@@ -2454,3 +2454,170 @@ box-shadow:
 0 3px 0 #cc8e12,
 0 8px 14px rgba(255,190,46,.28);
 }
+/* 冒険準備画面をスマホ1画面に収めやすくする */
+.condition-screen {
+width: min(100%, 430px);
+min-height: 100dvh;
+margin: 0 auto;
+padding: 18px 14px 110px;
+box-sizing: border-box;
+}
+
+.condition-hero {
+display: grid;
+grid-template-columns: 1fr 96px;
+align-items: start;
+gap: 10px;
+margin-bottom: 14px;
+}
+
+.condition-board {
+margin: 0 0 14px;
+padding: 8px 18px;
+font-size: 1rem;
+}
+
+.condition-welcome {
+margin: 0 0 4px;
+font-size: 1rem;
+}
+
+.condition-hero h2 {
+margin: 0;
+font-size: clamp(2rem, 9vw, 2.7rem);
+line-height: 1.12;
+max-width: 290px;
+}
+
+/* 「今日は／どんな冒険にする？」の2行に近づける */
+.condition-description {
+margin: 10px 0 0;
+max-width: 290px;
+font-size: 0.92rem;
+line-height: 1.5;
+}
+
+.condition-takaran {
+width: 96px;
+margin-top: 56px;
+align-self: start;
+}
+
+/* 距離と気分のカード間を詰める */
+.adventure-choice-panel {
+gap: 14px;
+}
+
+.adventure-choice-card {
+padding: 14px 12px 12px;
+border-radius: 22px;
+}
+
+.adventure-choice-card legend {
+padding: 7px 16px;
+font-size: 1rem;
+border-radius: 15px;
+}
+
+/* 距離は3列、気分も3列でコンパクトに */
+.adventure-choice-card .choice-buttons {
+display: grid;
+grid-template-columns: repeat(3, minmax(0, 1fr));
+gap: 8px;
+margin-top: 10px;
+}
+
+.adventure-choice-card .choice-button {
+min-height: 54px;
+padding: 7px 5px;
+border-width: 2px;
+border-radius: 17px;
+font-size: 0.88rem;
+line-height: 1.15;
+}
+
+.adventure-choice-card .choice-icon {
+margin-bottom: 2px;
+font-size: 1.05rem;
+}
+
+/* 5個目だけ変に広がらない */
+.adventure-choice-card .choice-button:last-child {
+width: 100%;
+}
+
+/* 条件確認カードは画面上では小さく */
+.selected-condition-card {
+margin-top: 12px;
+padding: 12px;
+border-radius: 20px;
+}
+
+.selected-condition-card .result-label {
+margin: 0 0 8px;
+font-size: 0.95rem;
+}
+
+.coin-grid {
+gap: 8px;
+}
+
+.coin-item {
+padding: 8px;
+min-height: auto;
+}
+
+.coin-title {
+font-size: 0.78rem;
+}
+
+/* コイン作成ボタン */
+.adventure-coin-button {
+margin-top: 14px;
+min-height: 68px;
+padding: 12px 16px;
+border-radius: 24px;
+}
+
+.adventure-coin-button strong {
+font-size: 1.15rem;
+}
+
+.adventure-coin-button small {
+font-size: 0.75rem;
+}
+
+.adventure-coin-icon {
+font-size: 1.7rem;
+}
+.coin-detail {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+
+margin: 12px 0;
+padding: 12px 16px;
+
+border-radius: 18px;
+background: rgba(255, 255, 255, 0.6);
+
+color: #67431f;
+}
+
+.coin-detail span {
+font-size: 0.95rem;
+font-weight: 800;
+}
+
+.coin-detail strong {
+font-size: 1.35rem;
+color: #5b351f;
+}
+
+.coin-message {
+margin: 18px 0 0;
+color: #76552d;
+font-size: 0.92rem;
+line-height: 1.6;
+}

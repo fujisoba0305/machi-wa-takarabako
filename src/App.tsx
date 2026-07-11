@@ -1563,7 +1563,11 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 {trimmedName}さん、
 </p>
 
-<h2>今日はどんな冒険にする？</h2>
+<h2>
+    今日は
+    <br />
+    どんな冒険にする？
+    </h2>
 
 <p className="condition-description">
 距離と気分を選ぶと、冒険コインが作られるよ✨
@@ -1725,21 +1729,23 @@ className="coin-takaran"
 </div>
 
 <div className="adventure-coin">
-<span className="coin-label">
-🏆 冒険コイン
-</span>
+<span className="coin-label">🪙 今日の冒険コイン</span>
 
-<p>
-🥾 {choices.distance}
-</p>
+<div className="coin-detail">
+<span>🥾 距離</span>
+<strong>{choices.distance}</strong>
+</div>
 
-<p>
+<div className="coin-detail">
+<span>😊 気分</span>
+<strong>
 {getOptionIcon(choices.mood)} {choices.mood}
-</p>
+</strong>
+</div>
 
-<small>
-このコインが今日の宝物へ導いてくれるよ！
-</small>
+<p className="coin-message">
+このコインが、今日の宝物へ導いてくれるよ✨
+</p>
 </div>
 
 <button
@@ -1768,6 +1774,7 @@ findNearbySpot();
 🎰 ガチャスタート！
 </button>
 </section>
+
 ) : screen === 'gacha' ? (
 <section className="gacha-screen treasure-gacha-stage">
 <h1 className="gacha-main-title">✨ 街の宝ガチャ ✨</h1>
