@@ -3180,3 +3180,41 @@ opacity: 1 !important;
 transform: translateX(-50%) !important;
 z-index: 4 !important;
 }
+/* ガチャ配置・確認用の最終上書き */
+.treasure-gacha-machine {
+position: relative !important;
+width: 100% !important;
+height: 620px !important;
+margin: 0 auto !important;
+}
+
+.treasure-gacha-machine .gacha-machine-image {
+position: absolute !important;
+top: 10px !important;
+left: 50% !important;
+width: min(96vw, 500px) !important;
+max-width: none !important;
+margin: 0 !important;
+transform: translateX(-50%) !important;
+}
+
+.treasure-gacha-machine .gacha-handle-button {
+position: absolute !important;
+top: 230px !important;
+left: calc(50% + 110px) !important;
+right: auto !important;
+width: 150px !important;
+height: 150px !important;
+z-index: 20 !important;
+}
+
+.treasure-gacha-machine .falling-capsule {
+position: absolute !important;
+top: 115px !important;
+left: 50% !important;
+width: 90px !important;
+height: 90px !important;
+opacity: 1 !important;
+z-index: 10 !important;
+transform: translateX(-50%) !important;
+}
