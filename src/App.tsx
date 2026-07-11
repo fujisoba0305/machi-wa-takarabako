@@ -300,8 +300,6 @@ String(adventureCount)
 const canProceedToGacha =
 Boolean(choices.distance) &&
 Boolean(choices.mood) &&
-Boolean(choices.budget) &&
-Boolean(choices.time) &&
 (choices.mood !== 'グルメ' || Boolean(choices.foodGenre)) &&
 (choices.mood !== 'デート' || Boolean(choices.dateGenre)) &&
 (choices.mood !== 'イベント' || Boolean(choices.eventGenre));
@@ -1553,28 +1551,55 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 </p>
 </div>
 </div>
-
 </section>
+
 ) : screen === 'condition' ? (
 <section className="condition-screen" aria-live="polite">
 <div className="condition-hero">
-<p className="result-kicker">🎒 冒険の準備</p>
-<h2>{trimmedName}さん、今日の宝物を探しに行こう</h2>
-<p>条件を選ぶと、冒険コインが作られます。</p>
+<div>
+<p className="condition-board">🌿 冒険の準備</p>
+
+<p className="condition-welcome">
+{trimmedName}さん、
+</p>
+
+<h2>今日はどんな冒険にする？</h2>
+
+<p className="condition-description">
+距離と気分を選ぶと、冒険コインが作られるよ✨
+</p>
+</div>
+
+<img
+src={takaranWelcome}
+alt="たからん"
+className="condition-takaran"
+/>
 </div>
 
 <div className="choice-panel adventure-choice-panel">
 {choiceGroups
 .filter(
 (group) =>
+group.key !== 'budget' &&
+group.key !== 'time' &&
 (group.key !== 'foodGenre' || choices.mood === 'グルメ') &&
 (group.key !== 'dateGenre' || choices.mood === 'デート') &&
 (group.key !== 'eventGenre' || choices.mood === 'イベント') &&
 (group.key !== 'shrineGenre' || choices.mood === '神社・お寺')
 )
 .map((group) => (
-<fieldset className="choice-group adventure-choice-card" key={group.key}>
-<legend>{group.label}</legend>
+<fieldset
+className="choice-group adventure-choice-card"
+key={group.key}
+>
+<legend>
+{group.key === 'distance'
+? '🥾 距離を選ぼう'
+: group.key === 'mood'
+? '😊 気分を選ぼう'
+: group.label}
+</legend>
 
 <div className="choice-buttons">
 {group.options.map((option) => (
@@ -1588,7 +1613,10 @@ key={option}
 onClick={() => selectChoice(group.key, option)}
 type="button"
 >
-<span className="choice-icon">{getOptionIcon(option)}</span>
+<span className="choice-icon">
+{getOptionIcon(option)}
+</span>
+
 <span>{option}</span>
 </button>
 ))}
@@ -1598,28 +1626,31 @@ type="button"
 </div>
 
 <div className="selected-condition-card">
-<p className="result-label">🪙 今日の冒険コイン</p>
+<p className="result-label">
+🪙 今日の冒険コイン
+</p>
 
 <div className="coin-grid">
 <div className="coin-item">
 <span className="coin-title">距離</span>
-<strong>{getOptionIcon(choices.distance)} {choices.distance || '未選択'}</strong>
+
+<strong>
+{getOptionIcon(choices.distance)}
+{' '}
+{choices.distance || '未選択'}
+</strong>
 </div>
 
 <div className="coin-item">
 <span className="coin-title">気分</span>
-<strong>{getOptionIcon(choices.mood)} {choices.mood || '未選択'}</strong>
+
+<strong>
+{getOptionIcon(choices.mood)}
+{' '}
+{choices.mood || '未選択'}
+</strong>
 </div>
 
-<div className="coin-item">
-<span className="coin-title">予算</span>
-<strong>{getOptionIcon(choices.budget)} {choices.budget || '未選択'}</strong>
-</div>
-
-<div className="coin-item">
-<span className="coin-title">時間</span>
-<strong>{getOptionIcon(choices.time)} {choices.time || '未選択'}</strong>
-</div>
 {choices.mood === 'デート' && choices.dateGenre && (
 <div className="coin-item coin-wide">
 <span className="coin-title">デートジャンル</span>
@@ -1647,12 +1678,11 @@ type="button"
 <strong>{choices.shrineGenre}</strong>
 </div>
 )}
-
 </div>
 </div>
 
 <button
-className="gacha-button"
+className="gacha-button adventure-coin-button"
 type="button"
 disabled={!canProceedToGacha}
 onClick={() => {
@@ -1661,8 +1691,16 @@ setCourseStep(1);
 setScreen('coin');
 }}
 >
-<Compass size={20} />
-冒険コインを作る
+<span className="adventure-coin-icon">🪙</span>
+
+<span>
+<strong>冒険コインを作る</strong>
+<small>選んだ条件で宝物を探しに行こう！</small>
+</span>
+
+<span className="coin-button-sparkle">
+✨
+</span>
 </button>
 </section>
 
