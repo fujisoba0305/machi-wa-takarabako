@@ -3064,3 +3064,55 @@ top: 38px;
 left: 118px;
 width: 90px;
 }
+/* ガチャ本体を大きく中央へ */
+.treasure-gacha-machine {
+position: relative !important;
+width: min(92vw, 430px) !important;
+min-height: 560px !important;
+margin: 10px auto 0 !important;
+}
+
+/* 本体画像 */
+.treasure-gacha-machine .gacha-machine-image {
+display: block !important;
+width: 100% !important;
+max-width: 430px !important;
+margin: 0 auto !important;
+}
+
+/* ハンドルを本体右側へ固定 */
+.treasure-gacha-machine .gacha-handle-button {
+position: absolute !important;
+top: 47% !important;
+right: -2% !important;
+
+width: 96px !important;
+height: 96px !important;
+
+padding: 0 !important;
+border: 0 !important;
+background: transparent !important;
+
+transform-origin: 50% 50% !important;
+z-index: 5 !important;
+}
+
+.treasure-gacha-machine .gacha-handle-image {
+width: 100% !important;
+height: 100% !important;
+object-fit: contain !important;
+}
+
+/* カプセルをガラス内へ */
+.treasure-gacha-machine .falling-capsule {
+position: absolute !important;
+top: 16% !important;
+left: 50% !important;
+
+width: 72px !important;
+height: 72px !important;
+
+opacity: 1;
+transform: translateX(-50%) !important;
+z-index: 4 !important;
+}
