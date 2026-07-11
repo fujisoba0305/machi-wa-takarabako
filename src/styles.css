@@ -2621,3 +2621,101 @@ color: #76552d;
 font-size: 0.92rem;
 line-height: 1.6;
 }
+/* ===== 冒険準備画面・最終強制調整 ===== */
+
+.condition-screen .adventure-choice-panel {
+display: flex !important;
+flex-direction: column;
+gap: 10px !important;
+}
+
+.condition-screen .adventure-choice-card {
+margin: 0 !important;
+padding: 12px 10px 10px !important;
+border-radius: 20px !important;
+}
+
+.condition-screen .adventure-choice-card legend {
+padding: 6px 14px !important;
+font-size: 0.95rem !important;
+}
+
+/* 距離・気分を3列にする */
+.condition-screen .adventure-choice-card .choice-buttons {
+display: grid !important;
+grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+gap: 7px !important;
+margin-top: 8px !important;
+}
+
+/* 選択肢を小さくする */
+.condition-screen .adventure-choice-card .choice-button {
+width: 100% !important;
+min-width: 0 !important;
+min-height: 48px !important;
+padding: 6px 3px !important;
+border-radius: 15px !important;
+font-size: 0.8rem !important;
+line-height: 1.1 !important;
+}
+
+.condition-screen .adventure-choice-card .choice-icon {
+display: block !important;
+margin: 0 0 2px !important;
+font-size: 1rem !important;
+}
+
+/* 選択中は金色 */
+.condition-screen .adventure-choice-card .choice-button.selected {
+background: linear-gradient(180deg, #fff09a, #ffc53d) !important;
+color: #653b13 !important;
+border-color: #ffbd2e !important;
+box-shadow:
+0 4px 0 #ce8c0e,
+0 0 18px rgba(255, 194, 42, 0.65) !important;
+}
+
+/* 上部分も詰める */
+.condition-screen .condition-hero {
+grid-template-columns: 1fr 105px !important;
+gap: 8px !important;
+margin-bottom: 10px !important;
+}
+
+.condition-screen .condition-board {
+margin-bottom: 8px !important;
+}
+
+.condition-screen .condition-welcome {
+margin: 0 0 3px !important;
+}
+
+.condition-screen .condition-hero h2 {
+margin: 0 !important;
+font-size: 2rem !important;
+line-height: 1.05 !important;
+}
+
+.condition-screen .condition-description {
+margin-top: 7px !important;
+font-size: 0.82rem !important;
+line-height: 1.4 !important;
+}
+
+.condition-screen .condition-takaran {
+width: 105px !important;
+margin-top: 48px !important;
+}
+
+/* 条件確認欄を小さく */
+.condition-screen .selected-condition-card {
+margin-top: 10px !important;
+padding: 9px !important;
+}
+
+/* コイン作成ボタン */
+.condition-screen .adventure-coin-button {
+min-height: 62px !important;
+margin-top: 10px !important;
+padding: 10px 14px !important;
+}
