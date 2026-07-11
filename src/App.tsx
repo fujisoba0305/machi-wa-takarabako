@@ -1706,19 +1706,44 @@ setScreen('coin');
 
 ) : screen === 'coin' ? (
 <section className="coin-screen">
-<h2>投入するコイン</h2>
-<p className="coin-subtitle">今日の冒険条件を刻印したコイン</p>
+<div className="coin-header">
+<img
+src={takaranWelcome}
+alt="たからん"
+className="coin-takaran"
+/>
+
+<p className="coin-ready">
+🪙 冒険コイン完成！
+</p>
+
+<h2>できたよ！</h2>
+
+<p className="coin-subtitle">
+今日だけの冒険コインだよ✨
+</p>
+</div>
 
 <div className="adventure-coin">
-<span className="coin-label">🏆冒険コイン</span>
-<p>{choices.distance}</p>
-<p>{choices.mood}</p>
-<p>{choices.budget}</p>
-<p>{choices.time}</p>
+<span className="coin-label">
+🏆 冒険コイン
+</span>
+
+<p>
+🥾 {choices.distance}
+</p>
+
+<p>
+{getOptionIcon(choices.mood)} {choices.mood}
+</p>
+
+<small>
+このコインが今日の宝物へ導いてくれるよ！
+</small>
 </div>
 
 <button
-className="gacha-button"
+className="gacha-button adventure-start-button"
 type="button"
 onClick={() => {
 setSearchFailed(false);
@@ -1740,9 +1765,8 @@ findNearbySpot();
 }
 }}
 >
-ガチャを回す
+🎰 ガチャスタート！
 </button>
-
 </section>
 ) : screen === 'gacha' ? (
 <section className="gacha-screen treasure-gacha-stage">
