@@ -2949,7 +2949,7 @@ margin: 80px auto 0 !important;
 .gacha-handle-button {
 position: absolute;
 top: 54%;
-right: 4%;
+right: 10%;
 z-index: 5;
 
 width: 92px;
@@ -3183,8 +3183,8 @@ z-index: 4 !important;
 /* ガチャ配置・確認用の最終上書き */
 .treasure-gacha-machine {
 position: relative !important;
-width: 100% !important;
-height: 620px !important;
+width: min(94vw, 520px) !important;
+height: 720px !important;
 margin: 0 auto !important;
 }
 
@@ -3192,29 +3192,21 @@ margin: 0 auto !important;
 position: absolute !important;
 top: 10px !important;
 left: 50% !important;
-width: min(96vw, 500px) !important;
+width: min(92vw, 500px) !important;
 max-width: none !important;
-margin: 0 !important;
 transform: translateX(-50%) !important;
 }
 
 .treasure-gacha-machine .gacha-handle-button {
-position: absolute !important;
-top: 230px !important;
-left: calc(50% + 110px) !important;
-right: auto !important;
-width: 150px !important;
-height: 150px !important;
-z-index: 20 !important;
+top: 330px !important;
+left: calc(50% + 135px) !important;
+width: 110px !important;
+height: 110px !important;
 }
 
 .treasure-gacha-machine .falling-capsule {
-position: absolute !important;
-top: 115px !important;
+top: 170px !important;
 left: 50% !important;
-width: 90px !important;
-height: 90px !important;
-opacity: 1 !important;
-z-index: 10 !important;
-transform: translateX(-50%) !important;
+width: 88px !important;
+height: 88px !important;
 }
