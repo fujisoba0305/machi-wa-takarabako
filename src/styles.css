@@ -2719,3 +2719,166 @@ min-height: 62px !important;
 margin-top: 10px !important;
 padding: 10px 14px !important;
 }
+/* 冒険準備タイトルを2行に */
+.condition-hero h2 {
+white-space: normal;
+line-height: 1.15;
+}
+
+.condition-hero h2 br {
+display: block;
+}
+/* ===== 冒険コイン画面・最終修正 ===== */
+
+.coin-screen {
+width: min(100%, 430px);
+min-height: 100dvh;
+margin: 0 auto;
+padding: 24px 18px 120px;
+box-sizing: border-box;
+text-align: center;
+}
+
+.coin-header {
+margin-bottom: 18px;
+}
+
+.coin-takaran {
+width: 110px;
+height: auto;
+display: block;
+margin: 0 auto 12px;
+}
+
+.coin-ready {
+display: inline-block;
+margin: 0 0 10px;
+padding: 8px 18px;
+border: 2px solid #dfbd68;
+border-radius: 999px;
+background: linear-gradient(180deg, #fff4bf, #f3d879);
+color: #65401d;
+font-size: 1rem;
+font-weight: 900;
+box-shadow: 0 5px 0 rgba(166, 112, 29, 0.18);
+}
+
+.coin-screen .coin-header h2 {
+margin: 10px 0 4px;
+color: #5b351f;
+font-size: 2rem;
+line-height: 1.2;
+}
+
+.coin-screen .coin-subtitle {
+margin: 0;
+color: #76522d;
+font-size: 0.95rem;
+}
+
+/* 古い巨大な丸コイン風CSSを上書き */
+.coin-screen .adventure-coin {
+width: 100% !important;
+height: auto !important;
+min-height: 0 !important;
+margin: 20px auto 28px !important;
+padding: 22px 18px !important;
+box-sizing: border-box !important;
+
+display: block !important;
+
+border: 3px solid #dba62d !important;
+border-radius: 28px !important;
+
+background: linear-gradient(
+180deg,
+#fff8cf,
+#ffe17a
+) !important;
+
+box-shadow:
+0 8px 0 #b97810,
+0 16px 28px rgba(92, 56, 11, 0.18) !important;
+
+transform: none !important;
+overflow: visible !important;
+}
+
+/* 古いp設定を解除 */
+.coin-screen .adventure-coin p {
+position: static !important;
+width: auto !important;
+height: auto !important;
+margin: 0 !important;
+padding: 0 !important;
+
+font-size: inherit !important;
+line-height: normal !important;
+
+transform: none !important;
+}
+
+.coin-screen .coin-label {
+display: block;
+margin: 0 0 16px;
+color: #65401d;
+font-size: 1.2rem;
+font-weight: 900;
+}
+
+.coin-screen .coin-detail {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+
+margin: 10px 0;
+padding: 13px 16px;
+
+border-radius: 18px;
+background: rgba(255, 255, 255, 0.72);
+
+color: #65401f;
+}
+
+.coin-screen .coin-detail span {
+font-size: 0.95rem;
+font-weight: 800;
+}
+
+.coin-screen .coin-detail strong {
+color: #563416;
+font-size: 1.3rem;
+font-weight: 900;
+}
+
+.coin-screen .coin-message {
+margin: 16px 0 0 !important;
+color: #76522d;
+font-size: 0.9rem !important;
+line-height: 1.6 !important;
+}
+
+.coin-screen .adventure-start-button {
+width: 100%;
+min-height: 76px;
+margin: 0;
+padding: 16px 20px;
+
+border: 3px solid #ffe188;
+border-radius: 26px;
+
+background: linear-gradient(
+180deg,
+#ffdf53,
+#ffb91f
+);
+
+color: #653b12;
+font-size: 1.25rem;
+font-weight: 900;
+
+box-shadow:
+0 7px 0 #bd7410,
+0 14px 24px rgba(207, 126, 15, 0.25);
+}
