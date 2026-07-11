@@ -3116,3 +3116,67 @@ opacity: 1;
 transform: translateX(-50%) !important;
 z-index: 4 !important;
 }
+/* ===== 新ガチャ最終配置 ===== */
+
+.treasure-gacha-machine {
+position: relative !important;
+width: min(92vw, 430px) !important;
+height: 520px !important;
+margin: 8px auto 0 !important;
+}
+
+/* 本体を大きく中央へ */
+.treasure-gacha-machine .gacha-machine-image {
+position: absolute !important;
+top: 0 !important;
+left: 50% !important;
+
+width: 390px !important;
+max-width: 92vw !important;
+height: auto !important;
+
+margin: 0 !important;
+transform: translateX(-50%) !important;
+z-index: 2 !important;
+}
+
+/* ハンドルを本体右側へ */
+.treasure-gacha-machine .gacha-handle-button {
+position: absolute !important;
+top: 235px !important;
+left: calc(50% + 118px) !important;
+
+width: 88px !important;
+height: 88px !important;
+
+margin: 0 !important;
+padding: 0 !important;
+border: 0 !important;
+background: transparent !important;
+
+transform-origin: 50% 50% !important;
+z-index: 5 !important;
+}
+
+.treasure-gacha-machine .gacha-handle-image {
+display: block !important;
+width: 100% !important;
+height: 100% !important;
+object-fit: contain !important;
+}
+
+/* カプセルは最初はガラスの中 */
+.treasure-gacha-machine .falling-capsule {
+position: absolute !important;
+top: 120px !important;
+left: 50% !important;
+
+width: 72px !important;
+height: 72px !important;
+
+margin: 0 !important;
+opacity: 1 !important;
+
+transform: translateX(-50%) !important;
+z-index: 4 !important;
+}
