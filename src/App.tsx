@@ -1788,7 +1788,9 @@ src={backgroundTown}
 className="gacha-background"
 alt=""
 />
+
 <h1 className="gacha-main-title">✨ 街の宝ガチャ ✨</h1>
+
 <p className="gacha-sub">
 たからんが街の中から、今日の宝物を探しているよ…！
 </p>
@@ -1801,7 +1803,7 @@ gachaStep >= 3 ? 'gacha-found' : ''
 <img
 src={gachaMachine}
 className="gacha-machine-image"
-alt="ガチャ"
+alt="街の宝ガチャ"
 />
 
 <button
@@ -1826,83 +1828,7 @@ className={`falling-capsule ${
 gachaStep >= 2 ? 'is-falling' : ''
 }`}
 />
-
-<div className="gacha-sign-board">
-<strong>街の宝ガチャ</strong>
 </div>
-
-<div className="gacha-glass-dome">
-<span className="gacha-orb orb-1">☕</span>
-<span className="gacha-orb orb-2">🌳</span>
-<span className="gacha-orb orb-3">⛩️</span>
-<span className="gacha-orb orb-4">🍜</span>
-<span className="gacha-orb orb-5">📸</span>
-<span className="gacha-orb orb-6">💎</span>
-</div>
-
-<div className="gacha-base">
-<div className="gacha-door" />
-<div className="gacha-lever">
-<span className="lever-arm" />
-<span className="lever-ball" />
-</div>
-</div>
-
-{showCapsule && <div className="gacha-capsule-drop">🔴</div>}
-</div>
-
-<div className="gacha-message-card">
-<p>
-{searchFailed
-? '近くに宝物が見つからなかったよ💦'
-: gachaStep === 1
-? '宝物を探し中…'
-: gachaStep === 2
-? 'いい宝物を探してるよ〜！'
-: 'あっ！見つけたかも！'}
-</p>
-</div>
-
-<button
-className="gacha-button"
-type="button"
-disabled={
-!searchFailed &&
-(
-!showCapsule ||
-(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)) ||
-(choices.mood !== 'デート' && !nearbySpot)
-)
-}
-onClick={() => {
-if (searchFailed) {
-setSearchFailed(false);
-setNearbySpot(null);
-setDateFinalSpot(null);
-setSelectedSpot(null);
-setSpotDistance(null);
-setShowCapsule(false);
-setGachaStep(1);
-setIsCapsuleOpening(false);
-setShowTreasureBox(false);
-setScreen('condition');
-return;
-}
-
-setScreen('capsule');
-}}
-
->
-{searchFailed
-? '条件を変えてもう一度探す'
-: !showCapsule
-? '宝物を探しています…'
-: choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
-? 'デートコースを整えています…'
-: choices.mood !== 'デート' && !nearbySpot
-? '宝物を探しています…'
-: 'カプセルを受け取る'}
-</button>
 </section>
 
 ) : screen === 'capsule' ? (

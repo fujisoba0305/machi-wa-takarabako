@@ -3034,3 +3034,33 @@ opacity: 1;
 transform: translate(-50%, 130px) scale(1) rotate(360deg);
 }
 }
+.treasure-gacha-machine {
+position: relative;
+width: 340px;
+margin: 40px auto;
+}
+
+.gacha-machine-image {
+width: 100%;
+display: block;
+}
+
+.gacha-handle-button {
+position: absolute;
+right: -28px;
+top: 155px;
+background: none;
+border: none;
+cursor: pointer;
+}
+
+.gacha-handle-image {
+width: 70px;
+}
+
+.falling-capsule {
+position: absolute;
+top: 38px;
+left: 118px;
+width: 90px;
+}
