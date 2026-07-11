@@ -21,9 +21,15 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 
-import takaranImage from './assets/takaran.png';
+import takaranImage from './assets/takaran/takaran.png';
 import titleBackground from './assets/title-background.png';
-import takaranWelcome from "./assets/takaran-welcome.png";
+import takaranWelcome from "./assets/takaran/takaran-welcome.png";
+import backgroundTown from './assets/gacha/background-town.png';
+import gachaMachine from './assets/gacha/gacha-machine.png';
+import gachaHandle from './assets/gacha/gacha-handle.png';
+import capsuleEmpty from './assets/gacha/capsule-empty.png';
+import treasureChest from './assets/gacha/treasure-chest.png';
+
 
 type ChoiceKey =
 | 'distance'
@@ -1777,6 +1783,11 @@ findNearbySpot();
 
 ) : screen === 'gacha' ? (
 <section className="gacha-screen treasure-gacha-stage">
+<img
+src={backgroundTown}
+className="gacha-background"
+alt=""
+/>
 <h1 className="gacha-main-title">✨ 街の宝ガチャ ✨</h1>
 <p className="gacha-sub">
 たからんが街の中から、今日の宝物を探しているよ…！
@@ -1787,6 +1798,11 @@ className={`treasure-gacha-machine ${
 gachaStep >= 3 ? 'gacha-found' : ''
 }`}
 >
+<img
+src={gachaMachine}
+className="gacha-machine-image"
+alt="ガチャ"
+/>
 <div className="gacha-sign-board">
 <strong>街の宝ガチャ</strong>
 </div>
