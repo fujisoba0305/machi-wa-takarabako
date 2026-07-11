@@ -3190,7 +3190,7 @@ margin: 0 auto !important;
 
 .treasure-gacha-machine .gacha-machine-image {
 position: absolute !important;
-top: 10px !important;
+top: 80px !important;
 left: 50% !important;
 width: min(92vw, 500px) !important;
 max-width: none !important;
@@ -3198,10 +3198,10 @@ transform: translateX(-50%) !important;
 }
 
 .treasure-gacha-machine .gacha-handle-button {
-top: 330px !important;
-left: calc(50% + 135px) !important;
-width: 110px !important;
-height: 110px !important;
+top: 300px !important;
+left: calc(50% + 165px) !important;
+width: 120px !important;
+height: 120px !important;
 }
 
 .treasure-gacha-machine .falling-capsule {
@@ -3209,4 +3209,29 @@ top: 170px !important;
 left: 50% !important;
 width: 88px !important;
 height: 88px !important;
+}
+/* 最初はカプセルを隠す */
+.treasure-gacha-machine .falling-capsule {
+opacity: 0 !important;
+visibility: hidden !important;
+}
+
+/* ハンドルを回した後だけ表示 */
+.treasure-gacha-machine .falling-capsule.is-falling {
+visibility: visible !important;
+animation: capsuleDrop 1.25s ease-in forwards;
+animation-delay: 0.7s;
+}
+.treasure-gacha-machine::after {
+content: "";
+position: absolute;
+left: 50%;
+top: 650px;
+width: 280px;
+height: 34px;
+transform: translateX(-50%);
+border-radius: 50%;
+background: rgba(70, 45, 20, 0.22);
+filter: blur(10px);
+z-index: 1;
 }
