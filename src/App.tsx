@@ -1803,6 +1803,30 @@ src={gachaMachine}
 className="gacha-machine-image"
 alt="ガチャ"
 />
+
+<button
+type="button"
+className={`gacha-handle-button ${
+gachaStep >= 2 ? 'is-turning' : ''
+}`}
+onClick={() => setGachaStep(2)}
+aria-label="ガチャのハンドルを回す"
+>
+<img
+src={gachaHandle}
+className="gacha-handle-image"
+alt=""
+/>
+</button>
+
+<img
+src={capsuleEmpty}
+alt="カプセル"
+className={`falling-capsule ${
+gachaStep >= 2 ? 'is-falling' : ''
+}`}
+/>
+
 <div className="gacha-sign-board">
 <strong>街の宝ガチャ</strong>
 </div>

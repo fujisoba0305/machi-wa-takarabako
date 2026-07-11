@@ -2920,3 +2920,117 @@ margin: 18px auto 0;
 position: relative;
 z-index: 3;
 }
+/* 旧ガチャUIを非表示 */
+.treasure-gacha-machine .gacha-sign-board,
+.treasure-gacha-machine .gacha-window,
+.treasure-gacha-machine .gacha-lower,
+.treasure-gacha-machine .gacha-handle,
+.treasure-gacha-machine .capsule-ball {
+display: none !important;
+}
+
+/* 旧オレンジ本体の枠・背景を解除 */
+.treasure-gacha-machine {
+width: 100% !important;
+min-height: 0 !important;
+padding: 0 !important;
+border: 0 !important;
+border-radius: 0 !important;
+background: transparent !important;
+box-shadow: none !important;
+overflow: visible !important;
+}
+
+/* 新ガチャ本体を大きく中央へ */
+.treasure-gacha-machine .gacha-machine-image {
+width: min(86vw, 360px) !important;
+margin: 80px auto 0 !important;
+}
+.gacha-handle-button {
+position: absolute;
+top: 54%;
+right: 4%;
+z-index: 5;
+
+width: 92px;
+height: 92px;
+padding: 0;
+
+border: 0;
+background: transparent;
+cursor: pointer;
+
+transform-origin: 50% 50%;
+}
+
+.gacha-handle-image {
+display: block;
+width: 100%;
+height: 100%;
+object-fit: contain;
+}
+
+.gacha-handle-button.is-turning {
+animation: turnGachaHandle 0.9s ease-in-out;
+}
+
+@keyframes turnGachaHandle {
+0% {
+transform: rotate(0deg);
+}
+
+40% {
+transform: rotate(150deg);
+}
+
+75% {
+transform: rotate(310deg);
+}
+
+100% {
+transform: rotate(360deg);
+}
+}
+.falling-capsule {
+position: absolute;
+left: 50%;
+top: 56%;
+z-index: 6;
+
+width: 76px;
+height: 76px;
+object-fit: contain;
+
+opacity: 0;
+transform: translate(-50%, -30px) scale(0.7) rotate(0deg);
+pointer-events: none;
+}
+
+.falling-capsule.is-falling {
+animation: capsuleDrop 1.25s ease-in forwards;
+animation-delay: 0.65s;
+}
+
+@keyframes capsuleDrop {
+0% {
+opacity: 0;
+transform: translate(-50%, -30px) scale(0.7) rotate(0deg);
+}
+
+20% {
+opacity: 1;
+}
+
+65% {
+transform: translate(-50%, 120px) scale(0.95) rotate(220deg);
+}
+
+82% {
+transform: translate(-50%, 105px) scale(1) rotate(300deg);
+}
+
+100% {
+opacity: 1;
+transform: translate(-50%, 130px) scale(1) rotate(360deg);
+}
+}
