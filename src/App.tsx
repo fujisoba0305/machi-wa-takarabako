@@ -1803,18 +1803,6 @@ alt=""
 たからんが宝物を見つけたよ✨
 ハンドルを回して取り出そう！
 </p>
-<p
-style={{
-position: 'relative',
-zIndex: 50,
-color: 'red',
-fontSize: '28px',
-fontWeight: 900,
-textAlign: 'center',
-}}
->
-現在のgachaStep：{gachaStep}
-</p>
 
 <div
 className={`treasure-gacha-machine ${

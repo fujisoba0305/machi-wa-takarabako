@@ -2975,8 +2975,8 @@ transform: rotate(360deg);
 
 .popping-capsule {
 position: absolute;
-top: 520px;
-left: 50%;
+top: 545px;
+left: 46%;
 
 width: 120px;
 height: 120px;
@@ -3015,7 +3015,7 @@ transform: translate(-50%, 30px) scale(1.65) rotate(360deg);
 
 .waiting-capsule {
 position: absolute;
-top: 275px;
+top: 335px;
 left: 50%;
 width: 120px;
 height: 120px;
@@ -3130,5 +3130,13 @@ transform: translateY(0);
 
 50% {
 transform: translateY(-8px);
+}
+}
+@media (max-width: 430px) {
+.gacha-handle-button {
+top: 590px;
+left: calc(50% + 75px);
+width: 88px;
+height: 88px;
 }
 }
