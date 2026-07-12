@@ -250,7 +250,7 @@ const [hasStarted, setHasStarted] = useState(false);
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
-const [gachaStep, setGachaStep] = useState(1);
+const [gachaStep, setGachaStep] = useState(0);
 const [showCapsule, setShowCapsule] = useState(false);
 const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
@@ -258,6 +258,24 @@ const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
 >('home');
+const startGacha = () => {
+if (gachaStep !== 0) return;
+
+// ハンドル回転・待機カプセルを消す
+setGachaStep(1);
+
+// 回転後、外側にカプセルを出す
+window.setTimeout(() => {
+setGachaStep(2);
+}, 700);
+
+// 演出後にカプセル画面へ
+window.setTimeout(() => {
+setScreen('capsule');
+setGachaStep(0);
+}, 2300);
+};
+
 const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
 distance: '',
 mood: '',
@@ -365,20 +383,13 @@ if (screen !== 'gacha') return;
 let isCancelled = false;
 
 async function runGacha() {
-setGachaStep(1);
 setShowCapsule(false);
 setIsSearching(true);
 setSearchFailed(false);
 
-const timer1 = setTimeout(() => setGachaStep(2), 1600);
-
 await findNearbySpot();
 
 if (isCancelled) return;
-
-clearTimeout(timer1);
-
-setGachaStep(3);
 
 const waitTime = choices.mood === 'デート' ? 2200 : 1200;
 
@@ -661,7 +672,6 @@ setNearbySpot(waypoint);
 setDateFinalSpot(finalSpot);
 setSpotDistance(distanceToWaypoint + distanceWaypointToFinal);
 
-setGachaStep(3);
 setShowCapsule(true);
 return;
 }
@@ -768,7 +778,6 @@ setNearbySpot(selectedCourse.waypoint);
 setDateFinalSpot(selectedCourse.finalSpot);
 setSpotDistance(selectedCourse.totalDistance);
 
-setGachaStep(3);
 setShowCapsule(true);
 
 } else {
@@ -814,7 +823,6 @@ const spot = randomItem(namedSpots);
 setSelectedSpot(spot);
 setNearbySpot(spot);
 
-setGachaStep(3);
 setShowCapsule(true);
 
 const location = getSpotLocation(spot);
@@ -1764,7 +1772,7 @@ setDateFinalSpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
 setShowCapsule(false);
-setGachaStep(1);
+setGachaStep(0);
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 
@@ -1789,15 +1797,28 @@ className="gacha-background"
 alt=""
 />
 
-<h1 className="gacha-main-title">✨ 街の宝ガチャ ✨</h1>
+<h1 className="gacha-main-title">✨　街の宝ガチャ　✨</h1>
 
 <p className="gacha-sub">
-たからんが街の中から、今日の宝物を探しているよ…！
+たからんが宝物を見つけたよ✨
+ハンドルを回して取り出そう！
+</p>
+<p
+style={{
+position: 'relative',
+zIndex: 50,
+color: 'red',
+fontSize: '28px',
+fontWeight: 900,
+textAlign: 'center',
+}}
+>
+現在のgachaStep：{gachaStep}
 </p>
 
 <div
 className={`treasure-gacha-machine ${
-gachaStep >= 3 ? 'gacha-found' : ''
+gachaStep >= 2 ? 'gacha-found' : ''
 }`}
 >
 <img
@@ -1809,9 +1830,10 @@ alt="街の宝ガチャ"
 <button
 type="button"
 className={`gacha-handle-button ${
-gachaStep >= 2 ? 'is-turning' : ''
+gachaStep >= 1 ? 'is-turning' : ''
 }`}
-onClick={() => setGachaStep(2)}
+onClick={startGacha}
+disabled={gachaStep !== 0}
 aria-label="ガチャのハンドルを回す"
 >
 <img
@@ -1821,13 +1843,30 @@ alt=""
 />
 </button>
 
+{gachaStep === 0 && (
+<>
+<p className="gacha-handle-guide">
+👇
+<br />
+タップ！
+</p>
+
 <img
 src={capsuleEmpty}
-alt="カプセル"
-className={`falling-capsule ${
-gachaStep >= 2 ? 'is-falling' : ''
-}`}
+alt="待機中のカプセル"
+className="waiting-capsule"
 />
+</>
+)}
+
+{gachaStep === 2 && (
+<img
+src={capsuleEmpty}
+alt="選ばれたカプセル"
+className="popping-capsule"
+/>
+)}
+
 </div>
 </section>
 
