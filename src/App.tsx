@@ -244,6 +244,20 @@ const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 return R * c;
 }
 
+const capsuleIcons: Record<string, string> = {
+自然: "🌳",
+カフェ: "☕",
+グルメ: "🍙",
+デート: "💖",
+写真: "📸",
+夜景: "🌃",
+映画: "🎬",
+イベント: "🎉",
+リラックス: "🍃",
+神社: "⛩️",
+おまかせ: "🎁",
+};
+
 export default function App() {
 const [name, setName] = useState('');
 const [hasStarted, setHasStarted] = useState(false);
@@ -251,6 +265,7 @@ const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
 const [gachaStep, setGachaStep] = useState(0);
+const [capsuleIcon, setCapsuleIcon] = useState("🎁");
 const [showCapsule, setShowCapsule] = useState(false);
 const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
@@ -1776,6 +1791,10 @@ setGachaStep(0);
 setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 
+setCapsuleIcon(
+capsuleIcons[choices.mood] ?? '🎁'
+);
+
 setScreen('gacha');
 
 if (choices.mood === 'デート') {
@@ -1844,15 +1863,24 @@ src={capsuleEmpty}
 alt="待機中のカプセル"
 className="waiting-capsule"
 />
+
+<div className="capsule-icon waiting-icon">
+{capsuleIcon}
+</div>
 </>
 )}
 
 {gachaStep === 2 && (
+<>
 <img
 src={capsuleEmpty}
 alt="選ばれたカプセル"
 className="popping-capsule"
 />
+<div className="capsule-icon popping-icon">
+{capsuleIcon}
+</div>
+</>
 )}
 
 </div>
