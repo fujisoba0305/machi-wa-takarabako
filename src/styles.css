@@ -3037,25 +3037,6 @@ transform: translate(-50%, -8px);
 }
 }
 
-@keyframes capsulePop {
-
-0%{
-opacity:0;
-transform:translate(-50%,-30px) scale(0.2);
-}
-
-60%{
-opacity:1;
-transform:translate(-50%,0) scale(1.25);
-}
-
-100%{
-opacity:1;
-transform:translate(-50%,0) scale(1);
-}
-
-}
-
 /* ===== 接地感の影 ===== */
 
 .treasure-gacha-machine::after {
@@ -3138,5 +3119,31 @@ top: 590px;
 left: calc(50% + 75px);
 width: 88px;
 height: 88px;
+}
+}
+/* ===== ガチャ・スマホ最終配置 ===== */
+@media (max-width: 430px) {
+/* ハンドルを本体の右側へ戻す */
+.gacha-handle-button {
+top: 48% !important;
+left: 78% !important;
+
+width: 88px !important;
+height: 88px !important;
+}
+
+/* 排出カプセルを正面の排出口付近へ */
+.popping-capsule {
+top: 66% !important;
+left: 34% !important;
+
+width: 110px !important;
+height: 110px !important;
+}
+
+/* 待機カプセル */
+.waiting-capsule {
+top: 275px !important;
+left: 50% !important;
 }
 }
