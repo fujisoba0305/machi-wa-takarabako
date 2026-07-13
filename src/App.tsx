@@ -1858,27 +1858,32 @@ alt=""
 タップ！
 </p>
 
+<div className="capsule-wrap waiting-capsule-wrap">
 <img
 src={capsuleEmpty}
 alt="待機中のカプセル"
-className="waiting-capsule"
+className="capsule-shell"
 />
 
-<div className="capsule-icon waiting-icon">
+<div className="capsule-inner-icon">
 {capsuleIcon}
+</div>
 </div>
 </>
 )}
 
 {gachaStep === 2 && (
 <>
+<div className="capsule-wrap popping-capsule-wrap">
 <img
 src={capsuleEmpty}
 alt="選ばれたカプセル"
-className="popping-capsule"
+className="capsule-shell"
 />
-<div className="capsule-icon popping-icon">
+
+<div className="capsule-inner-icon">
 {capsuleIcon}
+</div>
 </div>
 </>
 )}
