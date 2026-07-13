@@ -1893,50 +1893,91 @@ className="capsule-shell"
 
 ) : screen === 'capsule' ? (
 <section className="capsule-screen capsule-stage">
+<h2 className="capsule-title">
+宝物カプセル発見！
+</h2>
 
-<h2 className="capsule-title">🔴 宝物カプセルを見つけた！</h2>
-
-<p className="capsule-text">タップして宝箱を開けよう！</p>
+<p className="capsule-text">
+タップしてカプセルを開けよう！
+</p>
 
 <div className="capsule-open-area">
+{!showTreasureBox && (
 <button
 className="capsule-open-button"
 type="button"
-disabled={showTreasureBox}
+disabled={isCapsuleOpening}
 onClick={() => {
+if (isCapsuleOpening) return;
+
 setIsCapsuleOpening(true);
 
 setTimeout(() => {
 setShowTreasureBox(true);
-}, 700);
+}, 1000);
 }}
+>
+<div
+className={`capsule-wrap discovery-capsule-wrap ${
+isCapsuleOpening ? 'discovery-capsule-opening' : ''
+}`}
 >
 <div className="capsule-light" />
 
-<div className={`big-capsule ${isCapsuleOpening ? 'capsule-opening' : ''}`}>
-<div className="capsule-top" />
-<div className="capsule-bottom" />
-<div className="capsule-shine" />
-<div className="capsule-shadow" />
+<img
+src={capsuleEmpty}
+alt="宝物カプセル"
+className="capsule-shell discovery-capsule-shell"
+/>
+
+<div
+className={`capsule-inner-icon discovery-capsule-icon ${
+isCapsuleOpening ? 'discovery-icon-flying' : ''
+}`}
+>
+{capsuleIcon}
+</div>
 </div>
 
-{!showTreasureBox && (
-<span className="tap-text">👆 タップして開ける</span>
+{!isCapsuleOpening && (
+<span className="tap-text">
+👆 タップして開ける
+</span>
+)}
+
+{isCapsuleOpening && (
+<span className="capsule-opening-text">
+宝物が飛び出すよ…！
+</span>
 )}
 </button>
+)}
 
 {showTreasureBox && (
 <div className="treasure-popup">
 <div className="treasure-light" />
-<div className="treasure-box">📦</div>
-<p className="treasure-found">宝物発見！！</p>
+
+<div className="treasure-flying-icon">
+{capsuleIcon}
+</div>
+
+<div className="treasure-box">
+📦
+</div>
+
+<p className="treasure-found">
+宝物発見！！
+</p>
 
 <button
 className="gacha-button"
 type="button"
 disabled={
 (choices.mood !== 'デート' && !nearbySpot) ||
-(choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot))
+(
+choices.mood === 'デート' &&
+(!nearbySpot || !dateFinalSpot)
+)
 }
 onClick={() => {
 if (choices.mood === 'デート') {
@@ -1950,7 +1991,8 @@ setIsCapsuleOpening(false);
 setShowTreasureBox(false);
 }}
 >
-: {choices.mood === 'デート' && (!nearbySpot || !dateFinalSpot)
+{choices.mood === 'デート' &&
+(!nearbySpot || !dateFinalSpot)
 ? 'デートコースを整えています...'
 : choices.mood !== 'デート' && !nearbySpot
 ? '宝物を探しています...'
@@ -1959,7 +2001,6 @@ setShowTreasureBox(false);
 </div>
 )}
 </div>
-
 </section>
 
 ) : (

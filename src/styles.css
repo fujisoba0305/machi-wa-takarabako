@@ -1538,8 +1538,17 @@ top: 270px;
 z-index: 11;
 }
 .capsule-stage {
-min-height: calc(100vh - 120px);
-padding-bottom: 140px;
+min-height: calc(100dvh - 120px);
+padding: 40px 20px 140px;
+box-sizing: border-box;
+
+display: flex;
+flex-direction: column;
+align-items: center;
+
+width: 100%;
+overflow-x: hidden;
+text-align: center;
 }
 
 .treasure-popup {
@@ -2940,7 +2949,9 @@ border: 0;
 background: transparent;
 cursor: pointer;
 
-transform-origin: 50% 50%;
+/* 本体に接している左側を回転の中心にする */
+transform-origin: 32% 50%;
+
 z-index: 5;
 }
 
@@ -2949,6 +2960,7 @@ display: block;
 width: 100%;
 height: 100%;
 object-fit: contain;
+pointer-events: none;
 }
 
 .gacha-handle-button.is-turning {
@@ -2960,18 +2972,19 @@ animation: turnGachaHandle 0.9s ease-in-out;
 transform: rotate(0deg);
 }
 
-40% {
-transform: rotate(150deg);
+35% {
+transform: rotate(145deg);
 }
 
-75% {
-transform: rotate(310deg);
+70% {
+transform: rotate(290deg);
 }
 
 100% {
 transform: rotate(360deg);
 }
 }
+
 
 @keyframes capsulePop {
 0% {
@@ -3171,7 +3184,7 @@ pointer-events: none;
 /* 待機中 */
 
 .waiting-capsule-wrap {
-top: 285px;
+top: 265px;
 left: 50%;
 
 transform: translateX(-50%);
@@ -3186,4 +3199,123 @@ top: 545px;
 left: 46%;
 
 animation: capsulePop 1.1s ease-out forwards;
+}
+.capsule-title,
+.capsule-text {
+width: 100%;
+max-width: 360px;
+margin-left: auto;
+margin-right: auto;
+text-align: center;
+}
+
+.capsule-title {
+font-size: clamp(28px, 8vw, 40px);
+line-height: 1.25;
+overflow-wrap: anywhere;
+}
+.discovery-capsule-wrap {
+position: relative;
+width: 260px;
+height: 260px;
+margin: 24px auto 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.discovery-capsule-shell {
+width: 240px;
+height: auto;
+display: block;
+}
+
+.discovery-capsule-icon {
+position: absolute;
+top: 43%;
+left: 50%;
+transform: translate(-50%, -50%);
+font-size: 72px;
+line-height: 1;
+z-index: 2;
+}
+.capsule-title {
+font-size: 34px;
+line-height: 1.25;
+text-align: center;
+margin-bottom: 24px;
+}
+
+.capsule-text {
+font-size: 20px;
+margin-bottom: 10px;
+}
+@media (max-width: 600px) {
+.discovery-capsule-wrap {
+width: 220px;
+height: 220px;
+}
+
+.discovery-capsule-shell {
+width: 205px;
+}
+
+.discovery-capsule-icon {
+font-size: 60px;
+}
+
+.capsule-title {
+font-size: 28px;
+}
+
+.capsule-text {
+font-size: 17px;
+}
+}
+.discovery-capsule-wrap {
+position: relative;
+width: 360px;
+height: 300px;
+margin: 0 auto 6px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.discovery-capsule-shell {
+width: 320px;
+height: auto;
+display: block;
+}
+
+.discovery-capsule-icon {
+position: absolute;
+top: 42%;
+left: 50%;
+transform: translate(-50%, -50%);
+font-size: 78px;
+line-height: 1;
+z-index: 2;
+}
+
+.capsule-open-button {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 0;
+}
+
+.capsule-text {
+margin: 8px 0 0;
+}
+
+.tap-text {
+display: block;
+margin-top: -8px;
+font-size: 22px;
+font-weight: 700;
+}
+
+.capsule-title {
+margin-bottom: 8px;
 }
