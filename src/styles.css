@@ -2950,7 +2950,7 @@ background: transparent;
 cursor: pointer;
 
 /* 本体に接している左側を回転の中心にする */
-transform-origin: 32% 50%;
+transform-origin: 42% 48%;
 
 z-index: 5;
 }
@@ -2972,12 +2972,12 @@ animation: turnGachaHandle 0.9s ease-in-out;
 transform: rotate(0deg);
 }
 
-35% {
-transform: rotate(145deg);
+40% {
+transform: rotate(120deg);
 }
 
-70% {
-transform: rotate(290deg);
+75% {
+transform: rotate(250deg);
 }
 
 100% {
@@ -3318,4 +3318,141 @@ font-weight: 700;
 
 .capsule-title {
 margin-bottom: 8px;
+}
+/* ==============================
+宝物カプセルを開く演出
+============================== */
+
+.discovery-capsule-wrap {
+transition:
+transform 0.25s ease,
+opacity 0.35s ease;
+}
+
+.discovery-capsule-opening {
+animation: discoveryCapsuleShake 0.75s ease-in-out forwards;
+}
+
+.discovery-capsule-shell {
+transition:
+transform 0.35s ease,
+opacity 0.35s ease,
+filter 0.35s ease;
+}
+
+.discovery-capsule-opening .discovery-capsule-shell {
+animation: discoveryCapsuleDisappear 1s ease-in-out forwards;
+}
+
+.discovery-capsule-icon {
+transition:
+transform 0.35s ease,
+opacity 0.35s ease;
+}
+
+.discovery-icon-flying {
+animation: discoveryIconFly 1s ease-out forwards;
+}
+
+.capsule-opening-text {
+display: block;
+margin-top: -6px;
+font-size: 20px;
+font-weight: 700;
+animation: openingTextPulse 0.7s ease-in-out infinite alternate;
+}
+
+/* カプセルがブルブル震える */
+@keyframes discoveryCapsuleShake {
+
+0%{
+transform:scale(1) rotate(0deg);
+}
+
+18%{
+transform:scale(0.94,1.06) rotate(-4deg);
+}
+
+36%{
+transform:scale(1.06,0.94) rotate(4deg);
+}
+
+54%{
+transform:scale(0.96,1.05) rotate(-3deg);
+}
+
+72%{
+transform:scale(1.12) rotate(0deg);
+}
+
+100%{
+transform:scale(1);
+}
+
+}
+
+/* カプセル画像が光りながら消える */
+@keyframes discoveryCapsuleDisappear {
+
+0%{
+opacity:1;
+transform:scale(1);
+}
+
+45%{
+opacity:1;
+transform:scale(1.15);
+filter:brightness(1.6);
+}
+
+70%{
+opacity:1;
+transform:scale(0.92);
+}
+
+100%{
+opacity:0;
+transform:scale(0.6);
+filter:brightness(2);
+}
+
+}
+
+
+/* 中のアイコンが上へ飛び出す */
+@keyframes discoveryIconFly {
+
+0%{
+opacity:0;
+transform:translate(-50%,-50%) scale(.6);
+}
+
+30%{
+opacity:1;
+transform:translate(-50%,-60%) scale(1.4);
+}
+
+65%{
+opacity:1;
+transform:translate(-50%,-170%) scale(1.8);
+}
+
+100%{
+opacity:0;
+transform:translate(-50%,-280%) scale(2.2);
+}
+
+}
+
+
+@keyframes openingTextPulse {
+from {
+opacity: 0.55;
+transform: scale(0.97);
+}
+
+to {
+opacity: 1;
+transform: scale(1.03);
+}
 }

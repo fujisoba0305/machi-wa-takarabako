@@ -29,6 +29,7 @@ import gachaMachine from './assets/gacha/gacha-machine.png';
 import gachaHandle from './assets/gacha/gacha-handle.png';
 import capsuleEmpty from './assets/gacha/capsule-empty.png';
 import treasureChest from './assets/gacha/treasure-chest.png';
+import takaranSearch from './assets/takaran/takaran-search.png';
 
 
 type ChoiceKey =
@@ -276,19 +277,20 @@ const [screen, setScreen] = useState<
 const startGacha = () => {
 if (gachaStep !== 0) return;
 
-// ハンドル回転・待機カプセルを消す
+// ガチャ開始
+setIsGachaAnimationDone(false);
 setGachaStep(1);
 
-// 回転後、外側にカプセルを出す
+// ハンドルが回り終わってからカプセル排出
 window.setTimeout(() => {
 setGachaStep(2);
-}, 700);
+}, 1100);
 
-// 演出後にカプセル画面へ
+// 演出終了
+// ここでは結果画面へ行かない
 window.setTimeout(() => {
-setScreen('capsule');
-setGachaStep(0);
-}, 2300);
+setIsGachaAnimationDone(true);
+}, 2800);
 };
 
 const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
@@ -313,6 +315,32 @@ const [spotDistance, setSpotDistance] = useState<number | null>(null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
+const [isGachaAnimationDone, setIsGachaAnimationDone] = useState(false);
+
+useEffect(() => {
+if (!isGachaAnimationDone) return;
+if (isSearching) return;
+
+const searchIsComplete =
+choices.mood === 'デート'
+? Boolean(nearbySpot && dateFinalSpot)
+: Boolean(nearbySpot);
+
+// 検索成功、または検索終了後に候補がなかった場合
+if (!searchIsComplete && !searchFailed) return;
+
+setScreen('result');
+setGachaStep(0);
+setIsGachaAnimationDone(false);
+}, [
+isGachaAnimationDone,
+isSearching,
+nearbySpot,
+dateFinalSpot,
+choices.mood,
+searchFailed,
+]);
+
 const [exp, setExp] = useState(() => {
 const savedExp = localStorage.getItem('machiTakarabakoExp');
 return savedExp ? Number(savedExp) : 0;
@@ -814,6 +842,7 @@ return;
 }
 
 setIsSearching(true);
+setSearchFailed(false);
 
 try {
 setNearbySpot(null);
@@ -1850,14 +1879,8 @@ alt=""
 />
 </button>
 
-{gachaStep === 0 && (
+{gachaStep < 2 && (
 <>
-<p className="gacha-handle-guide">
-👇
-<br />
-タップ！
-</p>
-
 <div className="capsule-wrap waiting-capsule-wrap">
 <img
 src={capsuleEmpty}
@@ -1871,6 +1894,7 @@ className="capsule-shell"
 </div>
 </>
 )}
+
 
 {gachaStep === 2 && (
 <>
@@ -1891,119 +1915,7 @@ className="capsule-shell"
 </div>
 </section>
 
-) : screen === 'capsule' ? (
-<section className="capsule-screen capsule-stage">
-<h2 className="capsule-title">
-宝物カプセル発見！
-</h2>
-
-<p className="capsule-text">
-タップしてカプセルを開けよう！
-</p>
-
-<div className="capsule-open-area">
-{!showTreasureBox && (
-<button
-className="capsule-open-button"
-type="button"
-disabled={isCapsuleOpening}
-onClick={() => {
-if (isCapsuleOpening) return;
-
-setIsCapsuleOpening(true);
-
-setTimeout(() => {
-setShowTreasureBox(true);
-}, 1000);
-}}
->
-<div
-className={`capsule-wrap discovery-capsule-wrap ${
-isCapsuleOpening ? 'discovery-capsule-opening' : ''
-}`}
->
-<div className="capsule-light" />
-
-<img
-src={capsuleEmpty}
-alt="宝物カプセル"
-className="capsule-shell discovery-capsule-shell"
-/>
-
-<div
-className={`capsule-inner-icon discovery-capsule-icon ${
-isCapsuleOpening ? 'discovery-icon-flying' : ''
-}`}
->
-{capsuleIcon}
-</div>
-</div>
-
-{!isCapsuleOpening && (
-<span className="tap-text">
-👆 タップして開ける
-</span>
-)}
-
-{isCapsuleOpening && (
-<span className="capsule-opening-text">
-宝物が飛び出すよ…！
-</span>
-)}
-</button>
-)}
-
-{showTreasureBox && (
-<div className="treasure-popup">
-<div className="treasure-light" />
-
-<div className="treasure-flying-icon">
-{capsuleIcon}
-</div>
-
-<div className="treasure-box">
-📦
-</div>
-
-<p className="treasure-found">
-宝物発見！！
-</p>
-
-<button
-className="gacha-button"
-type="button"
-disabled={
-(choices.mood !== 'デート' && !nearbySpot) ||
-(
-choices.mood === 'デート' &&
-(!nearbySpot || !dateFinalSpot)
-)
-}
-onClick={() => {
-if (choices.mood === 'デート') {
-if (!nearbySpot || !dateFinalSpot) return;
-} else {
-if (!nearbySpot) return;
-}
-
-setScreen('result');
-setIsCapsuleOpening(false);
-setShowTreasureBox(false);
-}}
->
-{choices.mood === 'デート' &&
-(!nearbySpot || !dateFinalSpot)
-? 'デートコースを整えています...'
-: choices.mood !== 'デート' && !nearbySpot
-? '宝物を探しています...'
-: '結果を見る'}
-</button>
-</div>
-)}
-</div>
-</section>
-
-) : (
+) : screen === 'result' ? (
 <section className="result-screen">
 <p className="result-kicker">今日の宝物が見つかりました</p>
 <h2>{destination.title}</h2>
@@ -2235,7 +2147,8 @@ alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
 </button>
 )}
 </section>
-)}
+) :null}
+
 {hasStarted && (
 <nav className="bottom-nav">
 <button type="button" onClick={() => setScreen('home')}>
