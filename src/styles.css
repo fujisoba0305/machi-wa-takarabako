@@ -3097,8 +3097,8 @@ height: 88px;
 @media (max-width: 430px) {
 /* ハンドルを本体の右側へ戻す */
 .gacha-handle-button {
-top: 59% !important;
-left: 68% !important;
+top: 61% !important;
+left: 69% !important;
 
 width: 82px !important;
 height: 82px !important;
@@ -3155,12 +3155,12 @@ object-fit: contain;
 
 .capsule-inner-icon {
 position: absolute;
-top: 50%;
+top: 44%;
 left: 50%;
 
 transform: translate(-50%, -50%);
 
-font-size: 52px;
+font-size: 32px;
 
 display: flex;
 align-items: center;
@@ -3171,7 +3171,7 @@ pointer-events: none;
 /* 待機中 */
 
 .waiting-capsule-wrap {
-top: 335px;
+top: 285px;
 left: 50%;
 
 transform: translateX(-50%);
