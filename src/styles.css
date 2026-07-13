@@ -3125,8 +3125,8 @@ height: 88px;
 @media (max-width: 430px) {
 /* ハンドルを本体の右側へ戻す */
 .gacha-handle-button {
-top: 48% !important;
-left: 78% !important;
+top: 52% !important;
+left: 68% !important;
 
 width: 88px !important;
 height: 88px !important;
@@ -3143,7 +3143,13 @@ height: 110px !important;
 
 /* 待機カプセル */
 .waiting-capsule {
-top: 275px !important;
+top: 250px !important;
 left: 50% !important;
 }
+}
+.gacha-handle-guide {
+top: 43% !important;
+left: 69% !important;
+right: auto !important;
+bottom: auto !important;
 }
