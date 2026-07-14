@@ -272,24 +272,20 @@ const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
-'home' | 'condition' | 'coin' | 'gacha' | 'capsule' | 'result'
+'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result'
 >('home');
 const startGacha = () => {
 if (gachaStep !== 0) return;
 
-// ガチャ開始
-setIsGachaAnimationDone(false);
 setGachaStep(1);
 
-// ハンドルが回り終わってからカプセル排出
 window.setTimeout(() => {
 setGachaStep(2);
 }, 1100);
 
-// 演出終了
-// ここでは結果画面へ行かない
 window.setTimeout(() => {
-setIsGachaAnimationDone(true);
+setScreen('searching');
+setGachaStep(0);
 }, 2800);
 };
 
@@ -315,10 +311,9 @@ const [spotDistance, setSpotDistance] = useState<number | null>(null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
-const [isGachaAnimationDone, setIsGachaAnimationDone] = useState(false);
 
 useEffect(() => {
-if (!isGachaAnimationDone) return;
+if (screen !== 'searching') return;
 if (isSearching) return;
 
 const searchIsComplete =
@@ -326,19 +321,21 @@ choices.mood === 'デート'
 ? Boolean(nearbySpot && dateFinalSpot)
 : Boolean(nearbySpot);
 
-// 検索成功、または検索終了後に候補がなかった場合
-if (!searchIsComplete && !searchFailed) return;
+if (!searchIsComplete) return;
 
+const resultTimer = window.setTimeout(() => {
 setScreen('result');
-setGachaStep(0);
-setIsGachaAnimationDone(false);
+}, 1500);
+
+return () => {
+window.clearTimeout(resultTimer);
+};
 }, [
-isGachaAnimationDone,
+screen,
 isSearching,
 nearbySpot,
 dateFinalSpot,
 choices.mood,
-searchFailed,
 ]);
 
 const [exp, setExp] = useState(() => {
@@ -1913,6 +1910,31 @@ className="capsule-shell"
 )}
 
 </div>
+</section>
+) : screen === 'searching' ? (
+
+<section className="searching-screen">
+
+<img
+src={takaranSearch}
+alt="たからん"
+className="searching-takaran"
+/>
+
+<h2 className="searching-title">
+街の宝物を探しています…
+</h2>
+
+<p className="searching-message">
+今日はどんな宝物があるかな？
+</p>
+
+<div className="searching-loader">
+<span></span>
+<span></span>
+<span></span>
+</div>
+
 </section>
 
 ) : screen === 'result' ? (
