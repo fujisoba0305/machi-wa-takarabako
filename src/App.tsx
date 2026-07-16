@@ -248,14 +248,14 @@ return R * c;
 const capsuleIcons: Record<string, string> = {
 自然: "🌳",
 カフェ: "☕",
-グルメ: "🍙",
+グルメ: "🍴",
 デート: "💖",
 写真: "📸",
 夜景: "🌃",
 映画: "🎬",
-イベント: "🎉",
+イベント: "🏢",
 リラックス: "🍃",
-神社: "⛩️",
+"神社・お寺": "⛩️",
 おまかせ: "🎁",
 };
 
@@ -314,21 +314,37 @@ const [courseStep, setCourseStep] = useState(1);
 
 useEffect(() => {
 if (screen !== 'searching') return;
-if (isSearching) return;
 
 const searchIsComplete =
 choices.mood === 'デート'
 ? Boolean(nearbySpot && dateFinalSpot)
 : Boolean(nearbySpot);
 
-if (!searchIsComplete) return;
-
+// 検索成功したら結果画面へ
+if (searchIsComplete) {
 const resultTimer = window.setTimeout(() => {
 setScreen('result');
-}, 1500);
+}, 1000);
 
 return () => {
 window.clearTimeout(resultTimer);
+};
+}
+
+// 検索失敗が確定したら失敗画面で止める
+if (searchFailed) return;
+
+// まだ検索中なら何もしないで待つ
+if (isSearching) return;
+
+// 検索中でも成功でも失敗でもない場合だけ、
+// 念のため5秒後に失敗扱い
+const timeoutTimer = window.setTimeout(() => {
+setSearchFailed(true);
+}, 5000);
+
+return () => {
+window.clearTimeout(timeoutTimer);
 };
 }, [
 screen,
@@ -336,6 +352,7 @@ isSearching,
 nearbySpot,
 dateFinalSpot,
 choices.mood,
+searchFailed,
 ]);
 
 const [exp, setExp] = useState(() => {
@@ -726,11 +743,10 @@ return;
 let finalSpots: Spot[] = [];
 
 if (choices.dateGenre === 'まったり') {
-finalSpots = await getNearbyRelaxSpots(latitude, longitude, searchRadius);
+// 経由地検索で取得済みの候補をそのまま使う
+// 同じAPIを2回呼ばない
+finalSpots = [...waypointSpots];
 
-if (choices.budget === '0円') {
-finalSpots = filterFreeSpots(finalSpots);
-}
 } else if (choices.dateGenre === '夜景') {
 finalSpots = await getNearbyViewSpots(latitude, longitude, searchRadius);
 } else if (choices.dateGenre === 'イベント') {
@@ -1823,11 +1839,6 @@ capsuleIcons[choices.mood] ?? '🎁'
 
 setScreen('gacha');
 
-if (choices.mood === 'デート') {
-findDateCourse();
-} else {
-findNearbySpot();
-}
 }}
 >
 🎰 ガチャスタート！
@@ -2093,8 +2104,8 @@ setCourseStep(5);
 
 {spotDistance !== null && (
 <div>
-<p>現在地から 約{spotDistance.toFixed(1)}km</p>
-<p>徒歩 約{Math.round((spotDistance / 4.8) * 60)}分</p>
+<p>現在地から直線距離 約{spotDistance.toFixed(1)}km</p>
+<p>実際の徒歩距離・時間は地図で確認してください。</p>
 </div>
 )}
 

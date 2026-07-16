@@ -28,13 +28,28 @@ return overpassCache.get(cacheKey) ?? [];
 }
 
 try {
-const response = await fetch('/api/overpass?v=20260708', {
+const isLocalhost =
+window.location.hostname === 'localhost' ||
+window.location.hostname === '127.0.0.1';
+
+const response = await fetch(
+isLocalhost
+? '/api/overpass'
+: '/api/overpass?v=20260708',
+{
 method: 'POST',
-headers: {
+headers: isLocalhost
+? {
+'Content-Type': 'application/x-www-form-urlencoded',
+}
+: {
 'Content-Type': 'application/json',
 },
-body: JSON.stringify({ query }),
-});
+body: isLocalhost
+? new URLSearchParams({ data: query }).toString()
+: JSON.stringify({ query }),
+}
+);
 
 if (!response.ok) {
 console.error('API Error:', response.status);
@@ -44,13 +59,13 @@ return [];
 const data: OverpassResponse = await response.json();
 const elements = data.elements ?? [];
 
-console.log('Proxy取得件数:', elements.length);
+console.log('取得件数:', elements.length);
 
 overpassCache.set(cacheKey, elements);
 
 return elements;
 } catch (error) {
-console.error('Proxy error:', error);
+console.error('Overpass error:', error);
 return [];
 }
 }
@@ -287,8 +302,16 @@ longitude: number,
 radius: number,
 shrineGenre: string
 ) {
+let filter = '["amenity"="place_of_worship"]';
+
+if (shrineGenre === '御朱印巡り') {
+// 神社だけ
+filter =
+'["amenity"="place_of_worship"]["religion"="shinto"]';
+}
+
 const queryBody = `
-${nodeOnly('["amenity"="place_of_worship"]', latitude, longitude, radius)}
+${nodeOnly(filter, latitude, longitude, radius)}
 `;
 
 return fetchOverpass(buildQuery(queryBody));
