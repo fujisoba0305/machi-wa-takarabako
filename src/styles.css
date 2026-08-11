@@ -2939,7 +2939,7 @@ z-index: 2;
 .gacha-handle-button {
 position: absolute;
 top: 79.5%;
-left: 65.8%;
+left: 64.3%;
 
 width: 96px;
 height: 96px;
@@ -3057,7 +3057,7 @@ max-width: 410px;
 
 .gacha-handle-button {
 top: 61%;
-left: 69%;
+left: 67.5%;
 width: 82px;
 height: 82px;
 }
@@ -3166,6 +3166,130 @@ align-items: center;
 justify-content: center;
 
 pointer-events: none;
+}
+
+/* 透明球内の装飾カプセル */
+
+.gacha-capsule-cluster {
+position: absolute;
+top: 36%;
+left: 50%;
+width: 58%;
+max-width: 250px;
+height: 29%;
+transform: translateX(-50%);
+overflow: hidden;
+border-radius: 46%;
+pointer-events: none;
+z-index: 3;
+}
+
+.gacha-capsule-cluster::after {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: inherit;
+background: radial-gradient(
+circle at 34% 24%,
+rgba(255, 255, 255, .28),
+rgba(224, 242, 244, .08) 58%,
+rgba(169, 211, 218, .18)
+);
+z-index: 2;
+}
+
+.decorative-capsule {
+position: absolute;
+width: 30%;
+aspect-ratio: 3 / 2;
+transform: rotate(var(--base-rotation));
+filter: saturate(.88) contrast(.94);
+opacity: .9;
+z-index: 1;
+}
+
+.decorative-capsule .capsule-inner-icon {
+font-size: clamp(16px, 4vw, 24px);
+}
+
+.decorative-capsule:nth-child(1) {
+top: 12%;
+left: 6%;
+--base-rotation: -14deg;
+--mix-x: 12px;
+--mix-y: -7px;
+--mix-rotation: 18deg;
+}
+
+.decorative-capsule:nth-child(2) {
+top: 5%;
+left: 36%;
+--base-rotation: 9deg;
+--mix-x: -9px;
+--mix-y: 10px;
+--mix-rotation: -20deg;
+}
+
+.decorative-capsule:nth-child(3) {
+top: 26%;
+left: 65%;
+--base-rotation: -8deg;
+--mix-x: -12px;
+--mix-y: -8px;
+--mix-rotation: 16deg;
+}
+
+.decorative-capsule:nth-child(4) {
+top: 45%;
+left: 15%;
+--base-rotation: 12deg;
+--mix-x: 8px;
+--mix-y: 9px;
+--mix-rotation: -15deg;
+}
+
+.decorative-capsule:nth-child(5) {
+top: 50%;
+left: 50%;
+--base-rotation: -16deg;
+--mix-x: -7px;
+--mix-y: -10px;
+--mix-rotation: 14deg;
+}
+
+.decorative-capsule:nth-child(6) {
+top: 69%;
+left: 32%;
+--base-rotation: 6deg;
+--mix-x: 10px;
+--mix-y: -8px;
+--mix-rotation: -18deg;
+}
+
+.gacha-capsule-cluster.is-mixing .decorative-capsule {
+animation: mixDecorativeCapsule .9s ease-in-out;
+}
+
+@keyframes mixDecorativeCapsule {
+0%, 100% {
+transform: translate(0, 0) rotate(var(--base-rotation));
+}
+
+45% {
+transform: translate(var(--mix-x), var(--mix-y)) rotate(var(--mix-rotation));
+}
+
+72% {
+transform: translate(0, 0) rotate(var(--base-rotation));
+}
+}
+
+@media (max-width: 430px) {
+.gacha-capsule-cluster {
+top: 29%;
+width: 60%;
+height: 24%;
+}
 }
 /* 待機中 */
 

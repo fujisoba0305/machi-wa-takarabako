@@ -259,6 +259,8 @@ const capsuleIcons: Record<string, string> = {
 おまかせ: "🎁",
 };
 
+const decorativeCapsuleIcons = ['☕', '🌳', '📷', '⛩️', '🍴', '🎵'];
+
 export default function App() {
 const [name, setName] = useState('');
 const [hasStarted, setHasStarted] = useState(false);
@@ -1893,19 +1895,24 @@ alt=""
 </button>
 
 {gachaStep < 2 && (
-<>
-<div className="capsule-wrap waiting-capsule-wrap">
+<div
+className={`gacha-capsule-cluster ${gachaStep === 1 ? 'is-mixing' : ''}`}
+aria-hidden="true"
+>
+{decorativeCapsuleIcons.map((icon) => (
+<div className="decorative-capsule" key={icon}>
 <img
 src={capsuleEmpty}
-alt="待機中のカプセル"
+alt=""
 className="capsule-shell"
 />
 
 <div className="capsule-inner-icon">
-{capsuleIcon}
+{icon}
 </div>
 </div>
-</>
+))}
+</div>
 )}
 
 
