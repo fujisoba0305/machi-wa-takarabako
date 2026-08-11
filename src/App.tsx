@@ -553,23 +553,37 @@ return !isPaidLike;
 });
 }
 function getDistanceRange(expandLevel: number) {
+const walkingRange = getWalkingDistanceRange(expandLevel);
+
+return { min: 0, max: walkingRange.max };
+}
+
+function getWalkingDistanceRange(expandLevel: number) {
 if (choices.distance === '1km') {
-return { min: 0, max: 1 + expandLevel };
+return { min: 0, max: 2 + expandLevel };
 }
 
 if (choices.distance === '3km') {
-return { min: 0, max: 3 + expandLevel };
+return { min: 2, max: 4 + expandLevel };
 }
 
 if (choices.distance === '5km') {
-return { min: 0, max: 5 + expandLevel };
+return { min: 4, max: 6 + expandLevel };
 }
 
 if (choices.distance === '10km') {
-return { min: 0, max: 10 + expandLevel };
+return { min: 9, max: 11 + expandLevel };
 }
 
 return { min: 0, max: 999 };
+}
+
+function getNormalSearchRadius(expandLevel: number) {
+if (choices.distance === '？km') {
+return getRadius() + expandLevel * 1000;
+}
+
+return getWalkingDistanceRange(expandLevel).max * 1000;
 }
 
 function setSelectedSpot(spot: Spot | null) {
@@ -602,7 +616,7 @@ if (!currentLocation) return [];
 
 const latitude = currentLocation.latitude;
 const longitude = currentLocation.longitude;
-const radius = getRadius() + expandLevel * 1000;
+const radius = getNormalSearchRadius(expandLevel);
 
 if (choices.mood === 'カフェ') {
 return getNearbyCafes(latitude, longitude, radius);
@@ -875,7 +889,7 @@ console.info('[normal-search] started', {
 searchId,
 distance: choices.distance,
 expandLevel: normalSearchExpandLevel,
-overpassRadiusMeters: getRadius() + normalSearchExpandLevel * 1000,
+overpassRadiusMeters: getNormalSearchRadius(normalSearchExpandLevel),
 haversineMaxMeters:
 getDistanceRange(normalSearchExpandLevel).max * 1000,
 at: new Date().toISOString(),
@@ -952,6 +966,7 @@ setShowCapsule(true);
 return;
 }
 
+const targetDistanceKm = getRadius() / 1000;
 const closestCandidates = [...namedSpots]
 .sort((spotA, spotB) => {
 const locationA = getSpotLocation(spotA);
@@ -972,12 +987,18 @@ locationB.lat,
 locationB.lon
 );
 
-return distanceA - distanceB;
+return (
+Math.abs(distanceA - targetDistanceKm) -
+Math.abs(distanceB - targetDistanceKm)
+);
 })
 .slice(0, 16);
 
-const maxWalkingDistanceMeters =
-getDistanceRange(normalSearchExpandLevel).max * 1000;
+const walkingDistanceRange = getWalkingDistanceRange(
+normalSearchExpandLevel
+);
+const minWalkingDistanceMeters = walkingDistanceRange.min * 1000;
+const maxWalkingDistanceMeters = walkingDistanceRange.max * 1000;
 let eligibleCandidates: { spot: Spot; distanceMeters: number }[] = [];
 let secondBatchExecuted = false;
 
@@ -1031,6 +1052,7 @@ const distanceMeters = walkingDistanceById.get(String(index));
 
 if (
 typeof distanceMeters !== 'number' ||
+distanceMeters < minWalkingDistanceMeters ||
 distanceMeters > maxWalkingDistanceMeters
 ) {
 return [];
@@ -1046,6 +1068,7 @@ batchNumber,
 responseCount: walkingResults.length,
 ...walkingStatusCounts,
 withinLimitCount: eligibleCandidates.length,
+minWalkingDistanceMeters,
 maxWalkingDistanceMeters,
 });
 }
