@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import {
 Compass,
 BookOpen,
@@ -311,6 +311,8 @@ const [spotDistance, setSpotDistance] = useState<number | null>(null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
+const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(false);
+const normalArrivalRewardClaimedRef = useRef(false);
 
 useEffect(() => {
 if (screen !== 'searching') return;
@@ -473,10 +475,10 @@ if (choices.distance === '10km') return 10000;
 return 3000;
 }
 
-function getSpotsInRange(spots: Spot[]) {
+function getSpotsInRange(spots: Spot[], expandLevel: number) {
 if (!currentLocation) return [];
 
-const range = getDistanceRange();
+const range = getDistanceRange(expandLevel);
 
 return getNamedSpots(spots).filter((spot) => {
 const location = getSpotLocation(spot);
@@ -532,23 +534,21 @@ tags.shop === 'coffee';
 return !isPaidLike;
 });
 }
-function getDistanceRange() {
-const expand = searchExpandLevel;
-
+function getDistanceRange(expandLevel: number) {
 if (choices.distance === '1km') {
-return { min: 0, max: 1.5 + expand };
+return { min: 0, max: 1 + expandLevel };
 }
 
 if (choices.distance === '3km') {
-return { min: 0, max: 4 + expand };
+return { min: 0, max: 3 + expandLevel };
 }
 
 if (choices.distance === '5km') {
-return { min: 0, max: 6 + expand };
+return { min: 0, max: 5 + expandLevel };
 }
 
 if (choices.distance === '10km') {
-return { min: 0, max: 12 + expand };
+return { min: 0, max: 10 + expandLevel };
 }
 
 return { min: 0, max: 999 };
@@ -579,12 +579,12 @@ location.lon
 setSpotDistance(distance);
 }
 
-async function getSpotsByMood() {
+async function getSpotsByMood(expandLevel: number) {
 if (!currentLocation) return [];
 
 const latitude = currentLocation.latitude;
 const longitude = currentLocation.longitude;
-const radius = getRadius() + searchExpandLevel * 1000;
+const radius = getRadius() + expandLevel * 1000;
 
 if (choices.mood === 'カフェ') {
 return getNearbyCafes(latitude, longitude, radius);
@@ -845,17 +845,21 @@ setSearchFailed(true);
 }
 }
 
-async function findNearbySpot() {
+async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
 if (!currentLocation) {
 alert('先に現在地を取得してください。');
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
+setSearchFailed(true);
+setIsSearching(false);
 return;
 }
 
 setIsSearching(true);
 setSearchFailed(false);
+normalArrivalRewardClaimedRef.current = false;
+setHasArrivedAtNormalSpot(false);
 
 try {
 setNearbySpot(null);
@@ -867,9 +871,9 @@ await findDateCourse();
 return;
 }
 
-const spots = await getSpotsByMood();
+const spots = await getSpotsByMood(normalSearchExpandLevel);
 
-const namedSpots = getNamedSpots(spots);
+const namedSpots = getSpotsInRange(spots, normalSearchExpandLevel);
 
 console.log('取得したspots数:', spots.length);
 console.log('名前ありspots数:', namedSpots.length);
@@ -905,6 +909,7 @@ console.error(error);
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
+setSearchFailed(true);
 } finally {
 setIsSearching(false);
 }
@@ -1932,6 +1937,30 @@ alt="たからん"
 className="searching-takaran"
 />
 
+{searchFailed ? (
+<div className="search-failed-card" role="alert">
+<h2 className="searching-title">
+スポットが見つかりませんでした
+</h2>
+
+<p className="searching-message">
+条件を変えるか、少し時間をおいてもう一度探してみてね。
+</p>
+
+<button
+type="button"
+className="gacha-button search-failed-button"
+onClick={() => {
+setSearchFailed(false);
+setIsSearching(false);
+setScreen('condition');
+}}
+>
+条件を変えて戻る
+</button>
+</div>
+) : (
+<>
 <h2 className="searching-title">
 街の宝物を探しています…
 </h2>
@@ -1945,6 +1974,8 @@ className="searching-takaran"
 <span></span>
 <span></span>
 </div>
+</>
+)}
 
 </section>
 
@@ -2124,8 +2155,15 @@ className="gacha-button"
 type="button"
 disabled={isSearching}
 onClick={async () => {
+if (choices.mood === 'デート') {
 setSearchExpandLevel((level) => level + 1);
 await findNearbySpot();
+return;
+}
+
+const nextExpandLevel = searchExpandLevel + 1;
+setSearchExpandLevel(nextExpandLevel);
+await findNearbySpot(nextExpandLevel);
 }}
 >
 もう少し範囲を広げて探す
@@ -2149,7 +2187,13 @@ setScreen('condition');
 <button
 className="gacha-button"
 type="button"
+disabled={hasArrivedAtNormalSpot}
 onClick={() => {
+if (normalArrivalRewardClaimedRef.current) return;
+
+normalArrivalRewardClaimedRef.current = true;
+setHasArrivedAtNormalSpot(true);
+
 setExp((currentExp) => {
 const beforeRank = getWalkRank(currentExp);
 const nextExp = currentExp + 20;
@@ -2176,7 +2220,7 @@ return nextCount;
 alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
 }}
 >
-🎉 到着した！
+{hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : '🎉 到着した！'}
 </button>
 )}
 </section>
