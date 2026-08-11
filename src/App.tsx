@@ -1388,9 +1388,16 @@ choices.mood === 'デート'
 function openMapForSpot(spot: Spot | null, fallbackQuery: string) {
 const location = spot ? getSpotLocation(spot) : null;
 
-if (location) {
+if (location && currentLocation) {
+const params = new URLSearchParams({
+api: '1',
+origin: `${currentLocation.latitude},${currentLocation.longitude}`,
+destination: `${location.lat},${location.lon}`,
+travelmode: 'walking',
+});
+
 window.open(
-`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lon}`,
+`https://www.google.com/maps/dir/?${params.toString()}`,
 '_blank'
 );
 return;
