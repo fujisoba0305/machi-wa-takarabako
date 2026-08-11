@@ -920,9 +920,15 @@ locationB.lon
 
 return distanceA - distanceB;
 })
-.slice(0, 8);
+.slice(0, 16);
 
-const walkingDestinations = closestCandidates.map((spot, index) => {
+const maxWalkingDistanceMeters =
+getDistanceRange(normalSearchExpandLevel).max * 1000;
+let eligibleCandidates: { spot: Spot; distanceMeters: number }[] = [];
+
+for (let batchStart = 0; batchStart < closestCandidates.length; batchStart += 8) {
+const batchCandidates = closestCandidates.slice(batchStart, batchStart + 8);
+const walkingDestinations = batchCandidates.map((spot, index) => {
 const location = getSpotLocation(spot)!;
 
 return {
@@ -946,9 +952,8 @@ Number.isFinite(result.distanceMeters)
 )
 .map((result) => [result.id, result.distanceMeters as number])
 );
-const maxWalkingDistanceMeters =
-getDistanceRange(normalSearchExpandLevel).max * 1000;
-const eligibleCandidates = closestCandidates.flatMap((spot, index) => {
+
+eligibleCandidates = batchCandidates.flatMap((spot, index) => {
 const distanceMeters = walkingDistanceById.get(String(index));
 
 if (
@@ -960,6 +965,9 @@ return [];
 
 return [{ spot, distanceMeters }];
 });
+
+if (eligibleCandidates.length > 0) break;
+}
 
 if (eligibleCandidates.length === 0) {
 setNearbySpot(null);
