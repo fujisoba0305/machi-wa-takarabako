@@ -3723,6 +3723,92 @@ font-size: 12px;
 font-weight: 700;
 }
 
+.treasure-discovery-button:disabled {
+opacity: 0.68;
+cursor: wait;
+}
+
+.treasure-floating-button {
+position: fixed;
+right: max(18px, calc((100vw - 430px) / 2 + 18px));
+bottom: 94px;
+z-index: 90;
+width: 60px;
+height: 60px;
+display: grid;
+place-items: center;
+border: 3px solid #fff3bd;
+border-radius: 50%;
+background: linear-gradient(145deg, #ffe783, #e6a92f);
+color: #593713;
+box-shadow: 0 8px 22px rgba(74, 44, 12, 0.3);
+cursor: pointer;
+}
+
+.treasure-floating-button > span {
+font-size: 29px;
+line-height: 1;
+}
+
+.treasure-floating-button small {
+position: absolute;
+top: 4px;
+right: 7px;
+width: 18px;
+height: 18px;
+display: grid;
+place-items: center;
+border-radius: 50%;
+background: #4f8d42;
+color: #fff;
+font-size: 14px;
+font-weight: 900;
+line-height: 1;
+}
+
+.treasure-location-status,
+.treasure-location-error {
+position: fixed;
+left: 50%;
+bottom: 94px;
+transform: translateX(-50%);
+z-index: 120;
+width: min(390px, calc(100% - 36px));
+padding: 13px 16px;
+border: 2px solid #d9ad42;
+border-radius: 17px;
+background: rgba(255, 249, 218, 0.98);
+color: #65451e;
+box-shadow: 0 8px 24px rgba(68, 44, 17, 0.24);
+font-size: 14px;
+font-weight: 800;
+text-align: center;
+}
+
+.treasure-location-error {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+border-color: #d88b6f;
+background: rgba(255, 242, 232, 0.98);
+color: #7e3524;
+text-align: left;
+}
+
+.treasure-location-error button {
+flex: 0 0 auto;
+width: 30px;
+height: 30px;
+border: 0;
+border-radius: 50%;
+background: rgba(126, 53, 36, 0.12);
+color: inherit;
+font-size: 20px;
+font-weight: 900;
+cursor: pointer;
+}
+
 .treasure-register-screen {
 min-height: calc(100dvh - 128px);
 display: flex;

@@ -260,6 +260,11 @@ const capsuleIcons: Record<string, string> = {
 おまかせ: "🎁",
 };
 
+type Coordinates = {
+latitude: number;
+longitude: number;
+};
+
 type TreasureCategory =
 | '☕ カフェ'
 | '🍜 グルメ'
@@ -287,6 +292,30 @@ const treasureCategories: TreasureCategory[] = [
 '🏪 お店',
 '💎 その他',
 ];
+
+function requestCurrentCoordinates(): Promise<Coordinates> {
+return new Promise((resolve, reject) => {
+if (!navigator.geolocation) {
+reject(new Error('Geolocation is not supported'));
+return;
+}
+
+navigator.geolocation.getCurrentPosition(
+(position) => {
+resolve({
+latitude: position.coords.latitude,
+longitude: position.coords.longitude,
+});
+},
+reject,
+{
+enableHighAccuracy: true,
+timeout: 10000,
+maximumAge: 0,
+}
+);
+});
+}
 
 const decorativeCapsuleIcons = ['☕', '🌳', '📷', '⛩️', '🍴', '🎵'];
 
@@ -338,10 +367,7 @@ eventGenre: '',
 shrineGenre:','
 });
 
-const [currentLocation, setCurrentLocation] = useState<{
-latitude: number;
-longitude: number;
-} | null>(null);
+const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
 
 const [nearbySpot, setNearbySpot] = useState<Spot | null>(null);
 const [dateFinalSpot, setDateFinalSpot] = useState<Spot | null>(null);
@@ -358,6 +384,9 @@ const [treasureImage, setTreasureImage] = useState<File | null>(null);
 const [treasureImagePreview, setTreasureImagePreview] = useState<string | null>(null);
 const [registeredTreasure, setRegisteredTreasure] =
 useState<TreasureRegistration | null>(null);
+const [treasureLocation, setTreasureLocation] = useState<Coordinates | null>(null);
+const [isTreasureLocationLoading, setIsTreasureLocationLoading] = useState(false);
+const [treasureLocationError, setTreasureLocationError] = useState('');
 const normalArrivalRewardClaimedRef = useRef(false);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
@@ -465,7 +494,7 @@ setChoices((currentChoices) => ({
 }));
 }
 
-function getCurrentLocation() {
+async function getCurrentLocation() {
 if (!navigator.geolocation) {
 setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
 alert('このブラウザでは現在地取得が使えません。');
@@ -474,26 +503,15 @@ return;
 
 setTakaranSpeech("🔍 現在地を探してるよ...");
 
-navigator.geolocation.getCurrentPosition(
-(position) => {
-setCurrentLocation({
-latitude: position.coords.latitude,
-longitude: position.coords.longitude,
-});
-
+try {
+const coordinates = await requestCurrentCoordinates();
+setCurrentLocation(coordinates);
 setTakaranSpeech("🎉 よし！冒険に行こう！");
-},
-(error) => {
+} catch (error) {
 console.error(error);
 setTakaranSpeech("😢 現在地が見つからなかったよ...");
 alert('現在地を取得できませんでした。ブラウザの位置情報許可を確認してください。');
-},
-{
-enableHighAccuracy: true,
-timeout: 10000,
-maximumAge: 0,
 }
-);
 }
 
 function resetTreasureRegistration() {
@@ -503,16 +521,29 @@ setTreasureCategory('');
 setTreasureImage(null);
 setTreasureImagePreview(null);
 setRegisteredTreasure(null);
+setTreasureLocation(null);
 }
 
-function openTreasureRegistration() {
-if (!currentLocation) {
-getCurrentLocation();
-return;
-}
+async function openTreasureRegistration() {
+if (isTreasureLocationLoading) return;
+
+setIsTreasureLocationLoading(true);
+setTreasureLocationError('');
+
+try {
+const coordinates = await requestCurrentCoordinates();
 
 resetTreasureRegistration();
+setTreasureLocation(coordinates);
 setScreen('treasure-register');
+} catch (error) {
+console.error(error);
+setTreasureLocationError(
+'現在地を取得できませんでした。位置情報の許可を確認して、もう一度お試しください。'
+);
+} finally {
+setIsTreasureLocationLoading(false);
+}
 }
 
 function closeTreasureRegistration() {
@@ -530,14 +561,14 @@ setTreasureImagePreview(file ? URL.createObjectURL(file) : null);
 function handleTreasureRegistration(event: FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
-if (!currentLocation || !treasureName.trim() || !treasureCategory) return;
+if (!treasureLocation || !treasureName.trim() || !treasureCategory) return;
 
 setRegisteredTreasure({
 name: treasureName.trim(),
 comment: treasureComment.trim(),
 category: treasureCategory,
-latitude: currentLocation.latitude,
-longitude: currentLocation.longitude,
+latitude: treasureLocation.latitude,
+longitude: treasureLocation.longitude,
 image: treasureImage,
 });
 }
@@ -1937,14 +1968,15 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 className="treasure-discovery-button"
 type="button"
 onClick={openTreasureRegistration}
+disabled={isTreasureLocationLoading}
 >
 <span aria-hidden="true">💎</span>
 <span>
-<strong>宝物を発見！</strong>
+<strong>
+{isTreasureLocationLoading ? '今いる場所を確認中…' : '宝物を発見！'}
+</strong>
 <small>
-{currentLocation
-? '気になる場所を記録する'
-: '現在地を取得してから記録する'}
+押した場所を新しく取得して記録する
 </small>
 </span>
 </button>
@@ -2014,10 +2046,10 @@ onClick={closeTreasureRegistration}
 <span aria-hidden="true">📍</span>
 <div>
 <strong>この場所の現在地</strong>
-{currentLocation ? (
+{treasureLocation ? (
 <p>
-緯度 {currentLocation.latitude.toFixed(6)}<br />
-経度 {currentLocation.longitude.toFixed(6)}
+緯度 {treasureLocation.latitude.toFixed(6)}<br />
+経度 {treasureLocation.longitude.toFixed(6)}
 </p>
 ) : (
 <p>現在地を取得できていません。</p>
@@ -2096,7 +2128,7 @@ onClick={closeTreasureRegistration}
 <button
 className="gacha-button treasure-register-primary"
 type="submit"
-disabled={!currentLocation || !treasureName.trim() || !treasureCategory}
+disabled={!treasureLocation || !treasureName.trim() || !treasureCategory}
 >
 💎 登録する
 </button>
@@ -2712,6 +2744,41 @@ alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
 )}
 </section>
 ) :null}
+
+{hasStarted &&
+screen === 'result' &&
+!isTreasureLocationLoading &&
+!treasureLocationError && (
+<button
+className="treasure-floating-button"
+type="button"
+onClick={openTreasureRegistration}
+aria-label="今いる場所で宝物を発見する"
+title="宝物を発見"
+>
+<span aria-hidden="true">💎</span>
+<small>＋</small>
+</button>
+)}
+
+{isTreasureLocationLoading && (
+<div className="treasure-location-status" role="status" aria-live="polite">
+📍 今いる場所を確認しています…
+</div>
+)}
+
+{treasureLocationError && !isTreasureLocationLoading && (
+<div className="treasure-location-error" role="alert">
+<span>{treasureLocationError}</span>
+<button
+type="button"
+onClick={() => setTreasureLocationError('')}
+aria-label="メッセージを閉じる"
+>
+×
+</button>
+</div>
+)}
 
 {hasStarted && (
 <nav className="bottom-nav">
