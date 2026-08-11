@@ -20,6 +20,7 @@ getNearbyCinemas,
 getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
+import { getWalkingDistances } from './services/walkingDistance';
 
 import takaranImage from './assets/takaran/takaran.png';
 import titleBackground from './assets/title-background.png';
@@ -881,30 +882,96 @@ console.log('取得したspots数:', spots.length);
 console.log('名前ありspots数:', namedSpots.length);
 console.log('namedSpots:', namedSpots);
 
-if (namedSpots.length > 0) {
-const spot = randomItem(namedSpots);
-setSelectedSpot(spot);
-setNearbySpot(spot);
-
-setShowCapsule(true);
-
-const location = getSpotLocation(spot);
-if (location && currentLocation) {
-const distance = calculateDistance(
-currentLocation.latitude,
-currentLocation.longitude,
-location.lat,
-location.lon
-);
-setSpotDistance(distance);
-}
-} else {
+if (namedSpots.length === 0) {
 setNearbySpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
 
 setSearchFailed(true);
+return;
 }
+
+if (choices.distance === '？km') {
+const spot = randomItem(namedSpots);
+setSelectedSpot(spot);
+setShowCapsule(true);
+return;
+}
+
+const closestCandidates = [...namedSpots]
+.sort((spotA, spotB) => {
+const locationA = getSpotLocation(spotA);
+const locationB = getSpotLocation(spotB);
+
+if (!locationA || !locationB) return 0;
+
+const distanceA = calculateDistance(
+currentLocation.latitude,
+currentLocation.longitude,
+locationA.lat,
+locationA.lon
+);
+const distanceB = calculateDistance(
+currentLocation.latitude,
+currentLocation.longitude,
+locationB.lat,
+locationB.lon
+);
+
+return distanceA - distanceB;
+})
+.slice(0, 8);
+
+const walkingDestinations = closestCandidates.map((spot, index) => {
+const location = getSpotLocation(spot)!;
+
+return {
+id: String(index),
+latitude: location.lat,
+longitude: location.lon,
+};
+});
+
+const walkingResults = await getWalkingDistances(
+currentLocation,
+walkingDestinations
+);
+const walkingDistanceById = new Map(
+walkingResults
+.filter(
+(result) =>
+result.status === 'OK' &&
+typeof result.distanceMeters === 'number' &&
+Number.isFinite(result.distanceMeters)
+)
+.map((result) => [result.id, result.distanceMeters as number])
+);
+const maxWalkingDistanceMeters =
+getDistanceRange(normalSearchExpandLevel).max * 1000;
+const eligibleCandidates = closestCandidates.flatMap((spot, index) => {
+const distanceMeters = walkingDistanceById.get(String(index));
+
+if (
+typeof distanceMeters !== 'number' ||
+distanceMeters > maxWalkingDistanceMeters
+) {
+return [];
+}
+
+return [{ spot, distanceMeters }];
+});
+
+if (eligibleCandidates.length === 0) {
+setNearbySpot(null);
+setSpotDistance(null);
+setSearchFailed(true);
+return;
+}
+
+const selectedCandidate = randomItem(eligibleCandidates);
+setNearbySpot(selectedCandidate.spot);
+setSpotDistance(selectedCandidate.distanceMeters / 1000);
+setShowCapsule(true);
 
 } catch (error) {
 console.error(error);
@@ -2142,8 +2209,14 @@ setCourseStep(5);
 
 {spotDistance !== null && (
 <div>
+{choices.mood === 'デート' || choices.distance === '？km' ? (
+<>
 <p>現在地から直線距離 約{spotDistance.toFixed(1)}km</p>
 <p>実際の徒歩距離・時間は地図で確認してください。</p>
+</>
+) : (
+<p>徒歩ルート 約{spotDistance.toFixed(1)}km</p>
+)}
 </div>
 )}
 
