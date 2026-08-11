@@ -14,20 +14,52 @@ distanceMeters: number | null;
 errorCode?: number | null;
 };
 
+type WalkingDistanceDiagnostics = {
+searchId: string;
+batchNumber: number;
+};
+
 type WalkingDistanceResponse = {
 results: WalkingDistanceResult[];
 };
 
 export async function getWalkingDistances(
 origin: Coordinates,
-destinations: WalkingDistanceDestination[]
+destinations: WalkingDistanceDestination[],
+diagnostics?: WalkingDistanceDiagnostics
 ): Promise<WalkingDistanceResult[]> {
-const response = await fetch('/api/walking-distance', {
+let response: Response;
+
+try {
+response = await fetch('/api/walking-distance', {
 method: 'POST',
 headers: {
 'Content-Type': 'application/json',
+...(diagnostics
+? {
+'X-Search-Id': diagnostics.searchId,
+'X-Walking-Batch': String(diagnostics.batchNumber),
+}
+: {}),
 },
 body: JSON.stringify({ origin, destinations }),
+});
+} catch (error) {
+console.error('[walking-distance-client] HTTP request failed', {
+searchId: diagnostics?.searchId,
+batchNumber: diagnostics?.batchNumber,
+candidateCount: destinations.length,
+error: error instanceof Error ? error.message : 'Unknown error',
+});
+throw error;
+}
+
+console.info('[walking-distance-client] HTTP response', {
+searchId: diagnostics?.searchId,
+batchNumber: diagnostics?.batchNumber,
+candidateCount: destinations.length,
+ok: response.ok,
+status: response.status,
 });
 
 if (!response.ok) {

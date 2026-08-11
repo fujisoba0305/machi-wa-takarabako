@@ -287,6 +287,13 @@ setGachaStep(2);
 }, 1100);
 
 window.setTimeout(() => {
+if (activeNormalSearchIdRef.current) {
+console.info('[normal-search] searching_screen_transition', {
+searchId: activeNormalSearchIdRef.current,
+distance: choices.distance,
+at: new Date().toISOString(),
+});
+}
 setScreen('searching');
 setGachaStep(0);
 }, 2800);
@@ -316,6 +323,8 @@ const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
 const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(false);
 const normalArrivalRewardClaimedRef = useRef(false);
+const normalSearchSequenceRef = useRef(0);
+const activeNormalSearchIdRef = useRef<string | null>(null);
 
 useEffect(() => {
 if (screen !== 'searching') return;
@@ -345,6 +354,12 @@ if (isSearching) return;
 // 検索中でも成功でも失敗でもない場合だけ、
 // 念のため5秒後に失敗扱い
 const timeoutTimer = window.setTimeout(() => {
+if (activeNormalSearchIdRef.current && choices.mood !== 'デート') {
+console.warn('[normal-search] failed', {
+searchId: activeNormalSearchIdRef.current,
+reason: 'searching_screen_fallback_timeout',
+});
+}
 setSearchFailed(true);
 }, 5000);
 
@@ -849,7 +864,31 @@ setSearchFailed(true);
 }
 
 async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
+const searchId =
+choices.mood === 'デート'
+? null
+: `${Date.now().toString(36)}-${++normalSearchSequenceRef.current}`;
+
+if (searchId) {
+activeNormalSearchIdRef.current = searchId;
+console.info('[normal-search] started', {
+searchId,
+distance: choices.distance,
+expandLevel: normalSearchExpandLevel,
+overpassRadiusMeters: getRadius() + normalSearchExpandLevel * 1000,
+haversineMaxMeters:
+getDistanceRange(normalSearchExpandLevel).max * 1000,
+at: new Date().toISOString(),
+});
+}
+
 if (!currentLocation) {
+if (searchId) {
+console.warn('[normal-search] failed', {
+searchId,
+reason: 'current_location_missing',
+});
+}
 alert('先に現在地を取得してください。');
 setNearbySpot(null);
 setDateFinalSpot(null);
@@ -876,13 +915,28 @@ return;
 
 const spots = await getSpotsByMood(normalSearchExpandLevel);
 
+const validSpots = getNamedSpots(spots);
 const namedSpots = getSpotsInRange(spots, normalSearchExpandLevel);
 
 console.log('取得したspots数:', spots.length);
 console.log('名前ありspots数:', namedSpots.length);
 console.log('namedSpots:', namedSpots);
+if (searchId) {
+console.info('[normal-search] overpass_complete', {
+searchId,
+overpassCount: spots.length,
+validNameAndCoordinatesCount: validSpots.length,
+haversineEligibleCount: namedSpots.length,
+});
+}
 
 if (namedSpots.length === 0) {
+if (searchId) {
+console.warn('[normal-search] failed', {
+searchId,
+reason: 'no_haversine_candidates',
+});
+}
 setNearbySpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
@@ -925,9 +979,20 @@ return distanceA - distanceB;
 const maxWalkingDistanceMeters =
 getDistanceRange(normalSearchExpandLevel).max * 1000;
 let eligibleCandidates: { spot: Spot; distanceMeters: number }[] = [];
+let secondBatchExecuted = false;
 
 for (let batchStart = 0; batchStart < closestCandidates.length; batchStart += 8) {
+const batchNumber = batchStart / 8 + 1;
 const batchCandidates = closestCandidates.slice(batchStart, batchStart + 8);
+if (batchNumber === 2) secondBatchExecuted = true;
+
+if (searchId) {
+console.info('[normal-search] walking_batch_sent', {
+searchId,
+batchNumber,
+candidateCount: batchCandidates.length,
+});
+}
 const walkingDestinations = batchCandidates.map((spot, index) => {
 const location = getSpotLocation(spot)!;
 
@@ -940,7 +1005,15 @@ longitude: location.lon,
 
 const walkingResults = await getWalkingDistances(
 currentLocation,
-walkingDestinations
+walkingDestinations,
+searchId ? { searchId, batchNumber } : undefined
+);
+const walkingStatusCounts = walkingResults.reduce(
+(counts, result) => {
+counts[result.status] += 1;
+return counts;
+},
+{ OK: 0, NO_ROUTE: 0, ERROR: 0 }
 );
 const walkingDistanceById = new Map(
 walkingResults
@@ -966,10 +1039,34 @@ return [];
 return [{ spot, distanceMeters }];
 });
 
+if (searchId) {
+console.info('[normal-search] walking_batch_complete', {
+searchId,
+batchNumber,
+responseCount: walkingResults.length,
+...walkingStatusCounts,
+withinLimitCount: eligibleCandidates.length,
+maxWalkingDistanceMeters,
+});
+}
+
 if (eligibleCandidates.length > 0) break;
 }
 
+if (searchId) {
+console.info('[normal-search] second_batch', {
+searchId,
+executed: secondBatchExecuted,
+});
+}
+
 if (eligibleCandidates.length === 0) {
+if (searchId) {
+console.warn('[normal-search] failed', {
+searchId,
+reason: 'no_walking_candidates_within_limit',
+});
+}
 setNearbySpot(null);
 setSpotDistance(null);
 setSearchFailed(true);
@@ -977,12 +1074,25 @@ return;
 }
 
 const selectedCandidate = randomItem(eligibleCandidates);
+if (searchId) {
+console.info('[normal-search] succeeded', {
+searchId,
+distanceMeters: selectedCandidate.distanceMeters,
+});
+}
 setNearbySpot(selectedCandidate.spot);
 setSpotDistance(selectedCandidate.distanceMeters / 1000);
 setShowCapsule(true);
 
 } catch (error) {
 console.error(error);
+if (searchId) {
+console.error('[normal-search] failed', {
+searchId,
+reason: 'search_or_walking_api_error',
+error: error instanceof Error ? error.message : 'Unknown error',
+});
+}
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);

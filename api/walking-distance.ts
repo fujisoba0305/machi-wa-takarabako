@@ -33,6 +33,13 @@ const GOOGLE_ROUTES_URL =
 const MAX_DESTINATIONS = 8;
 const REQUEST_TIMEOUT_MS = 12000;
 
+function getDiagnosticHeader(value: string | string[] | undefined) {
+const headerValue = Array.isArray(value) ? value[0] : value;
+return headerValue && /^[a-z0-9-]{1,64}$/i.test(headerValue)
+? headerValue
+: undefined;
+}
+
 function isCoordinates(value: unknown): value is Coordinates {
 if (!value || typeof value !== 'object') return false;
 
@@ -126,6 +133,16 @@ error:
 });
 }
 
+const searchId = getDiagnosticHeader(req.headers['x-search-id']);
+const batchNumber = getDiagnosticHeader(req.headers['x-walking-batch']);
+const diagnosticContext = {
+searchId,
+batchNumber,
+receivedCandidateCount: request.destinations.length,
+};
+
+console.info('[walking-distance-api] request_received', diagnosticContext);
+
 const apiKey = process.env.GOOGLE_ROUTES_API_KEY;
 
 if (!apiKey) {
@@ -153,11 +170,30 @@ travelMode: 'WALK',
 signal: controller.signal,
 });
 
+console.info('[walking-distance-api] google_http_response', {
+...diagnosticContext,
+status: googleResponse.status,
+ok: googleResponse.ok,
+timedOut: false,
+});
+
 if (!googleResponse.ok) {
 const errorText = await googleResponse.text();
+let googleErrorCode: string | number | undefined;
+
+try {
+const parsedError = JSON.parse(errorText) as {
+error?: { code?: number; status?: string };
+};
+googleErrorCode = parsedError.error?.status ?? parsedError.error?.code;
+} catch {
+googleErrorCode = undefined;
+}
+
 console.error('Google Routes API error:', {
-status: googleResponse.status,
-body: errorText.slice(0, 500),
+...diagnosticContext,
+httpStatus: googleResponse.status,
+googleErrorCode,
 });
 
 return res.status(502).json({ error: 'Walking route lookup failed' });
@@ -166,9 +202,14 @@ return res.status(502).json({ error: 'Walking route lookup failed' });
 const elements = (await googleResponse.json()) as unknown;
 
 if (!Array.isArray(elements)) {
-console.error('Unexpected Google Routes API response');
+console.error('Unexpected Google Routes API response', diagnosticContext);
 return res.status(502).json({ error: 'Walking route lookup failed' });
 }
+
+console.info('[walking-distance-api] matrix_received', {
+...diagnosticContext,
+matrixElementCount: elements.length,
+});
 
 const elementsByDestination = new Map<number, RouteMatrixElement>();
 
@@ -213,14 +254,44 @@ errorCode: element?.status?.code ?? null,
 };
 });
 
+const resultCounts = results.reduce(
+(counts, result) => {
+counts[result.status] += 1;
+return counts;
+},
+{ OK: 0, NO_ROUTE: 0, ERROR: 0 }
+);
+const googleErrorCodes = [
+...new Set(
+results
+.filter((result) => result.status === 'ERROR' && result.errorCode != null)
+.map((result) => result.errorCode)
+),
+];
+
+console.info('[walking-distance-api] result_summary', {
+...diagnosticContext,
+matrixElementCount: elements.length,
+...resultCounts,
+googleErrorCodes,
+timedOut: false,
+});
+
 return res.status(200).json({ results });
 } catch (error) {
 if (error instanceof Error && error.name === 'AbortError') {
-console.error('Google Routes API request timed out');
+console.error('Google Routes API request timed out', {
+...diagnosticContext,
+timedOut: true,
+});
 return res.status(504).json({ error: 'Walking route lookup timed out' });
 }
 
-console.error('Walking distance API failed:', error);
+console.error('Walking distance API failed:', {
+...diagnosticContext,
+timedOut: false,
+error: error instanceof Error ? error.message : 'Unknown error',
+});
 return res.status(502).json({ error: 'Walking route lookup failed' });
 } finally {
 clearTimeout(timeoutId);
