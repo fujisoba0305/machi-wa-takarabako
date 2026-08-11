@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import {
 Compass,
 BookOpen,
@@ -260,6 +260,34 @@ const capsuleIcons: Record<string, string> = {
 おまかせ: "🎁",
 };
 
+type TreasureCategory =
+| '☕ カフェ'
+| '🍜 グルメ'
+| '⛩️ 神社・お寺'
+| '🌳 自然'
+| '📷 写真スポット'
+| '🏪 お店'
+| '💎 その他';
+
+type TreasureRegistration = {
+name: string;
+comment: string;
+category: TreasureCategory;
+latitude: number;
+longitude: number;
+image: File | null;
+};
+
+const treasureCategories: TreasureCategory[] = [
+'☕ カフェ',
+'🍜 グルメ',
+'⛩️ 神社・お寺',
+'🌳 自然',
+'📷 写真スポット',
+'🏪 お店',
+'💎 その他',
+];
+
 const decorativeCapsuleIcons = ['☕', '🌳', '📷', '⛩️', '🍴', '🎵'];
 
 export default function App() {
@@ -275,7 +303,7 @@ const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
-'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result'
+'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'treasure-register'
 >('home');
 const startGacha = () => {
 if (gachaStep !== 0) return;
@@ -322,9 +350,23 @@ const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
 const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(false);
+const [treasureName, setTreasureName] = useState('');
+const [treasureComment, setTreasureComment] = useState('');
+const [treasureCategory, setTreasureCategory] =
+useState<TreasureCategory | ''>('');
+const [treasureImage, setTreasureImage] = useState<File | null>(null);
+const [treasureImagePreview, setTreasureImagePreview] = useState<string | null>(null);
+const [registeredTreasure, setRegisteredTreasure] =
+useState<TreasureRegistration | null>(null);
 const normalArrivalRewardClaimedRef = useRef(false);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
+
+useEffect(() => {
+return () => {
+if (treasureImagePreview) URL.revokeObjectURL(treasureImagePreview);
+};
+}, [treasureImagePreview]);
 
 useEffect(() => {
 if (screen !== 'searching') return;
@@ -452,6 +494,52 @@ timeout: 10000,
 maximumAge: 0,
 }
 );
+}
+
+function resetTreasureRegistration() {
+setTreasureName('');
+setTreasureComment('');
+setTreasureCategory('');
+setTreasureImage(null);
+setTreasureImagePreview(null);
+setRegisteredTreasure(null);
+}
+
+function openTreasureRegistration() {
+if (!currentLocation) {
+getCurrentLocation();
+return;
+}
+
+resetTreasureRegistration();
+setScreen('treasure-register');
+}
+
+function closeTreasureRegistration() {
+resetTreasureRegistration();
+setScreen('home');
+}
+
+function handleTreasureImageChange(event: ChangeEvent<HTMLInputElement>) {
+const file = event.target.files?.[0] ?? null;
+
+setTreasureImage(file);
+setTreasureImagePreview(file ? URL.createObjectURL(file) : null);
+}
+
+function handleTreasureRegistration(event: FormEvent<HTMLFormElement>) {
+event.preventDefault();
+
+if (!currentLocation || !treasureName.trim() || !treasureCategory) return;
+
+setRegisteredTreasure({
+name: treasureName.trim(),
+comment: treasureComment.trim(),
+category: treasureCategory,
+latitude: currentLocation.latitude,
+longitude: currentLocation.longitude,
+image: treasureImage,
+});
 }
 
 useEffect(() => {
@@ -1844,6 +1932,177 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 </p>
 </div>
 </div>
+
+<button
+className="treasure-discovery-button"
+type="button"
+onClick={openTreasureRegistration}
+>
+<span aria-hidden="true">💎</span>
+<span>
+<strong>宝物を発見！</strong>
+<small>
+{currentLocation
+? '気になる場所を記録する'
+: '現在地を取得してから記録する'}
+</small>
+</span>
+</button>
+</section>
+
+) : screen === 'treasure-register' ? (
+<section className="treasure-register-screen" aria-live="polite">
+<div className="treasure-register-header">
+<p className="treasure-register-kicker">💎 街の宝物メモ</p>
+<h2>ここを宝物として残そう！</h2>
+<p>写真とひとことだけで、すぐに記録できます。</p>
+</div>
+
+{registeredTreasure ? (
+<div className="treasure-registration-complete">
+<div className="treasure-registration-icon" aria-hidden="true">✨💎✨</div>
+<h3>宝物を登録しました（仮）</h3>
+<p className="treasure-registration-note">
+今回は端末の画面上で確認するだけで、まだ外部には保存されません。
+</p>
+
+{treasureImagePreview && (
+<img
+src={treasureImagePreview}
+alt="選択した宝物"
+className="treasure-photo-preview"
+/>
+)}
+
+<dl className="treasure-confirmation-list">
+<div>
+<dt>名前</dt>
+<dd>{registeredTreasure.name}</dd>
+</div>
+<div>
+<dt>カテゴリ</dt>
+<dd>{registeredTreasure.category}</dd>
+</div>
+<div>
+<dt>ひとこと</dt>
+<dd>{registeredTreasure.comment || '（なし）'}</dd>
+</div>
+<div>
+<dt>現在地</dt>
+<dd>
+緯度 {registeredTreasure.latitude.toFixed(6)} / 経度{' '}
+{registeredTreasure.longitude.toFixed(6)}
+</dd>
+</div>
+<div>
+<dt>写真</dt>
+<dd>{registeredTreasure.image?.name || '（なし）'}</dd>
+</div>
+</dl>
+
+<button
+className="gacha-button treasure-register-primary"
+type="button"
+onClick={closeTreasureRegistration}
+>
+ホームへ戻る
+</button>
+</div>
+) : (
+<form className="treasure-register-form" onSubmit={handleTreasureRegistration}>
+<div className="treasure-location-card">
+<span aria-hidden="true">📍</span>
+<div>
+<strong>この場所の現在地</strong>
+{currentLocation ? (
+<p>
+緯度 {currentLocation.latitude.toFixed(6)}<br />
+経度 {currentLocation.longitude.toFixed(6)}
+</p>
+) : (
+<p>現在地を取得できていません。</p>
+)}
+</div>
+</div>
+
+<label className="treasure-form-field">
+<span>写真</span>
+<input
+type="file"
+accept="image/*"
+onChange={handleTreasureImageChange}
+/>
+</label>
+
+{treasureImagePreview ? (
+<img
+src={treasureImagePreview}
+alt="選択した宝物のプレビュー"
+className="treasure-photo-preview"
+/>
+) : treasureImage ? (
+<p className="treasure-file-name">選択済み：{treasureImage.name}</p>
+) : null}
+
+<label className="treasure-form-field">
+<span>宝物の名前</span>
+<input
+type="text"
+value={treasureName}
+onChange={(event) => setTreasureName(event.target.value)}
+placeholder="例：路地裏の小さな喫茶店"
+maxLength={60}
+required
+/>
+</label>
+
+<label className="treasure-form-field">
+<span>一言コメント</span>
+<textarea
+value={treasureComment}
+onChange={(event) => setTreasureComment(event.target.value)}
+placeholder="どんなところが気になった？"
+maxLength={160}
+rows={3}
+/>
+</label>
+
+<label className="treasure-form-field">
+<span>カテゴリ</span>
+<select
+value={treasureCategory}
+onChange={(event) =>
+setTreasureCategory(event.target.value as TreasureCategory | '')
+}
+required
+>
+<option value="">選んでください</option>
+{treasureCategories.map((category) => (
+<option key={category} value={category}>
+{category}
+</option>
+))}
+</select>
+</label>
+
+<div className="treasure-register-actions">
+<button
+className="treasure-cancel-button"
+type="button"
+onClick={closeTreasureRegistration}
+>
+キャンセル
+</button>
+<button
+className="gacha-button treasure-register-primary"
+type="submit"
+disabled={!currentLocation || !treasureName.trim() || !treasureCategory}
+>
+💎 登録する
+</button>
+</div>
+</form>
+)}
 </section>
 
 ) : screen === 'condition' ? (

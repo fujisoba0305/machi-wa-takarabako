@@ -3680,3 +3680,255 @@ opacity:1;
 }
 
 }
+
+/* ==========================
+宝物発見・仮登録
+========================== */
+
+.treasure-discovery-button {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 12px;
+margin: 8px 0 0;
+padding: 15px 18px;
+border: 2px solid #d99a22;
+border-radius: 20px;
+background: linear-gradient(135deg, #fff8d9, #ffd978);
+color: #6f4517;
+box-shadow: 0 8px 20px rgba(121, 78, 22, 0.16);
+cursor: pointer;
+}
+
+.treasure-discovery-button > span:first-child {
+font-size: 34px;
+line-height: 1;
+}
+
+.treasure-discovery-button span:last-child {
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+gap: 2px;
+}
+
+.treasure-discovery-button strong {
+font-size: 18px;
+}
+
+.treasure-discovery-button small {
+color: #8b5a25;
+font-size: 12px;
+font-weight: 700;
+}
+
+.treasure-register-screen {
+min-height: calc(100dvh - 128px);
+display: flex;
+flex-direction: column;
+gap: 18px;
+}
+
+.treasure-register-header {
+padding: 20px 18px;
+border: 2px solid #e4b951;
+border-radius: 24px;
+background: linear-gradient(145deg, #fff9df, #ffe9aa);
+text-align: center;
+box-shadow: 0 10px 24px rgba(96, 62, 24, 0.12);
+}
+
+.treasure-register-kicker {
+margin: 0 0 6px;
+color: #8a5a16;
+font-weight: 900;
+}
+
+.treasure-register-header h2 {
+margin: 0 0 8px;
+font-size: 24px;
+color: #4f6d30;
+}
+
+.treasure-register-header > p:last-child {
+margin: 0;
+font-size: 14px;
+line-height: 1.6;
+}
+
+.treasure-register-form,
+.treasure-registration-complete {
+padding: 18px;
+border: 2px solid #ead5a2;
+border-radius: 24px;
+background: rgba(255, 252, 239, 0.96);
+box-shadow: 0 10px 24px rgba(82, 54, 25, 0.12);
+}
+
+.treasure-register-form {
+display: grid;
+gap: 15px;
+}
+
+.treasure-location-card {
+display: flex;
+align-items: flex-start;
+gap: 10px;
+padding: 13px 14px;
+border-radius: 16px;
+background: #eef7dc;
+color: #456128;
+}
+
+.treasure-location-card > span {
+font-size: 24px;
+}
+
+.treasure-location-card p {
+margin: 4px 0 0;
+font-size: 13px;
+line-height: 1.55;
+}
+
+.treasure-form-field {
+display: grid;
+gap: 7px;
+font-weight: 800;
+color: #654524;
+}
+
+.treasure-form-field input,
+.treasure-form-field textarea,
+.treasure-form-field select {
+width: 100%;
+padding: 12px 13px;
+border: 2px solid #dfc791;
+border-radius: 14px;
+background: #fffefa;
+color: #4c3426;
+font: inherit;
+}
+
+.treasure-form-field textarea {
+resize: vertical;
+min-height: 88px;
+line-height: 1.55;
+}
+
+.treasure-form-field input:focus,
+.treasure-form-field textarea:focus,
+.treasure-form-field select:focus {
+outline: 3px solid rgba(234, 179, 58, 0.24);
+border-color: #d9a32d;
+}
+
+.treasure-photo-preview {
+display: block;
+width: 100%;
+max-height: 240px;
+object-fit: cover;
+border: 2px solid #e1c681;
+border-radius: 18px;
+background: #f5ecd5;
+}
+
+.treasure-file-name {
+margin: -5px 0 0;
+font-size: 13px;
+overflow-wrap: anywhere;
+}
+
+.treasure-register-actions {
+display: grid;
+grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
+gap: 10px;
+align-items: stretch;
+}
+
+.treasure-register-actions .gacha-button {
+margin: 0;
+}
+
+.treasure-cancel-button {
+padding: 12px 10px;
+border: 2px solid #cabf9f;
+border-radius: 16px;
+background: #fffdf5;
+color: #685944;
+font-weight: 800;
+cursor: pointer;
+}
+
+.treasure-register-primary {
+width: 100%;
+}
+
+.treasure-registration-complete {
+text-align: center;
+}
+
+.treasure-registration-icon {
+font-size: 40px;
+}
+
+.treasure-registration-complete h3 {
+margin: 8px 0;
+font-size: 22px;
+color: #4f6d30;
+}
+
+.treasure-registration-note {
+font-size: 13px;
+line-height: 1.6;
+}
+
+.treasure-registration-complete .treasure-photo-preview {
+margin: 16px 0;
+}
+
+.treasure-confirmation-list {
+display: grid;
+gap: 8px;
+margin: 18px 0;
+text-align: left;
+}
+
+.treasure-confirmation-list div {
+display: grid;
+grid-template-columns: 74px minmax(0, 1fr);
+gap: 8px;
+padding: 10px 12px;
+border-radius: 12px;
+background: #fff7dc;
+}
+
+.treasure-confirmation-list dt {
+font-weight: 900;
+color: #795426;
+}
+
+.treasure-confirmation-list dd {
+margin: 0;
+overflow-wrap: anywhere;
+}
+
+@media (max-width: 430px) {
+.treasure-register-screen {
+gap: 14px;
+}
+
+.treasure-register-header,
+.treasure-register-form,
+.treasure-registration-complete {
+padding: 16px;
+}
+
+.treasure-register-header h2 {
+font-size: 21px;
+}
+
+.treasure-photo-preview {
+max-height: 210px;
+}
+}
