@@ -36,10 +36,10 @@ eventHandlers={{ click: () => onSelectTreasure(treasure) }} title={treasure.name
 {selectedTreasure && (
 <article className={`treasure-map-detail ${selectedTreasure.image_url ? 'has-image' : ''}`} aria-live="polite">
 {selectedTreasure.image_url && <img src={selectedTreasure.image_url} alt={selectedTreasure.name} />}
-<div>
-<p className="treasure-map-detail-category">{getTreasureCategoryIcon(selectedTreasure.category)} {selectedTreasure.category}</p>
-<h3>{selectedTreasure.name}</h3>
-<p>{selectedTreasure.comment || 'コメントはありません。'}</p>
+<div className="treasure-map-detail-content">
+<p className="treasure-map-detail-category">{selectedTreasure.category}</p>
+<h3 className="treasure-map-detail-name">{selectedTreasure.name}</h3>
+<p className="treasure-map-detail-comment">{selectedTreasure.comment || 'コメントはありません。'}</p>
 </div>
 </article>
 )}

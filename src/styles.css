@@ -2936,23 +2936,46 @@ z-index: 2;
 
 /* ===== ハンドル ===== */
 
+.gacha-handle-assembly {
+position: absolute;
+top: 61%;
+left: 72%;
+width: 0;
+height: 0;
+z-index: 5;
+}
+
+.gacha-gear-base-image {
+position: absolute;
+left: 0;
+top: 0;
+width: 96px;
+height: auto;
+display: block;
+transform: translate(-59.4%, -37.7%);
+pointer-events: none;
+user-select: none;
+z-index: 1;
+}
+
 .gacha-handle-button {
 position: absolute;
-top: 79.5%;
-left: 64.3%;
+left: -56px;
+top: -26.9px;
 
-width: 96px;
-height: 96px;
+width: 112px;
+height: auto;
+aspect-ratio: 356 / 446;
 padding: 0;
 
 border: 0;
 background: transparent;
 cursor: pointer;
 
-/* 本体に接している左側を回転の中心にする */
-transform-origin: 43% 50%;
+/* 切り抜き画像内の、歯車へ差し込まれる軸の中心 */
+transform-origin: 50% 21.4%;
 
-z-index: 5;
+z-index: 2;
 }
 
 .gacha-handle-image {
@@ -2964,7 +2987,7 @@ pointer-events: none;
 }
 
 .gacha-handle-button.is-turning {
-animation: turnGachaHandle 0.9s ease-in-out;
+animation: turnGachaHandle 0.9s cubic-bezier(0.45, 0, 0.25, 1);
 }
 
 @keyframes turnGachaHandle {
@@ -3055,11 +3078,10 @@ width: 94vw;
 max-width: 410px;
 }
 
-.gacha-handle-button {
+.gacha-handle-assembly {
 top: 61%;
-left: 67.5%;
-width: 82px;
-height: 82px;
+left: 72%;
+transform: scale(0.82);
 }
 }
 .gacha-handle-guide {
@@ -3855,14 +3877,53 @@ display: grid;
 grid-template-columns: 1fr;
 gap: 14px;
 padding: 14px;
+max-height: min(260px, 48%);
 background: rgba(255, 255, 255, 0.97);
 border-radius: 18px;
 box-shadow: 0 8px 28px rgba(30, 50, 35, 0.28);
+overflow: hidden;
 }
-.treasure-map-detail.has-image { grid-template-columns: minmax(0, 140px) 1fr; }
-.treasure-map-detail img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; }
-.treasure-map-detail h3, .treasure-map-detail p { margin: 0 0 6px; }
-.treasure-map-detail-category { color: #477852; font-weight: 700; }
+.treasure-map-detail.has-image { grid-template-columns: minmax(0, 132px) minmax(0, 1fr); }
+.treasure-map-detail img {
+width: 100%;
+height: 100%;
+max-height: 150px;
+object-fit: cover;
+border-radius: 12px;
+align-self: start;
+}
+.treasure-map-detail-content {
+min-width: 0;
+overflow-y: auto;
+overscroll-behavior: contain;
+}
+.treasure-map-detail h3, .treasure-map-detail p { margin: 0; }
+.treasure-map-detail-category {
+display: inline-flex;
+max-width: 100%;
+margin-bottom: 7px !important;
+padding: 4px 9px;
+color: #477852;
+font-size: 0.8rem;
+font-weight: 700;
+line-height: 1.25;
+white-space: nowrap;
+background: #edf7eb;
+border-radius: 999px;
+}
+.treasure-map-detail-name {
+font-size: clamp(1rem, 3vw, 1.25rem);
+line-height: 1.35;
+overflow-wrap: anywhere;
+}
+.treasure-map-detail-comment {
+margin-top: 7px !important;
+color: #536057;
+font-size: 0.9rem;
+line-height: 1.5;
+white-space: pre-wrap;
+overflow-wrap: anywhere;
+}
 .treasure-map-message {
 max-width: 900px;
 margin: 30px auto;
@@ -3875,9 +3936,18 @@ border-radius: 20px;
 @media (max-width: 600px) {
 .treasure-map-screen { padding: 18px 10px 96px; }
 .treasure-map { height: calc(100vh - 220px); min-height: 460px; border-radius: 18px; }
-.treasure-map-detail { left: 8px; right: 8px; bottom: 8px; }
-.treasure-map-detail.has-image { grid-template-columns: 92px 1fr; }
-.treasure-map-detail img { height: 92px; }
+.treasure-map-detail {
+left: 8px;
+right: 8px;
+bottom: 8px;
+gap: 10px;
+padding: 10px;
+max-height: min(220px, 45%);
+}
+.treasure-map-detail.has-image { grid-template-columns: 88px minmax(0, 1fr); }
+.treasure-map-detail img { height: 96px; }
+.treasure-map-detail-category { font-size: 0.75rem; }
+.treasure-map-detail-comment { font-size: 0.84rem; }
 }
 
 .treasure-register-header {
