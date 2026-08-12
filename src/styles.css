@@ -3816,6 +3816,70 @@ flex-direction: column;
 gap: 18px;
 }
 
+.treasure-map-screen {
+min-height: 100vh;
+padding: 24px 18px 110px;
+background: linear-gradient(180deg, #eef9ef 0%, #fff8e9 100%);
+}
+
+.treasure-map-header { max-width: 900px; margin: 0 auto 14px; color: #315b3b; }
+.treasure-map-header p, .treasure-map-header h2 { margin: 0 0 6px; }
+.treasure-map-layout { position: relative; max-width: 900px; margin: 0 auto; }
+.treasure-map {
+height: min(68vh, 650px);
+min-height: 420px;
+border: 4px solid #fff;
+border-radius: 24px;
+box-shadow: 0 14px 35px rgba(51, 87, 58, 0.2);
+overflow: hidden;
+}
+.treasure-map-marker-shell { background: transparent; border: 0; }
+.treasure-map-marker {
+display: grid;
+place-items: center;
+width: 42px;
+height: 42px;
+font-size: 24px;
+background: #fff;
+border: 3px solid #f1b84b;
+border-radius: 50% 50% 50% 10%;
+box-shadow: 0 4px 10px rgba(50, 60, 40, 0.28);
+}
+.treasure-map-detail {
+position: absolute;
+z-index: 500;
+left: 14px;
+right: 14px;
+bottom: 14px;
+display: grid;
+grid-template-columns: 1fr;
+gap: 14px;
+padding: 14px;
+background: rgba(255, 255, 255, 0.97);
+border-radius: 18px;
+box-shadow: 0 8px 28px rgba(30, 50, 35, 0.28);
+}
+.treasure-map-detail.has-image { grid-template-columns: minmax(0, 140px) 1fr; }
+.treasure-map-detail img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; }
+.treasure-map-detail h3, .treasure-map-detail p { margin: 0 0 6px; }
+.treasure-map-detail-category { color: #477852; font-weight: 700; }
+.treasure-map-message {
+max-width: 900px;
+margin: 30px auto;
+padding: 30px;
+text-align: center;
+background: #fff;
+border-radius: 20px;
+}
+
+@media (max-width: 600px) {
+.treasure-map-screen { padding: 18px 10px 96px; }
+.treasure-map { height: calc(100vh - 220px); min-height: 460px; border-radius: 18px; }
+.treasure-map-detail { left: 8px; right: 8px; bottom: 8px; }
+.treasure-map-detail.has-image { grid-template-columns: 92px 1fr; }
+.treasure-map-detail img { height: 92px; }
+}
+
 .treasure-register-header {
 padding: 20px 18px;
 border: 2px solid #e4b951;

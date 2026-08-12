@@ -9,6 +9,29 @@ longitude: number;
 image_url: string | null;
 };
 
+export type Treasure = TreasureInsert & {
+id?: number | string;
+};
+
+export async function getTreasures(): Promise<Treasure[]> {
+const supabase = getSupabaseClient();
+const { data, error } = await supabase
+.from('treasures')
+.select('name, comment, category, latitude, longitude, image_url');
+
+if (error) {
+console.error('[treasure-map] Supabase SELECT failed', {
+code: error.code,
+message: error.message,
+details: error.details,
+hint: error.hint,
+});
+throw new Error('Treasure list fetch failed');
+}
+
+return (data ?? []) as Treasure[];
+}
+
 export async function createTreasure(treasure: TreasureInsert) {
 console.info('[treasure-save] INSERT start', {
 namePresent: treasure.name.length > 0,

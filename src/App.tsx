@@ -21,7 +21,9 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
-import { createTreasure } from './services/treasures';
+import { createTreasure, getTreasures, type Treasure } from './services/treasures';
+import { TreasureMap } from './components/TreasureMap';
+import 'leaflet/dist/leaflet.css';
 import {
 deleteTreasureImage,
 uploadTreasureImage,
@@ -337,7 +339,7 @@ const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
-'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'treasure-register'
+'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'treasure-register' | 'treasure-map'
 >('home');
 const startGacha = () => {
 if (gachaStep !== 0) return;
@@ -394,10 +396,30 @@ const [treasureSaveError, setTreasureSaveError] = useState('');
 const [treasureLocation, setTreasureLocation] = useState<Coordinates | null>(null);
 const [isTreasureLocationLoading, setIsTreasureLocationLoading] = useState(false);
 const [treasureLocationError, setTreasureLocationError] = useState('');
+const [mapTreasures, setMapTreasures] = useState<Treasure[]>([]);
+const [selectedMapTreasure, setSelectedMapTreasure] = useState<Treasure | null>(null);
+const [isTreasureMapLoading, setIsTreasureMapLoading] = useState(false);
+const [treasureMapError, setTreasureMapError] = useState('');
 const normalArrivalRewardClaimedRef = useRef(false);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
 const treasureSaveInFlightRef = useRef(false);
+
+async function openTreasureMap() {
+setScreen('treasure-map');
+setSelectedMapTreasure(null);
+setIsTreasureMapLoading(true);
+setTreasureMapError('');
+
+try {
+setMapTreasures(await getTreasures());
+} catch (error) {
+console.error('[treasure-map] Treasure list load failed', error);
+setTreasureMapError('宝物を読み込めませんでした。もう一度お試しください。');
+} finally {
+setIsTreasureMapLoading(false);
+}
+}
 
 useEffect(() => {
 return () => {
@@ -2043,6 +2065,27 @@ disabled={isTreasureLocationLoading}
 </button>
 </section>
 
+) : screen === 'treasure-map' ? (
+<section className="treasure-map-screen">
+<header className="treasure-map-header">
+<p>📖 街の宝物図鑑</p>
+<h2>みんなが見つけた宝物</h2>
+<small>地図のマーカーをタップすると詳細が見られます。</small>
+</header>
+{isTreasureMapLoading ? (
+<div className="treasure-map-message" role="status">宝物を読み込んでいます…</div>
+) : treasureMapError ? (
+<div className="treasure-map-message" role="alert">
+<p>{treasureMapError}</p>
+<button type="button" onClick={openTreasureMap}>もう一度読み込む</button>
+</div>
+) : mapTreasures.length === 0 ? (
+<div className="treasure-map-message">まだ登録された宝物がありません。</div>
+) : (
+<TreasureMap treasures={mapTreasures} selectedTreasure={selectedMapTreasure}
+onSelectTreasure={setSelectedMapTreasure} currentLocation={currentLocation} />
+)}
+</section>
 ) : screen === 'treasure-register' ? (
 <section className="treasure-register-screen" aria-live="polite">
 <div className="treasure-register-header">
@@ -2860,7 +2903,7 @@ aria-label="メッセージを閉じる"
 <small>ホーム</small>
 </button>
 
-<button type="button">
+<button type="button" onClick={openTreasureMap}>
 <span>📖</span>
 <small>図鑑</small>
 </button>
