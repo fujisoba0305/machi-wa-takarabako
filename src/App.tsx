@@ -34,7 +34,8 @@ import titleBackground from './assets/title-background.png';
 import takaranWelcome from "./assets/takaran/takaran-welcome.png";
 import backgroundTown from './assets/gacha/background-town.png';
 import gachaMachine from './assets/gacha/gacha-machine.png';
-import gachaHandle from './assets/gacha/gacha-handle.png';
+import gachaGearBase from './assets/gacha/gacha-gear-base.png';
+import gachaCrank from './assets/gacha/gacha-crank.png';
 import capsuleEmpty from './assets/gacha/capsule-empty.png';
 import treasureChest from './assets/gacha/treasure-chest.png';
 import takaranSearch from './assets/takaran/takaran-search.png';
@@ -2500,6 +2501,13 @@ className="gacha-machine-image"
 alt="街の宝ガチャ"
 />
 
+<div className="gacha-handle-assembly">
+<img
+src={gachaGearBase}
+className="gacha-gear-base-image"
+alt=""
+aria-hidden="true"
+/>
 <button
 type="button"
 className={`gacha-handle-button ${
@@ -2510,11 +2518,12 @@ disabled={gachaStep !== 0}
 aria-label="ガチャのハンドルを回す"
 >
 <img
-src={gachaHandle}
+src={gachaCrank}
 className="gacha-handle-image"
 alt=""
 />
 </button>
+</div>
 
 {gachaStep < 2 && (
 <div
