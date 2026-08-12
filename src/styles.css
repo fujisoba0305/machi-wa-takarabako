@@ -3946,6 +3946,23 @@ font-weight: 800;
 cursor: pointer;
 }
 
+.treasure-cancel-button:disabled {
+opacity: 0.55;
+cursor: not-allowed;
+}
+
+.treasure-save-error {
+margin: 0;
+padding: 11px 13px;
+border: 2px solid #d88b6f;
+border-radius: 14px;
+background: #fff0e8;
+color: #7e3524;
+font-size: 13px;
+font-weight: 800;
+line-height: 1.6;
+}
+
 .treasure-register-primary {
 width: 100%;
 }

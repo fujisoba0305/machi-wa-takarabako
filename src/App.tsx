@@ -21,6 +21,7 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
+import { createTreasure } from './services/treasures';
 
 import takaranImage from './assets/takaran/takaran.png';
 import titleBackground from './assets/title-background.png';
@@ -384,12 +385,15 @@ const [treasureImage, setTreasureImage] = useState<File | null>(null);
 const [treasureImagePreview, setTreasureImagePreview] = useState<string | null>(null);
 const [registeredTreasure, setRegisteredTreasure] =
 useState<TreasureRegistration | null>(null);
+const [isTreasureSaving, setIsTreasureSaving] = useState(false);
+const [treasureSaveError, setTreasureSaveError] = useState('');
 const [treasureLocation, setTreasureLocation] = useState<Coordinates | null>(null);
 const [isTreasureLocationLoading, setIsTreasureLocationLoading] = useState(false);
 const [treasureLocationError, setTreasureLocationError] = useState('');
 const normalArrivalRewardClaimedRef = useRef(false);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
+const treasureSaveInFlightRef = useRef(false);
 
 useEffect(() => {
 return () => {
@@ -521,6 +525,8 @@ setTreasureCategory('');
 setTreasureImage(null);
 setTreasureImagePreview(null);
 setRegisteredTreasure(null);
+setIsTreasureSaving(false);
+setTreasureSaveError('');
 setTreasureLocation(null);
 }
 
@@ -558,19 +564,50 @@ setTreasureImage(file);
 setTreasureImagePreview(file ? URL.createObjectURL(file) : null);
 }
 
-function handleTreasureRegistration(event: FormEvent<HTMLFormElement>) {
+async function handleTreasureRegistration(event: FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
-if (!treasureLocation || !treasureName.trim() || !treasureCategory) return;
+if (
+treasureSaveInFlightRef.current ||
+!treasureLocation ||
+!treasureName.trim() ||
+!treasureCategory
+) {
+return;
+}
 
-setRegisteredTreasure({
+const registration: TreasureRegistration = {
 name: treasureName.trim(),
 comment: treasureComment.trim(),
 category: treasureCategory,
 latitude: treasureLocation.latitude,
 longitude: treasureLocation.longitude,
 image: treasureImage,
+};
+
+treasureSaveInFlightRef.current = true;
+setIsTreasureSaving(true);
+setTreasureSaveError('');
+
+try {
+await createTreasure({
+name: registration.name,
+comment: registration.comment,
+category: registration.category,
+latitude: registration.latitude,
+longitude: registration.longitude,
 });
+
+setRegisteredTreasure(registration);
+} catch {
+console.error('[treasure-registration] Treasure save failed');
+setTreasureSaveError(
+'宝物を保存できませんでした。入力内容を確認して、もう一度お試しください。'
+);
+} finally {
+treasureSaveInFlightRef.current = false;
+setIsTreasureSaving(false);
+}
 }
 
 useEffect(() => {
@@ -1993,9 +2030,9 @@ disabled={isTreasureLocationLoading}
 {registeredTreasure ? (
 <div className="treasure-registration-complete">
 <div className="treasure-registration-icon" aria-hidden="true">✨💎✨</div>
-<h3>宝物を登録しました（仮）</h3>
+<h3>宝物を登録しました！</h3>
 <p className="treasure-registration-note">
-今回は端末の画面上で確認するだけで、まだ外部には保存されません。
+宝物の情報を保存しました。写真の保存は次の段階で対応します。
 </p>
 
 {treasureImagePreview && (
@@ -2117,20 +2154,32 @@ required
 </select>
 </label>
 
+{treasureSaveError && (
+<p className="treasure-save-error" role="alert">
+{treasureSaveError}
+</p>
+)}
+
 <div className="treasure-register-actions">
 <button
 className="treasure-cancel-button"
 type="button"
 onClick={closeTreasureRegistration}
+disabled={isTreasureSaving}
 >
 キャンセル
 </button>
 <button
 className="gacha-button treasure-register-primary"
 type="submit"
-disabled={!treasureLocation || !treasureName.trim() || !treasureCategory}
+disabled={
+isTreasureSaving ||
+!treasureLocation ||
+!treasureName.trim() ||
+!treasureCategory
+}
 >
-💎 登録する
+{isTreasureSaving ? '💎 宝物を保存しています…' : '💎 登録する'}
 </button>
 </div>
 </form>
