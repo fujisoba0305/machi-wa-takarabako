@@ -6,6 +6,7 @@ comment: string;
 category: string;
 latitude: number;
 longitude: number;
+image_url: string | null;
 };
 
 export async function createTreasure(treasure: TreasureInsert) {

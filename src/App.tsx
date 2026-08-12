@@ -22,6 +22,10 @@ getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
 import { createTreasure } from './services/treasures';
+import {
+deleteTreasureImage,
+uploadTreasureImage,
+} from './services/treasureImages';
 
 import takaranImage from './assets/takaran/takaran.png';
 import titleBackground from './assets/title-background.png';
@@ -590,13 +594,33 @@ setIsTreasureSaving(true);
 setTreasureSaveError('');
 
 try {
+const uploadedImage = registration.image
+? await uploadTreasureImage(registration.image)
+: null;
+
+try {
 await createTreasure({
 name: registration.name,
 comment: registration.comment,
 category: registration.category,
 latitude: registration.latitude,
 longitude: registration.longitude,
+image_url: uploadedImage?.publicUrl ?? null,
 });
+} catch (error) {
+if (uploadedImage) {
+try {
+await deleteTreasureImage(uploadedImage.path);
+} catch (deleteError) {
+console.error(
+'[treasure-registration] Uploaded image cleanup failed',
+deleteError
+);
+}
+}
+
+throw error;
+}
 
 setRegisteredTreasure(registration);
 } catch {
@@ -2032,7 +2056,7 @@ disabled={isTreasureLocationLoading}
 <div className="treasure-registration-icon" aria-hidden="true">✨💎✨</div>
 <h3>宝物を登録しました！</h3>
 <p className="treasure-registration-note">
-宝物の情報を保存しました。写真の保存は次の段階で対応します。
+宝物の情報を保存しました。
 </p>
 
 {treasureImagePreview && (
