@@ -2937,22 +2937,31 @@ z-index: 2;
 /* ===== ハンドル ===== */
 
 .gacha-handle-assembly {
+--gacha-handle-axis-x: 50.8%;
+--gacha-handle-axis-y: 21.5%;
+--gacha-handle-axis-offset-x: -50.8%;
+--gacha-handle-axis-offset-y: -21.5%;
+--gacha-handle-scale: 1;
 position: absolute;
 top: 61%;
 left: 72%;
-width: 0;
-height: 0;
+width: 112px;
+aspect-ratio: 356 / 446;
+transform:
+translate(var(--gacha-handle-axis-offset-x), var(--gacha-handle-axis-offset-y))
+scale(var(--gacha-handle-scale));
+transform-origin: var(--gacha-handle-axis-x) var(--gacha-handle-axis-y);
 z-index: 5;
 }
 
 .gacha-gear-base-image {
 position: absolute;
-left: 0;
-top: 0;
+left: var(--gacha-handle-axis-x);
+top: var(--gacha-handle-axis-y);
 width: 96px;
 height: auto;
 display: block;
-transform: translate(-59.4%, -37.7%);
+transform: translate(-60%, -37.7%);
 pointer-events: none;
 user-select: none;
 z-index: 1;
@@ -2960,12 +2969,9 @@ z-index: 1;
 
 .gacha-handle-button {
 position: absolute;
-left: -56px;
-top: -26.9px;
-
-width: 112px;
-height: auto;
-aspect-ratio: 356 / 446;
+inset: 0;
+width: 100%;
+height: 100%;
 padding: 0;
 
 border: 0;
@@ -2973,7 +2979,7 @@ background: transparent;
 cursor: pointer;
 
 /* 切り抜き画像内の、歯車へ差し込まれる軸の中心 */
-transform-origin: 50% 21.4%;
+transform-origin: var(--gacha-handle-axis-x) var(--gacha-handle-axis-y);
 
 z-index: 2;
 }
@@ -3081,7 +3087,7 @@ max-width: 410px;
 .gacha-handle-assembly {
 top: 61%;
 left: 72%;
-transform: scale(0.82);
+--gacha-handle-scale: 0.82;
 }
 }
 .gacha-handle-guide {
