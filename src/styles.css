@@ -781,6 +781,210 @@ justify-content: center;
 align-items: center;
 text-align: center;
 }
+.normal-result-screen {
+width: min(100%, 980px);
+margin: 0 auto;
+padding: clamp(18px, 4vw, 36px) clamp(12px, 3vw, 28px)
+calc(132px + env(safe-area-inset-bottom, 0px));
+color: #4f3928;
+}
+.normal-result-screen > .result-kicker,
+.normal-result-screen > h2 {
+margin: 0;
+text-align: center;
+}
+.normal-result-screen > .result-kicker {
+color: #a66021;
+font-size: 0.88rem;
+font-weight: 900;
+letter-spacing: 0.08em;
+}
+.normal-result-screen > h2 {
+margin-top: 6px;
+font-size: clamp(1.35rem, 4vw, 2rem);
+overflow-wrap: anywhere;
+}
+.normal-result-card {
+display: grid;
+gap: 16px;
+margin-top: 18px;
+}
+.normal-result-hero {
+display: grid;
+gap: 0;
+overflow: hidden;
+background: linear-gradient(145deg, #fffdf7, #fff4d9);
+border: 2px solid #e7bd6c;
+border-radius: 26px;
+box-shadow: 0 16px 36px rgba(101, 67, 27, 0.16);
+}
+.normal-result-hero-content {
+width: 100%;
+min-width: 0;
+padding: clamp(18px, 4vw, 28px);
+}
+.normal-result-category {
+display: inline-flex;
+max-width: 100%;
+margin: 0 0 10px;
+padding: 6px 11px;
+color: #744519;
+font-size: 0.82rem;
+font-weight: 900;
+line-height: 1.25;
+white-space: nowrap;
+background: #ffebbb;
+border: 1px solid #e6bd60;
+border-radius: 999px;
+}
+.normal-result-hero h3 {
+width: 100%;
+min-width: 0;
+margin: 0;
+color: #49311f;
+font-size: clamp(1.35rem, 5vw, 2rem);
+line-height: 1.3;
+word-break: normal;
+overflow-wrap: break-word;
+}
+.normal-result-hero-content > p:not(.normal-result-category) {
+width: 100%;
+min-width: 0;
+margin: 10px 0 0;
+color: #655445;
+line-height: 1.7;
+white-space: pre-wrap;
+word-break: normal;
+overflow-wrap: break-word;
+}
+.normal-result-hero .gacha-treasure-result-image {
+display: block;
+width: 100%;
+max-width: none;
+height: clamp(190px, 52vw, 300px);
+max-height: 300px;
+margin: 0;
+object-fit: cover;
+border-radius: 0;
+box-shadow: none;
+}
+.normal-result-inline-map {
+width: 100%;
+min-height: 50px;
+margin-top: 18px;
+padding: 12px 18px;
+color: #fff;
+font: inherit;
+font-weight: 900;
+background: linear-gradient(135deg, #ef9d25, #df6f20);
+border: 0;
+border-radius: 15px;
+box-shadow: 0 8px 18px rgba(193, 100, 25, 0.24);
+cursor: pointer;
+}
+.normal-result-mission,
+.normal-result-info {
+padding: clamp(17px, 3vw, 24px);
+border-radius: 22px;
+}
+.normal-result-mission {
+background: linear-gradient(145deg, #eef8ff, #dceeff);
+border: 2px solid #9cc9ed;
+box-shadow: 0 10px 24px rgba(62, 120, 166, 0.12);
+}
+.normal-result-mission h3,
+.normal-result-info h3 {
+margin: 0 0 9px;
+font-size: 1rem;
+}
+.normal-result-mission p {
+margin: 0;
+color: #315b78;
+font-size: clamp(1rem, 3vw, 1.12rem);
+font-weight: 700;
+line-height: 1.65;
+overflow-wrap: anywhere;
+}
+.normal-result-info {
+background: rgba(255, 253, 247, 0.96);
+border: 2px solid #ead6ad;
+box-shadow: 0 10px 24px rgba(91, 69, 39, 0.1);
+}
+.normal-result-info dl { margin: 0; }
+.normal-result-info dl > div {
+display: grid;
+grid-template-columns: minmax(0, 1fr);
+gap: 4px;
+padding: 13px 0;
+border-top: 1px solid #eadfc8;
+}
+.normal-result-info dt {
+min-width: 0;
+color: #805826;
+font-weight: 800;
+word-break: normal;
+overflow-wrap: break-word;
+}
+.normal-result-info dd {
+min-width: 0;
+margin: 0;
+color: #4f453c;
+line-height: 1.6;
+word-break: normal;
+overflow-wrap: break-word;
+}
+.normal-result-actions {
+display: grid;
+gap: 11px;
+margin-top: 18px;
+margin-bottom: calc(
+58px +
+16px +
+14px +
+28px +
+env(safe-area-inset-bottom, 0px)
+);
+}
+.normal-result-screen .normal-result-actions .gacha-button {
+min-height: 52px;
+margin: 0;
+padding: 13px 18px;
+border-radius: 16px;
+font-size: clamp(1rem, 3.5vw, 1.12rem);
+}
+.normal-result-screen .normal-result-map-button {
+min-height: 58px;
+background: linear-gradient(135deg, #f6ad2f, #e67522);
+box-shadow: 0 11px 24px rgba(213, 113, 26, 0.28);
+}
+.normal-result-screen .normal-result-secondary-button {
+color: #75491e;
+background: #fffaf0;
+border: 2px solid #e5bd77;
+box-shadow: 0 7px 16px rgba(105, 72, 31, 0.12);
+}
+.normal-result-screen .normal-result-arrival-button {
+color: #27613a;
+background: #e9f7e9;
+border: 2px solid #8dc89b;
+box-shadow: none;
+}
+.normal-result-screen .normal-result-expand-button {
+color: #6b6258;
+background: transparent;
+border: 1px solid #cfc2ad;
+box-shadow: none;
+}
+.normal-result-inline-map:focus-visible,
+.normal-result-actions .gacha-button:focus-visible {
+outline: 3px solid rgba(231, 135, 37, 0.35);
+outline-offset: 3px;
+}
+@media (max-width: 520px) {
+.normal-result-screen { padding-inline: 10px; }
+.normal-result-info dl > div { padding: 11px 0; }
+.normal-result-category { white-space: normal; }
+}
 a.gacha-button {
 display: flex;
 justify-content: center;
@@ -3874,15 +4078,88 @@ overflow: hidden;
 }
 .treasure-map-marker-shell { background: transparent; border: 0; }
 .treasure-map-marker {
+--marker-color: #a46a24;
+--marker-dark: #744515;
+position: relative;
+isolation: isolate;
 display: grid;
 place-items: center;
 width: 42px;
 height: 42px;
-font-size: 24px;
-background: #fff;
-border: 3px solid #f1b84b;
-border-radius: 50% 50% 50% 10%;
-box-shadow: 0 4px 10px rgba(50, 60, 40, 0.28);
+box-sizing: border-box;
+font-size: 22px;
+line-height: 1;
+background: linear-gradient(145deg, color-mix(in srgb, var(--marker-color) 78%, white), var(--marker-color));
+border: 3px solid #fffaf0;
+border-radius: 50%;
+box-shadow: 0 4px 9px rgba(35, 50, 38, 0.32), inset 0 -3px 0 var(--marker-dark);
+}
+.treasure-map-marker::after {
+content: '';
+position: absolute;
+z-index: -1;
+left: 50%;
+bottom: -8px;
+width: 15px;
+height: 15px;
+background: var(--marker-color);
+border-right: 3px solid #fffaf0;
+border-bottom: 3px solid #fffaf0;
+border-radius: 0 0 4px 0;
+transform: translateX(-50%) rotate(45deg);
+}
+.treasure-map-marker > span {
+filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.45));
+transform: translateY(-1px);
+}
+.treasure-map-marker--cafe { --marker-color: #c98a43; --marker-dark: #875323; }
+.treasure-map-marker--gourmet { --marker-color: #e56752; --marker-dark: #a43b2c; }
+.treasure-map-marker--shrine { --marker-color: #d64a50; --marker-dark: #932c34; }
+.treasure-map-marker--nature { --marker-color: #55a960; --marker-dark: #32723c; }
+.treasure-map-marker--photo { --marker-color: #8a6cc5; --marker-dark: #594292; }
+.treasure-map-marker--shop { --marker-color: #3e9ca0; --marker-dark: #246c70; }
+.treasure-map-marker--other { --marker-color: #d2a53b; --marker-dark: #8f6a16; }
+.treasure-current-location-shell { background: transparent; border: 0; }
+.treasure-current-location-dot {
+display: block;
+width: 24px;
+height: 24px;
+background: #1976d2;
+border: 4px solid #fff;
+border-radius: 50%;
+box-shadow: 0 0 0 7px rgba(25, 118, 210, 0.2), 0 3px 8px rgba(20, 60, 100, 0.35);
+}
+.treasure-current-location-label {
+position: absolute;
+top: 29px;
+left: -7px;
+padding: 2px 7px;
+color: #174e83;
+font-size: 12px;
+font-weight: 800;
+line-height: 1.3;
+white-space: nowrap;
+background: rgba(255, 255, 255, 0.95);
+border-radius: 999px;
+box-shadow: 0 2px 6px rgba(20, 60, 100, 0.2);
+}
+.treasure-map-empty {
+position: absolute;
+z-index: 450;
+top: 14px;
+left: 50%;
+width: max-content;
+max-width: calc(100% - 28px);
+margin: 0;
+padding: 8px 12px;
+color: #315b3b;
+font-size: 0.85rem;
+font-weight: 700;
+text-align: center;
+background: rgba(255, 255, 255, 0.95);
+border-radius: 999px;
+box-shadow: 0 3px 12px rgba(30, 50, 35, 0.2);
+transform: translateX(-50%);
 }
 .treasure-map-detail {
 position: absolute;
@@ -3940,6 +4217,37 @@ font-size: 0.9rem;
 line-height: 1.5;
 white-space: pre-wrap;
 overflow-wrap: anywhere;
+}
+.treasure-map-directions-button {
+display: block;
+width: 100%;
+min-height: 46px;
+margin-top: 12px;
+padding: 10px 16px;
+color: #fff;
+font: inherit;
+font-weight: 800;
+background: #287747;
+border: 0;
+border-radius: 12px;
+box-shadow: 0 4px 10px rgba(35, 95, 56, 0.24);
+cursor: pointer;
+}
+.treasure-map-directions-button:hover { background: #21643c; }
+.treasure-map-directions-button:active { transform: translateY(1px); }
+.treasure-map-directions-button:focus-visible {
+outline: 3px solid rgba(40, 119, 71, 0.35);
+outline-offset: 2px;
+}
+.gacha-treasure-result-image {
+display: block;
+width: 100%;
+max-width: 420px;
+max-height: 240px;
+margin: 10px auto 14px;
+object-fit: cover;
+border-radius: 16px;
+box-shadow: 0 6px 18px rgba(45, 55, 38, 0.2);
 }
 .treasure-map-message {
 max-width: 900px;

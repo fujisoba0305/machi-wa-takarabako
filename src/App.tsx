@@ -23,7 +23,14 @@ getNearbyShrinesAndTemples,
 import { getWalkingDistances } from './services/walkingDistance';
 import { createTreasure, getTreasures, type Treasure } from './services/treasures';
 import { TreasureMap } from './components/TreasureMap';
+import { calculateDistance } from './features/distance';
+import { buildGoogleMapsDirectionsUrl } from './features/googleMaps';
 import { scheduleGachaSequence } from './features/gachaSequence';
+import {
+getEligibleRegisteredTreasures,
+loadNormalSearchSources,
+selectNormalSearchCandidate,
+} from './features/normalTreasureCandidates';
 import 'leaflet/dist/leaflet.css';
 import {
 deleteTreasureImage,
@@ -232,29 +239,6 @@ lon: spot.center.lon,
 return null;
 }
 
-function calculateDistance(
-lat1: number,
-lon1: number,
-lat2: number,
-lon2: number
-) {
-const R = 6371;
-
-const dLat = ((lat2 - lat1) * Math.PI) / 180;
-const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-const a =
-Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-Math.cos((lat1 * Math.PI) / 180) *
-Math.cos((lat2 * Math.PI) / 180) *
-Math.sin(dLon / 2) *
-Math.sin(dLon / 2);
-
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-return R * c;
-}
-
 const capsuleIcons: Record<string, string> = {
 自然: "🌳",
 カフェ: "☕",
@@ -375,6 +359,7 @@ shrineGenre:','
 const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
 
 const [nearbySpot, setNearbySpot] = useState<Spot | null>(null);
+const [selectedGachaTreasure, setSelectedGachaTreasure] = useState<Treasure | null>(null);
 const [dateFinalSpot, setDateFinalSpot] = useState<Spot | null>(null);
 const [spotDistance, setSpotDistance] = useState<number | null>(null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
@@ -410,10 +395,13 @@ setIsTreasureMapLoading(true);
 setTreasureMapError('');
 
 try {
+if (!currentLocation) {
+setCurrentLocation(await requestCurrentCoordinates());
+}
 setMapTreasures(await getTreasures());
 } catch (error) {
 console.error('[treasure-map] Treasure list load failed', error);
-setTreasureMapError('宝物を読み込めませんでした。もう一度お試しください。');
+setTreasureMapError('現在地または宝物を読み込めませんでした。位置情報を許可して、もう一度お試しください。');
 } finally {
 setIsTreasureMapLoading(false);
 }
@@ -431,7 +419,7 @@ if (screen !== 'searching') return;
 const searchIsComplete =
 choices.mood === 'デート'
 ? Boolean(nearbySpot && dateFinalSpot)
-: Boolean(nearbySpot);
+: Boolean(nearbySpot || selectedGachaTreasure);
 
 // 検索成功したら結果画面へ
 if (searchIsComplete) {
@@ -469,6 +457,7 @@ window.clearTimeout(timeoutTimer);
 screen,
 isSearching,
 nearbySpot,
+selectedGachaTreasure,
 dateFinalSpot,
 choices.mood,
 searchFailed,
@@ -787,6 +776,7 @@ return getWalkingDistanceRange(expandLevel).max * 1000;
 }
 
 function setSelectedSpot(spot: Spot | null) {
+setSelectedGachaTreasure(null);
 setNearbySpot(spot);
 
 if (!currentLocation || !spot) {
@@ -1096,6 +1086,8 @@ at: new Date().toISOString(),
 });
 }
 
+setSelectedGachaTreasure(null);
+
 if (!currentLocation) {
 if (searchId) {
 console.warn('[normal-search] failed', {
@@ -1119,6 +1111,7 @@ setHasArrivedAtNormalSpot(false);
 
 try {
 setNearbySpot(null);
+setSelectedGachaTreasure(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
 
@@ -1127,10 +1120,32 @@ await findDateCourse();
 return;
 }
 
-const spots = await getSpotsByMood(normalSearchExpandLevel);
+const sources = await loadNormalSearchSources(
+() => getSpotsByMood(normalSearchExpandLevel),
+getTreasures
+);
+const spots = sources.overpass;
+const registeredTreasures = sources.treasures;
+
+if (sources.overpassError) {
+console.error('[normal-search] Overpass source failed', sources.overpassError);
+}
+if (sources.treasuresError) {
+console.error('[normal-search] Supabase treasure source failed', sources.treasuresError);
+}
 
 const validSpots = getNamedSpots(spots);
 const namedSpots = getSpotsInRange(spots, normalSearchExpandLevel);
+const registeredDistanceRange =
+choices.distance === '？km'
+? getDistanceRange(normalSearchExpandLevel)
+: getWalkingDistanceRange(normalSearchExpandLevel);
+const registeredCandidates = getEligibleRegisteredTreasures(
+registeredTreasures,
+currentLocation,
+choices.mood,
+registeredDistanceRange
+);
 
 console.log('取得したspots数:', spots.length);
 console.log('名前ありspots数:', namedSpots.length);
@@ -1141,27 +1156,29 @@ searchId,
 overpassCount: spots.length,
 validNameAndCoordinatesCount: validSpots.length,
 haversineEligibleCount: namedSpots.length,
+registeredTreasureCount: registeredTreasures.length,
+registeredEligibleCount: registeredCandidates.length,
 });
 }
 
-if (namedSpots.length === 0) {
-if (searchId) {
-console.warn('[normal-search] failed', {
-searchId,
-reason: 'no_haversine_candidates',
-});
-}
-setNearbySpot(null);
-setSelectedSpot(null);
-setSpotDistance(null);
+if (choices.distance === '？km') {
+const selectedCandidate = selectNormalSearchCandidate(
+namedSpots,
+registeredCandidates
+);
 
+if (!selectedCandidate) {
 setSearchFailed(true);
 return;
 }
 
-if (choices.distance === '？km') {
-const spot = randomItem(namedSpots);
-setSelectedSpot(spot);
+if (selectedCandidate.source === 'treasure') {
+setSelectedGachaTreasure(selectedCandidate.treasure);
+setNearbySpot(null);
+setSpotDistance(selectedCandidate.distanceKm);
+} else {
+setSelectedSpot(selectedCandidate.candidate);
+}
 setShowCapsule(true);
 return;
 }
@@ -1202,6 +1219,7 @@ const maxWalkingDistanceMeters = walkingDistanceRange.max * 1000;
 let eligibleCandidates: { spot: Spot; distanceMeters: number }[] = [];
 let secondBatchExecuted = false;
 
+try {
 for (let batchStart = 0; batchStart < closestCandidates.length; batchStart += 8) {
 const batchNumber = batchStart / 8 + 1;
 const batchCandidates = closestCandidates.slice(batchStart, batchStart + 8);
@@ -1275,6 +1293,10 @@ maxWalkingDistanceMeters,
 
 if (eligibleCandidates.length > 0) break;
 }
+} catch (error) {
+console.error('[normal-search] Overpass walking-distance source failed', error);
+eligibleCandidates = [];
+}
 
 if (searchId) {
 console.info('[normal-search] second_batch', {
@@ -1283,11 +1305,16 @@ executed: secondBatchExecuted,
 });
 }
 
-if (eligibleCandidates.length === 0) {
+const selectedCandidate = selectNormalSearchCandidate(
+eligibleCandidates,
+registeredCandidates
+);
+
+if (!selectedCandidate) {
 if (searchId) {
 console.warn('[normal-search] failed', {
 searchId,
-reason: 'no_walking_candidates_within_limit',
+reason: 'no_candidates_from_either_source',
 });
 }
 setNearbySpot(null);
@@ -1296,15 +1323,25 @@ setSearchFailed(true);
 return;
 }
 
-const selectedCandidate = randomItem(eligibleCandidates);
 if (searchId) {
 console.info('[normal-search] succeeded', {
 searchId,
-distanceMeters: selectedCandidate.distanceMeters,
+source: selectedCandidate.source,
+distanceMeters:
+selectedCandidate.source === 'treasure'
+? selectedCandidate.distanceKm * 1000
+: selectedCandidate.candidate.distanceMeters,
 });
 }
-setNearbySpot(selectedCandidate.spot);
-setSpotDistance(selectedCandidate.distanceMeters / 1000);
+
+if (selectedCandidate.source === 'treasure') {
+setSelectedGachaTreasure(selectedCandidate.treasure);
+setNearbySpot(null);
+setSpotDistance(selectedCandidate.distanceKm);
+} else {
+setSelectedSpot(selectedCandidate.candidate.spot);
+setSpotDistance(selectedCandidate.candidate.distanceMeters / 1000);
+}
 setShowCapsule(true);
 
 } catch (error) {
@@ -1317,6 +1354,7 @@ error: error instanceof Error ? error.message : 'Unknown error',
 });
 }
 setNearbySpot(null);
+setSelectedGachaTreasure(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
 setSearchFailed(true);
@@ -1725,20 +1763,16 @@ const dateCourse = getDateCourse();
 const displayPlace =
 choices.mood === 'デート'
 ? dateFinalSpot?.tags?.name || nearbySpot?.tags?.name || 'デートコースを探しています'
-: nearbySpot?.tags?.name || '宝物を探しています';
+: selectedGachaTreasure?.name || nearbySpot?.tags?.name || '宝物を探しています';
 function openMapForSpot(spot: Spot | null, fallbackQuery: string) {
 const location = spot ? getSpotLocation(spot) : null;
 
 if (location && currentLocation) {
-const params = new URLSearchParams({
-api: '1',
-origin: `${currentLocation.latitude},${currentLocation.longitude}`,
-destination: `${location.lat},${location.lon}`,
-travelmode: 'walking',
-});
-
 window.open(
-`https://www.google.com/maps/dir/?${params.toString()}`,
+buildGoogleMapsDirectionsUrl(
+currentLocation,
+{ latitude: location.lat, longitude: location.lon }
+),
 '_blank'
 );
 return;
@@ -1781,21 +1815,25 @@ window.open(
 }
 
 function openGoogleMap() {
+if (selectedGachaTreasure && currentLocation) {
+window.open(
+buildGoogleMapsDirectionsUrl(currentLocation, selectedGachaTreasure),
+'_blank'
+);
+return;
+}
+
 if (choices.mood === 'デート') {
 const waypointLocation = nearbySpot ? getSpotLocation(nearbySpot) : null;
 const finalLocation = dateFinalSpot ? getSpotLocation(dateFinalSpot) : null;
 
 if (currentLocation && waypointLocation && finalLocation) {
-const params = new URLSearchParams({
-api: '1',
-origin: `${currentLocation.latitude},${currentLocation.longitude}`,
-destination: `${finalLocation.lat},${finalLocation.lon}`,
-waypoints: `${waypointLocation.lat},${waypointLocation.lon}`,
-travelmode: 'walking',
-});
-
 window.open(
-`https://www.google.com/maps/dir/?${params.toString()}`,
+buildGoogleMapsDirectionsUrl(
+currentLocation,
+{ latitude: finalLocation.lat, longitude: finalLocation.lon },
+{ latitude: waypointLocation.lat, longitude: waypointLocation.lon }
+),
 '_blank'
 );
 return;
@@ -2068,7 +2106,7 @@ disabled={isTreasureLocationLoading}
 <header className="treasure-map-header">
 <p>📖 街の宝物図鑑</p>
 <h2>みんなが見つけた宝物</h2>
-<small>地図のマーカーをタップすると詳細が見られます。</small>
+<small>現在地から3km以内のマーカーをタップすると詳細が見られます。</small>
 </header>
 {isTreasureMapLoading ? (
 <div className="treasure-map-message" role="status">宝物を読み込んでいます…</div>
@@ -2077,8 +2115,6 @@ disabled={isTreasureLocationLoading}
 <p>{treasureMapError}</p>
 <button type="button" onClick={openTreasureMap}>もう一度読み込む</button>
 </div>
-) : mapTreasures.length === 0 ? (
-<div className="treasure-map-message">まだ登録された宝物がありません。</div>
 ) : (
 <TreasureMap treasures={mapTreasures} selectedTreasure={selectedMapTreasure}
 onSelectTreasure={setSelectedMapTreasure} currentLocation={currentLocation} />
@@ -2452,6 +2488,7 @@ type="button"
 onClick={() => {
 setSearchFailed(false);
 setNearbySpot(null);
+setSelectedGachaTreasure(null);
 setDateFinalSpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
@@ -2617,11 +2654,11 @@ setScreen('condition');
 </section>
 
 ) : screen === 'result' ? (
-<section className="result-screen">
+<section className={`result-screen ${choices.mood !== 'デート' ? 'normal-result-screen' : ''}`}>
 <p className="result-kicker">今日の宝物が見つかりました</p>
 <h2>{destination.title}</h2>
 
-<div className="result-card">
+<div className={`result-card ${choices.mood !== 'デート' ? 'normal-result-card' : ''}`}>
 {choices.mood === 'デート' ? (
 <>
 <p className="result-label">❤️ 今日のデートコース</p>
@@ -2755,24 +2792,66 @@ setCourseStep(5);
 </>
 ) : (
 <>
-<div className="spot-card main-spot">
-<p className="spot-card-label">💎 今日の目的地</p>
+<article className={`normal-result-hero ${selectedGachaTreasure?.image_url ? 'has-image' : ''}`}>
+{selectedGachaTreasure?.image_url && (
+<img
+className="gacha-treasure-result-image"
+src={selectedGachaTreasure.image_url}
+alt={selectedGachaTreasure.name}
+/>
+)}
+<div className="normal-result-hero-content">
+<p className="normal-result-category">
+{selectedGachaTreasure
+? selectedGachaTreasure.category
+: `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`}
+</p>
 <h3>{displayPlace}</h3>
-<p>{destination.description}</p>
+<p>
+{selectedGachaTreasure
+? selectedGachaTreasure.comment || 'コメントはありません。'
+: destination.description}
+</p>
+<button className="normal-result-inline-map" type="button" onClick={openGoogleMap}>
+📍 ここへ行く
+</button>
 </div>
+</article>
 
-<div className="mission-card">
-<p className="result-label">🎯 今日のミッション</p>
+<section className="normal-result-mission" aria-labelledby="normal-result-mission-title">
+<h3 id="normal-result-mission-title">🎯 今日のミッション</h3>
 <p>{destination.mission}</p>
+</section>
+
+<section className="normal-result-info" aria-label="今日の冒険情報">
+<h3>🧭 今日の冒険情報</h3>
+<dl>
+{spotDistance !== null && (
+<div>
+<dt>{choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'}</dt>
+<dd>約{spotDistance.toFixed(1)}km</dd>
 </div>
+)}
+<div>
+<dt>📍 今日の条件</dt>
+<dd>{choices.distance}・{choices.mood}・{choices.budget}・{choices.time}</dd>
+</div>
+<div>
+<dt>🔍 ヒント</dt>
+<dd>{destination.description}</dd>
+</div>
+</dl>
+</section>
 </>
 )}
 
+{choices.mood === 'デート' && (
+<>
 <p>詳しい店舗名や場所は地図で確認してください。</p>
 
 {spotDistance !== null && (
 <div>
-{choices.mood === 'デート' || choices.distance === '？km' ? (
+{choices.mood === 'デート' || choices.distance === '？km' || selectedGachaTreasure ? (
 <>
 <p>現在地から直線距離 約{spotDistance.toFixed(1)}km</p>
 <p>実際の徒歩距離・時間は地図で確認してください。</p>
@@ -2791,8 +2870,12 @@ setCourseStep(5);
 
 <p>{destination.description}</p>
 <p>ミッション：{destination.mission}</p>
+</>
+)}
 </div>
 
+{choices.mood === 'デート' ? (
+<>
 <button
 className="gacha-button"
 type="button"
@@ -2824,11 +2907,26 @@ setScreen('condition');
 </button>
 
 <button className="gacha-button" type="button" onClick={openGoogleMap}>
-{choices.mood === 'デート' ? '全体の地図を開く' : '地図を開く'}
+全体の地図を開く
 </button>
-{choices.mood !== 'デート' && (
+</>
+) : (
+<div className="normal-result-actions">
+<button className="gacha-button normal-result-map-button" type="button" onClick={openGoogleMap}>
+📍 地図で場所を確認する
+</button>
 <button
-className="gacha-button"
+className="gacha-button normal-result-secondary-button"
+type="button"
+onClick={() => {
+setCourseStep(1);
+setScreen('condition');
+}}
+>
+🎁 もう一度ガチャを引く
+</button>
+<button
+className="gacha-button normal-result-arrival-button"
 type="button"
 disabled={hasArrivedAtNormalSpot}
 onClick={() => {
@@ -2865,6 +2963,19 @@ alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
 >
 {hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : '🎉 到着した！'}
 </button>
+<button
+className="gacha-button normal-result-expand-button"
+type="button"
+disabled={isSearching}
+onClick={async () => {
+const nextExpandLevel = searchExpandLevel + 1;
+setSearchExpandLevel(nextExpandLevel);
+await findNearbySpot(nextExpandLevel);
+}}
+>
+もう少し範囲を広げて探す
+</button>
+</div>
 )}
 </section>
 ) :null}
