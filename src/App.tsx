@@ -21,8 +21,8 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
-import { createTreasure, getTreasures, type Treasure } from './services/treasures';
-import { TreasureMap } from './components/TreasureMap';
+import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
+import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
 import { buildGoogleMapsDirectionsUrl } from './features/googleMaps';
 import { scheduleGachaSequence } from './features/gachaSequence';
@@ -31,6 +31,35 @@ getEligibleRegisteredTreasures,
 loadNormalSearchSources,
 selectNormalSearchCandidate,
 } from './features/normalTreasureCandidates';
+import { claimNormalArrivalOnce, getNormalArrivalRewardExp } from './features/normalArrivalReward';
+import {
+getTreasureDiscoveryTargetId,
+updateTreasureDiscoveryWithoutBlocking,
+} from './features/treasureDiscovery';
+import {
+canRateTreasure,
+isValidTreasureRating,
+type TreasureRatingSummary,
+} from './features/treasureRatings';
+import {
+getTreasureRatingSummary,
+getTreasureRatingSummaries,
+submitTreasureRating,
+} from './services/treasureRatings';
+import type { TreasureRatingSummaryMap } from './features/treasureCollection';
+import {
+loadAdventureHistory,
+recordArrivedTreasure,
+saveAdventureHistory,
+type AdventureDiscovery,
+} from './features/adventureHistory';
+import {
+getTreasureRank,
+getTreasureRankForResult,
+getTreasureRatingStars,
+isTreasureRankUp,
+type TreasureRank,
+} from './features/treasureRank';
 import 'leaflet/dist/leaflet.css';
 import {
 deleteTreasureImage,
@@ -366,6 +395,17 @@ const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
 const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(false);
+const [treasureRatingSummary, setTreasureRatingSummary] =
+useState<TreasureRatingSummary | null>(null);
+const [selectedTreasureRating, setSelectedTreasureRating] = useState(0);
+const [isTreasureRatingLoading, setIsTreasureRatingLoading] = useState(false);
+const [isTreasureRatingSubmitting, setIsTreasureRatingSubmitting] = useState(false);
+const [hasSubmittedTreasureRating, setHasSubmittedTreasureRating] = useState(false);
+const [treasureRatingError, setTreasureRatingError] = useState('');
+const [treasureRankUp, setTreasureRankUp] = useState<{
+previous: TreasureRank;
+next: TreasureRank;
+} | null>(null);
 const [treasureName, setTreasureName] = useState('');
 const [treasureComment, setTreasureComment] = useState('');
 const [treasureCategory, setTreasureCategory] =
@@ -383,7 +423,14 @@ const [mapTreasures, setMapTreasures] = useState<Treasure[]>([]);
 const [selectedMapTreasure, setSelectedMapTreasure] = useState<Treasure | null>(null);
 const [isTreasureMapLoading, setIsTreasureMapLoading] = useState(false);
 const [treasureMapError, setTreasureMapError] = useState('');
+const [mapTreasureRatingSummaries, setMapTreasureRatingSummaries] =
+useState<TreasureRatingSummaryMap>({});
+const [areMapTreasureRatingsAvailable, setAreMapTreasureRatingsAvailable] = useState(true);
+const [adventureHistory, setAdventureHistory] = useState<AdventureDiscovery[]>(() =>
+loadAdventureHistory()
+);
 const normalArrivalRewardClaimedRef = useRef(false);
+const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
 const treasureSaveInFlightRef = useRef(false);
@@ -396,12 +443,29 @@ setTreasureMapError('');
 
 try {
 if (!currentLocation) {
+try {
 setCurrentLocation(await requestCurrentCoordinates());
+} catch (error) {
+console.warn('[treasure-collection] Current location unavailable; list remains available', error);
 }
-setMapTreasures(await getTreasures());
+}
+const [treasuresResult, ratingsResult] = await Promise.allSettled([
+getTreasures(),
+getTreasureRatingSummaries(),
+]);
+if (treasuresResult.status === 'rejected') throw treasuresResult.reason;
+setMapTreasures(treasuresResult.value);
+if (ratingsResult.status === 'fulfilled') {
+setMapTreasureRatingSummaries(ratingsResult.value);
+setAreMapTreasureRatingsAvailable(true);
+} else {
+console.error('[treasure-collection] Bulk rating summary unavailable', ratingsResult.reason);
+setMapTreasureRatingSummaries({});
+setAreMapTreasureRatingsAvailable(false);
+}
 } catch (error) {
 console.error('[treasure-map] Treasure list load failed', error);
-setTreasureMapError('現在地または宝物を読み込めませんでした。位置情報を許可して、もう一度お試しください。');
+setTreasureMapError('宝物を読み込めませんでした。通信状況を確認して、もう一度お試しください。');
 } finally {
 setIsTreasureMapLoading(false);
 }
@@ -412,6 +476,47 @@ return () => {
 if (treasureImagePreview) URL.revokeObjectURL(treasureImagePreview);
 };
 }, [treasureImagePreview]);
+
+useEffect(() => {
+const treasureId = selectedGachaTreasure?.id;
+let isCancelled = false;
+
+setTreasureRatingSummary(null);
+setSelectedTreasureRating(0);
+setHasSubmittedTreasureRating(false);
+setTreasureRatingError('');
+setTreasureRankUp(null);
+ratingSubmissionPreviousRankRef.current = null;
+
+if (treasureId === undefined) {
+setIsTreasureRatingLoading(false);
+return;
+}
+
+setIsTreasureRatingLoading(true);
+getTreasureRatingSummary(treasureId)
+.then((summary) => {
+if (!isCancelled) setTreasureRatingSummary(summary);
+})
+.catch((error) => {
+console.error('[treasure-rating] Summary load failed', error);
+if (!isCancelled) setTreasureRatingError('評価情報を読み込めませんでした。');
+})
+.finally(() => {
+if (!isCancelled) setIsTreasureRatingLoading(false);
+});
+
+return () => {
+isCancelled = true;
+};
+}, [selectedGachaTreasure?.id]);
+
+useEffect(() => {
+if (!treasureRankUp) return;
+
+const timer = window.setTimeout(() => setTreasureRankUp(null), 2800);
+return () => window.clearTimeout(timer);
+}, [treasureRankUp]);
 
 useEffect(() => {
 if (screen !== 'searching') return;
@@ -1764,6 +1869,29 @@ const displayPlace =
 choices.mood === 'デート'
 ? dateFinalSpot?.tags?.name || nearbySpot?.tags?.name || 'デートコースを探しています'
 : selectedGachaTreasure?.name || nearbySpot?.tags?.name || '宝物を探しています';
+const normalArrivalRewardExp = getNormalArrivalRewardExp(Boolean(selectedGachaTreasure));
+const displayedTreasureRatingSummary = treasureRatingSummary ?? {
+averageRating: 0,
+ratingCount: 0,
+};
+const displayedTreasureRank = getTreasureRankForResult(
+selectedGachaTreasure,
+displayedTreasureRatingSummary
+);
+useEffect(() => {
+const previousRank = ratingSubmissionPreviousRankRef.current;
+if (!hasSubmittedTreasureRating || !previousRank || !displayedTreasureRank) return;
+
+if (isTreasureRankUp(previousRank, displayedTreasureRank)) {
+setTreasureRankUp({ previous: previousRank, next: displayedTreasureRank });
+ratingSubmissionPreviousRankRef.current = null;
+}
+}, [
+displayedTreasureRank,
+hasSubmittedTreasureRating,
+selectedGachaTreasure?.discovery_count,
+treasureRatingSummary,
+]);
 function openMapForSpot(spot: Spot | null, fallbackQuery: string) {
 const location = spot ? getSpotLocation(spot) : null;
 
@@ -1840,6 +1968,42 @@ return;
 }
 }
 openMapForSpot(nearbySpot, destination.mapQuery);
+}
+
+async function handleTreasureRatingSubmit() {
+const treasure = selectedGachaTreasure;
+const treasureId = treasure?.id;
+
+if (
+!treasure ||
+treasureId === undefined ||
+!hasArrivedAtNormalSpot ||
+!isValidTreasureRating(selectedTreasureRating) ||
+isTreasureRatingSubmitting ||
+hasSubmittedTreasureRating
+) {
+return;
+}
+
+setIsTreasureRatingSubmitting(true);
+setTreasureRatingError('');
+
+try {
+const previousRank = getTreasureRank(
+treasure.discovery_count ?? 0,
+displayedTreasureRatingSummary
+);
+ratingSubmissionPreviousRankRef.current = previousRank;
+const summary = await submitTreasureRating(treasureId, selectedTreasureRating);
+setTreasureRatingSummary(summary);
+setHasSubmittedTreasureRating(true);
+} catch (error) {
+ratingSubmissionPreviousRankRef.current = null;
+console.error('[treasure-rating] Submission failed without affecting arrival', error);
+setTreasureRatingError('評価を送信できませんでした。もう一度お試しください。');
+} finally {
+setIsTreasureRatingSubmitting(false);
+}
 }
 
 
@@ -2103,11 +2267,6 @@ disabled={isTreasureLocationLoading}
 
 ) : screen === 'treasure-map' ? (
 <section className="treasure-map-screen">
-<header className="treasure-map-header">
-<p>📖 街の宝物図鑑</p>
-<h2>みんなが見つけた宝物</h2>
-<small>現在地から3km以内のマーカーをタップすると詳細が見られます。</small>
-</header>
 {isTreasureMapLoading ? (
 <div className="treasure-map-message" role="status">宝物を読み込んでいます…</div>
 ) : treasureMapError ? (
@@ -2116,8 +2275,17 @@ disabled={isTreasureLocationLoading}
 <button type="button" onClick={openTreasureMap}>もう一度読み込む</button>
 </div>
 ) : (
-<TreasureMap treasures={mapTreasures} selectedTreasure={selectedMapTreasure}
-onSelectTreasure={setSelectedMapTreasure} currentLocation={currentLocation} />
+<TreasureCollection
+treasures={mapTreasures}
+ratingSummaries={mapTreasureRatingSummaries}
+ratingSummariesAvailable={areMapTreasureRatingsAvailable}
+selectedMapTreasure={selectedMapTreasure}
+onSelectMapTreasure={setSelectedMapTreasure}
+currentLocation={currentLocation}
+onStartAdventure={() => setScreen('condition')}
+onRegisterTreasure={openTreasureRegistration}
+adventureHistory={adventureHistory}
+/>
 )}
 </section>
 ) : screen === 'treasure-register' ? (
@@ -2792,6 +2960,13 @@ setCourseStep(5);
 </>
 ) : (
 <>
+{selectedGachaTreasure && (
+<section className="secret-treasure-discovery" aria-label="登録宝物を発見">
+<p className="secret-treasure-title">✨ SECRET TREASURE ✨</p>
+<h3>誰かが見つけた宝物！</h3>
+<p>この街を冒険した誰かが「ここ、いいな」と残した場所です</p>
+</section>
+)}
 <article className={`normal-result-hero ${selectedGachaTreasure?.image_url ? 'has-image' : ''}`}>
 {selectedGachaTreasure?.image_url && (
 <img
@@ -2818,6 +2993,56 @@ alt={selectedGachaTreasure.name}
 </div>
 </article>
 
+{selectedGachaTreasure && displayedTreasureRank && (
+<section
+className={`treasure-status-card treasure-status-card--${displayedTreasureRank.key}`}
+aria-labelledby="treasure-status-rank"
+>
+<p className="treasure-status-eyebrow">TREASURE STATUS</p>
+<h3 id="treasure-status-rank">{displayedTreasureRank.label}</h3>
+<div className="treasure-status-rating">
+<span className="treasure-status-stars" aria-hidden="true">
+{getTreasureRatingStars(displayedTreasureRatingSummary)}
+</span>
+{displayedTreasureRatingSummary.ratingCount > 0 ? (
+<strong>{displayedTreasureRatingSummary.averageRating.toFixed(1)}</strong>
+) : (
+<strong>まだ評価はありません</strong>
+)}
+</div>
+<p className="treasure-status-rating-count">
+{displayedTreasureRatingSummary.ratingCount}人の冒険者が評価
+</p>
+<p className="treasure-status-discoveries">
+👣 発見回数　{selectedGachaTreasure.discovery_count ?? 0}回
+</p>
+<p className="treasure-status-description">{displayedTreasureRank.description}</p>
+{isTreasureRatingLoading && (
+<p className="treasure-status-note">評価情報を読み込んでいます…</p>
+)}
+{!isTreasureRatingLoading && !treasureRatingSummary && (
+<p className="treasure-status-note">評価情報を取得できませんでした</p>
+)}
+<p className="treasure-status-growth">発見と評価で、この宝物は成長していきます</p>
+</section>
+)}
+
+{treasureRankUp && (
+<section
+className={`treasure-rank-up treasure-rank-up--${treasureRankUp.next.key}`}
+role="status"
+aria-live="polite"
+>
+<strong>✨ TREASURE RANK UP! ✨</strong>
+<div>
+<span>{treasureRankUp.previous.shortLabel}</span>
+<span aria-hidden="true">↓</span>
+<span>{treasureRankUp.next.shortLabel}</span>
+</div>
+<p>街の宝物が成長しました！</p>
+</section>
+)}
+
 <section className="normal-result-mission" aria-labelledby="normal-result-mission-title">
 <h3 id="normal-result-mission-title">🎯 今日のミッション</h3>
 <p>{destination.mission}</p>
@@ -2842,6 +3067,51 @@ alt={selectedGachaTreasure.name}
 </div>
 </dl>
 </section>
+{canRateTreasure(selectedGachaTreasure, hasArrivedAtNormalSpot) && (
+<section className="treasure-rating-panel" aria-labelledby="treasure-rating-title">
+{hasSubmittedTreasureRating ? (
+<div className="treasure-rating-thanks" role="status">
+<span aria-hidden="true">✨</span>
+<strong>評価ありがとう！</strong>
+</div>
+) : (
+<>
+<h3 id="treasure-rating-title">⭐ この宝物を評価する</h3>
+<div className="treasure-rating-stars" role="group" aria-label="宝物の評価">
+{[1, 2, 3, 4, 5].map((rating) => (
+<button
+key={rating}
+type="button"
+className={rating <= selectedTreasureRating ? 'selected' : ''}
+onClick={() => {
+setSelectedTreasureRating(rating);
+setTreasureRatingError('');
+}}
+aria-label={`${rating}つ星`}
+aria-pressed={rating === selectedTreasureRating}
+>
+★
+</button>
+))}
+</div>
+<button
+type="button"
+className="treasure-rating-submit"
+disabled={
+!isValidTreasureRating(selectedTreasureRating) ||
+isTreasureRatingSubmitting
+}
+onClick={handleTreasureRatingSubmit}
+>
+{isTreasureRatingSubmitting ? '送信中…' : '評価を送信する'}
+</button>
+</>
+)}
+{treasureRatingError && (
+<p className="treasure-rating-error" role="alert">{treasureRatingError}</p>
+)}
+</section>
+)}
 </>
 )}
 
@@ -2925,19 +3195,53 @@ setScreen('condition');
 >
 🎁 もう一度ガチャを引く
 </button>
+{selectedGachaTreasure && (
+<p className="secret-treasure-exp-bonus">💎 宝物発見ボーナス +30 EXP</p>
+)}
 <button
 className="gacha-button normal-result-arrival-button"
 type="button"
 disabled={hasArrivedAtNormalSpot}
 onClick={() => {
-if (normalArrivalRewardClaimedRef.current) return;
-
-normalArrivalRewardClaimedRef.current = true;
+if (!claimNormalArrivalOnce(normalArrivalRewardClaimedRef)) return;
 setHasArrivedAtNormalSpot(true);
+
+setAdventureHistory((currentHistory) => {
+const nextHistory = recordArrivedTreasure(
+currentHistory,
+selectedGachaTreasure,
+true
+);
+if (nextHistory !== currentHistory) {
+try {
+saveAdventureHistory(nextHistory);
+} catch (error) {
+console.error('[adventure-history] Local save failed without blocking arrival', error);
+}
+}
+return nextHistory;
+});
+
+const treasureId = getTreasureDiscoveryTargetId(selectedGachaTreasure);
+if (treasureId !== null) {
+void updateTreasureDiscoveryWithoutBlocking(
+() => incrementTreasureDiscovery(treasureId),
+(discoveryCount) => {
+setSelectedGachaTreasure((currentTreasure) =>
+currentTreasure?.id === treasureId
+? { ...currentTreasure, discovery_count: discoveryCount }
+: currentTreasure
+);
+},
+(error) => {
+console.error('[treasure-discovery] Count update failed without blocking arrival reward', error);
+}
+);
+}
 
 setExp((currentExp) => {
 const beforeRank = getWalkRank(currentExp);
-const nextExp = currentExp + 20;
+const nextExp = currentExp + normalArrivalRewardExp;
 const afterRank = getWalkRank(nextExp);
 
 if (beforeRank !== afterRank) {
@@ -2958,7 +3262,7 @@ setAchievementMessage(`🏆 実績解除！ ${newAchievement}`);
 return nextCount;
 });
 
-alert("🎉 到着おめでとう！\n+20 EXP 獲得しました！");
+alert(`🎉 到着おめでとう！\n+${normalArrivalRewardExp} EXP 獲得しました！`);
 }}
 >
 {hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : '🎉 到着した！'}
