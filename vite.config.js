@@ -5,10 +5,14 @@ export default defineConfig({
     server: {
         proxy: {
             '/api/overpass': {
-                target: 'https://overpass-api.de',
+                target: 'https://machi-wa-takarabako.vercel.app',
                 changeOrigin: true,
                 secure: true,
-                rewrite: function () { return '/api/interpreter'; },
+            },
+            '/api/walking-distance': {
+                target: 'https://machi-wa-takarabako.vercel.app',
+                changeOrigin: true,
+                secure: true,
             },
         },
     },

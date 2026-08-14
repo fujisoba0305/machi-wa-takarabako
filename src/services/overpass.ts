@@ -28,26 +28,17 @@ return overpassCache.get(cacheKey) ?? [];
 }
 
 try {
-const isLocalhost =
-window.location.hostname === 'localhost' ||
-window.location.hostname === '127.0.0.1';
-
 const response = await fetch(
-isLocalhost
+window.location.hostname === 'localhost' ||
+window.location.hostname === '127.0.0.1'
 ? '/api/overpass'
 : '/api/overpass?v=20260708',
 {
 method: 'POST',
-headers: isLocalhost
-? {
-'Content-Type': 'application/x-www-form-urlencoded',
-}
-: {
+headers: {
 'Content-Type': 'application/json',
 },
-body: isLocalhost
-? new URLSearchParams({ data: query }).toString()
-: JSON.stringify({ query }),
+body: JSON.stringify({ query }),
 }
 );
 

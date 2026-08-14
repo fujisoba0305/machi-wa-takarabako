@@ -23,6 +23,7 @@ getNearbyShrinesAndTemples,
 import { getWalkingDistances } from './services/walkingDistance';
 import { createTreasure, getTreasures, type Treasure } from './services/treasures';
 import { TreasureMap } from './components/TreasureMap';
+import { scheduleGachaSequence } from './features/gachaSequence';
 import 'leaflet/dist/leaflet.css';
 import {
 deleteTreasureImage,
@@ -345,13 +346,9 @@ const [screen, setScreen] = useState<
 const startGacha = () => {
 if (gachaStep !== 0) return;
 
-setGachaStep(1);
-
-window.setTimeout(() => {
-setGachaStep(2);
-}, 1100);
-
-window.setTimeout(() => {
+scheduleGachaSequence({
+setStep: setGachaStep,
+showSearching: () => {
 if (activeNormalSearchIdRef.current) {
 console.info('[normal-search] searching_screen_transition', {
 searchId: activeNormalSearchIdRef.current,
@@ -360,8 +357,8 @@ at: new Date().toISOString(),
 });
 }
 setScreen('searching');
-setGachaStep(0);
-}, 2800);
+},
+});
 };
 
 const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
@@ -2495,6 +2492,7 @@ className={`treasure-gacha-machine ${
 gachaStep >= 2 ? 'gacha-found' : ''
 }`}
 >
+<div className="gacha-machine-frame">
 <img
 src={gachaMachine}
 className="gacha-machine-image"
@@ -2523,6 +2521,7 @@ className="gacha-handle-image"
 alt=""
 />
 </button>
+</div>
 </div>
 
 {gachaStep < 2 && (
