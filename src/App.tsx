@@ -24,6 +24,7 @@ import { getWalkingDistances } from './services/walkingDistance';
 import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
+import { AdventureSession, type AdventureTarget } from './features/activeAdventure';
 import { buildGoogleMapsDirectionsUrl } from './features/googleMaps';
 import { scheduleGachaSequence } from './features/gachaSequence';
 import {
@@ -342,8 +343,13 @@ maximumAge: 0,
 const decorativeCapsuleIcons = ['☕', '🌳', '📷', '⛩️', '🍴', '🎵'];
 
 export default function App() {
-const [name, setName] = useState('');
-const [hasStarted, setHasStarted] = useState(false);
+const [adventureSession] = useState(() => new AdventureSession(localStorage));
+const [restoredAdventure] = useState(() => adventureSession.current);
+const [adventureMessage, setAdventureMessage] = useState('');
+const [isAdventureBusy, setIsAdventureBusy] = useState(false);
+const adventureOperationRef = useRef(0);
+const [name, setName] = useState(restoredAdventure?.result.playerName ?? '');
+const [hasStarted, setHasStarted] = useState(Boolean(restoredAdventure));
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
@@ -355,7 +361,7 @@ const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'treasure-register' | 'treasure-map'
->('home');
+>(restoredAdventure ? 'result' : 'home');
 const startGacha = () => {
 if (gachaStep !== 0) return;
 
@@ -382,19 +388,20 @@ time: '',
 foodGenre: '',
 dateGenre: '',
 eventGenre: '',
-shrineGenre:','
+shrineGenre:',',
+...restoredAdventure?.result.choices,
 });
 
-const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
+const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(restoredAdventure?.departure ?? null);
 
-const [nearbySpot, setNearbySpot] = useState<Spot | null>(null);
-const [selectedGachaTreasure, setSelectedGachaTreasure] = useState<Treasure | null>(null);
+const [nearbySpot, setNearbySpot] = useState<Spot | null>(restoredAdventure?.result.spot ?? null);
+const [selectedGachaTreasure, setSelectedGachaTreasure] = useState<Treasure | null>(restoredAdventure?.result.treasure ?? null);
 const [dateFinalSpot, setDateFinalSpot] = useState<Spot | null>(null);
-const [spotDistance, setSpotDistance] = useState<number | null>(null);
+const [spotDistance, setSpotDistance] = useState<number | null>(restoredAdventure?.result.distanceKm ?? null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
 const [courseStep, setCourseStep] = useState(1);
-const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(false);
+const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(restoredAdventure?.rewardClaimed ?? false);
 const [treasureRatingSummary, setTreasureRatingSummary] =
 useState<TreasureRatingSummary | null>(null);
 const [selectedTreasureRating, setSelectedTreasureRating] = useState(0);
@@ -429,7 +436,7 @@ const [areMapTreasureRatingsAvailable, setAreMapTreasureRatingsAvailable] = useS
 const [adventureHistory, setAdventureHistory] = useState<AdventureDiscovery[]>(() =>
 loadAdventureHistory()
 );
-const normalArrivalRewardClaimedRef = useRef(false);
+const normalArrivalRewardClaimedRef = useRef(restoredAdventure?.rewardClaimed ?? false);
 const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
@@ -1173,6 +1180,7 @@ setSearchFailed(true);
 }
 
 async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
+if (!resetNormalAdventure()) return;
 const searchId =
 choices.mood === 'デート'
 ? null
@@ -1869,7 +1877,6 @@ const displayPlace =
 choices.mood === 'デート'
 ? dateFinalSpot?.tags?.name || nearbySpot?.tags?.name || 'デートコースを探しています'
 : selectedGachaTreasure?.name || nearbySpot?.tags?.name || '宝物を探しています';
-const normalArrivalRewardExp = getNormalArrivalRewardExp(Boolean(selectedGachaTreasure));
 const displayedTreasureRatingSummary = treasureRatingSummary ?? {
 averageRating: 0,
 ratingCount: 0,
@@ -1892,6 +1899,129 @@ hasSubmittedTreasureRating,
 selectedGachaTreasure?.discovery_count,
 treasureRatingSummary,
 ]);
+function getNormalAdventureTarget(): AdventureTarget | null {
+if (choices.mood === 'デート') return null;
+if (selectedGachaTreasure?.id !== undefined) return {
+kind: 'treasure', id: String(selectedGachaTreasure.id),
+latitude: selectedGachaTreasure.latitude, longitude: selectedGachaTreasure.longitude,
+};
+const location = nearbySpot ? getSpotLocation(nearbySpot) : null;
+return nearbySpot && location ? { kind: 'normal', id: nearbySpot.type + ':' + nearbySpot.id,
+latitude: location.lat, longitude: location.lon } : null;
+}
+function cancelAdventureOperation() {
+adventureOperationRef.current++;
+adventureSession.cancelPending();
+setIsAdventureBusy(false);
+setAdventureMessage('');
+}
+function resetNormalAdventure() {
+cancelAdventureOperation();
+try { adventureSession.reset(); return true; }
+catch { setAdventureMessage('冒険の保存状態を更新できませんでした。ブラウザの保存設定を確認してください。'); return false; }
+}
+const normalTarget = getNormalAdventureTarget();
+const normalTargetKey = normalTarget ? JSON.stringify(normalTarget) : '';
+useEffect(() => {
+cancelAdventureOperation();
+return () => { adventureOperationRef.current++; adventureSession.cancelPending(); };
+}, [screen, normalTargetKey]);
+
+async function startNormalAdventure() {
+if (isAdventureBusy) return;
+const target = getNormalAdventureTarget();
+if (!target) { setAdventureMessage('目的地の位置を確認できませんでした。'); return; }
+const operation = ++adventureOperationRef.current;
+setIsAdventureBusy(true);
+setAdventureMessage('出発地点を確認しています…');
+try {
+const adventure = await adventureSession.start(target, {
+spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name,
+});
+if (!adventure || operation !== adventureOperationRef.current) return;
+setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
+// Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
+window.location.assign(buildGoogleMapsDirectionsUrl(adventure.departure, adventure.target));
+} catch (error) {
+if (operation === adventureOperationRef.current)
+setAdventureMessage(error instanceof Error ? error.message : '冒険を開始できませんでした。もう一度試してください。');
+} finally { if (operation === adventureOperationRef.current) setIsAdventureBusy(false); }
+}
+async function confirmNormalArrival() {
+if (isAdventureBusy) return;
+const operation = ++adventureOperationRef.current;
+setIsAdventureBusy(true);
+setAdventureMessage('現在地を確認しています…');
+const message = await adventureSession.arrive(getNormalAdventureTarget(), (adventure) => {
+const arrivedTreasure = adventure.result.treasure;
+const rewardExp = getNormalArrivalRewardExp(adventure.target.kind === 'treasure');
+if (!claimNormalArrivalOnce(normalArrivalRewardClaimedRef)) return;
+setHasArrivedAtNormalSpot(true);
+
+setAdventureHistory((currentHistory) => {
+const nextHistory = recordArrivedTreasure(
+currentHistory,
+arrivedTreasure,
+true
+);
+if (nextHistory !== currentHistory) {
+try {
+saveAdventureHistory(nextHistory);
+} catch (error) {
+console.error('[adventure-history] Local save failed without blocking arrival', error);
+}
+}
+return nextHistory;
+});
+
+const treasureId = getTreasureDiscoveryTargetId(arrivedTreasure);
+if (treasureId !== null) {
+void updateTreasureDiscoveryWithoutBlocking(
+() => incrementTreasureDiscovery(treasureId),
+(discoveryCount) => {
+setSelectedGachaTreasure((currentTreasure) =>
+currentTreasure?.id === treasureId
+? { ...currentTreasure, discovery_count: discoveryCount }
+: currentTreasure
+);
+},
+(error) => {
+console.error('[treasure-discovery] Count update failed without blocking arrival reward', error);
+}
+);
+}
+
+setExp((currentExp) => {
+const beforeRank = getWalkRank(currentExp);
+const nextExp = currentExp + rewardExp;
+const afterRank = getWalkRank(nextExp);
+
+if (beforeRank !== afterRank) {
+setLevelUpMessage(`✨ LEVEL UP!! ${afterRank} になりました！`);
+}
+
+return nextExp;
+});
+
+setAdventureCount((count) => {
+const nextCount = count + 1;
+const newAchievement = getNewAchievement(nextCount);
+
+if (newAchievement) {
+setAchievementMessage(`🏆 実績解除！ ${newAchievement}`);
+}
+
+return nextCount;
+});
+
+alert(`🎉 到着おめでとう！\n+${rewardExp} EXP 獲得しました！`);
+});
+if (operation === adventureOperationRef.current) {
+setAdventureMessage(message);
+setIsAdventureBusy(false);
+}
+}
+
 function openMapForSpot(spot: Spot | null, fallbackQuery: string) {
 const location = spot ? getSpotLocation(spot) : null;
 
@@ -2654,6 +2784,7 @@ className="coin-takaran"
 className="gacha-button adventure-start-button"
 type="button"
 onClick={() => {
+if (!resetNormalAdventure()) return;
 setSearchFailed(false);
 setNearbySpot(null);
 setSelectedGachaTreasure(null);
@@ -2987,9 +3118,10 @@ alt={selectedGachaTreasure.name}
 ? selectedGachaTreasure.comment || 'コメントはありません。'
 : destination.description}
 </p>
-<button className="normal-result-inline-map" type="button" onClick={openGoogleMap}>
-📍 ここへ行く
+<button className="normal-result-inline-map" type="button" disabled={isAdventureBusy} onClick={startNormalAdventure}>
+{isAdventureBusy ? '📍 現在地を確認中…' : '📍 ここへ行く'}
 </button>
+{adventureMessage && <p role="status" aria-live="polite">{adventureMessage}</p>}
 </div>
 </article>
 
@@ -3182,6 +3314,7 @@ setScreen('condition');
 </>
 ) : (
 <div className="normal-result-actions">
+{adventureMessage && <p>{adventureMessage}</p>}
 <button className="gacha-button normal-result-map-button" type="button" onClick={openGoogleMap}>
 📍 地図で場所を確認する
 </button>
@@ -3201,71 +3334,10 @@ setScreen('condition');
 <button
 className="gacha-button normal-result-arrival-button"
 type="button"
-disabled={hasArrivedAtNormalSpot}
-onClick={() => {
-if (!claimNormalArrivalOnce(normalArrivalRewardClaimedRef)) return;
-setHasArrivedAtNormalSpot(true);
-
-setAdventureHistory((currentHistory) => {
-const nextHistory = recordArrivedTreasure(
-currentHistory,
-selectedGachaTreasure,
-true
-);
-if (nextHistory !== currentHistory) {
-try {
-saveAdventureHistory(nextHistory);
-} catch (error) {
-console.error('[adventure-history] Local save failed without blocking arrival', error);
-}
-}
-return nextHistory;
-});
-
-const treasureId = getTreasureDiscoveryTargetId(selectedGachaTreasure);
-if (treasureId !== null) {
-void updateTreasureDiscoveryWithoutBlocking(
-() => incrementTreasureDiscovery(treasureId),
-(discoveryCount) => {
-setSelectedGachaTreasure((currentTreasure) =>
-currentTreasure?.id === treasureId
-? { ...currentTreasure, discovery_count: discoveryCount }
-: currentTreasure
-);
-},
-(error) => {
-console.error('[treasure-discovery] Count update failed without blocking arrival reward', error);
-}
-);
-}
-
-setExp((currentExp) => {
-const beforeRank = getWalkRank(currentExp);
-const nextExp = currentExp + normalArrivalRewardExp;
-const afterRank = getWalkRank(nextExp);
-
-if (beforeRank !== afterRank) {
-setLevelUpMessage(`✨ LEVEL UP!! ${afterRank} になりました！`);
-}
-
-return nextExp;
-});
-
-setAdventureCount((count) => {
-const nextCount = count + 1;
-const newAchievement = getNewAchievement(nextCount);
-
-if (newAchievement) {
-setAchievementMessage(`🏆 実績解除！ ${newAchievement}`);
-}
-
-return nextCount;
-});
-
-alert(`🎉 到着おめでとう！\n+${normalArrivalRewardExp} EXP 獲得しました！`);
-}}
+disabled={hasArrivedAtNormalSpot || isAdventureBusy}
+onClick={confirmNormalArrival}
 >
-{hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : '🎉 到着した！'}
+{hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : isAdventureBusy ? '📍 現在地を確認中…' : '🎉 到着した！'}
 </button>
 <button
 className="gacha-button normal-result-expand-button"
