@@ -21,3 +21,8 @@ params.set('waypoints', `${waypoint.latitude},${waypoint.longitude}`);
 
 return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
+
+// Keep navigation separate from adventure creation; resume must never reset a session.
+export function navigateAdventureMap(origin: MapCoordinates, destination: MapCoordinates) {
+  window.location.assign(buildGoogleMapsDirectionsUrl(origin, destination));
+}

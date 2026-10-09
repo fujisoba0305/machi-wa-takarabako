@@ -24,6 +24,7 @@ export type ActiveAdventure = {
   departure: PositionFix;
   startedAt: number;
   rewardClaimed: boolean;
+  departureWalkingDistanceMeters?: number | null;
   completedAt?: number;
   arrival?: PositionFix;
   result: AdventureResult;
@@ -40,6 +41,7 @@ export function loadActiveAdventure(storage: StorageLike): ActiveAdventure | nul
       !validCoordinates(a.target) || typeof a.target.id !== 'string' ||
       !['normal', 'treasure'].includes(a.target.kind) || !validFix(a.departure) ||
       !Number.isFinite(a.startedAt) || a.startedAt <= 0 || typeof a.rewardClaimed !== 'boolean' ||
+      (a.departureWalkingDistanceMeters != null && (!Number.isFinite(a.departureWalkingDistanceMeters) || a.departureWalkingDistanceMeters < 0)) ||
       !a.result || !a.result.choices || typeof a.result.choices !== 'object' ||
       !Object.values(a.result.choices).every(v => typeof v === 'string') ||
       a.result.choices.mood === 'デート' ||
@@ -96,7 +98,7 @@ export class AdventureSession {
     catch { throw new Error('冒険を保存できませんでした。ブラウザの保存設定を確認して、もう一度試してください。'); }
     this.current = a;
   }
-  async start(target: AdventureTarget, result: AdventureResult): Promise<ActiveAdventure | null> {
+  async start(target: AdventureTarget, result: AdventureResult, measureRoute?: (departure: PositionFix, target: AdventureTarget) => Promise<number | null>): Promise<ActiveAdventure | null> {
     if (this.busy) return null;
     if (this.current && sameTarget(this.current.target, target)) return this.current;
     if (!validCoordinates(target)) throw new Error('目的地の位置を確認できませんでした。');
@@ -108,8 +110,12 @@ export class AdventureSession {
       const departure = await this.locate();
       if (generation !== this.generation) return null;
       if (departure.accuracy > MAX_ACCURACY_METERS) throw new Error(accuracyMessage);
+      const startedAt = Date.now();
+      const departureWalkingDistanceMeters = measureRoute ? await measureRoute(departure, fixedTarget).catch(() => null) : null;
+      if (generation !== this.generation) return null;
       const adventure: ActiveAdventure = { version: 1, id: crypto.randomUUID(),
-        target: fixedTarget, departure, startedAt: Date.now(), rewardClaimed: false,
+        target: fixedTarget, departure, startedAt, rewardClaimed: false,
+        departureWalkingDistanceMeters: departureWalkingDistanceMeters !== null && Number.isFinite(departureWalkingDistanceMeters) && departureWalkingDistanceMeters >= 0 ? departureWalkingDistanceMeters : null,
         result: fixedResult };
       this.persist(adventure);
       return adventure;

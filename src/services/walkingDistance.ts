@@ -26,13 +26,15 @@ results: WalkingDistanceResult[];
 export async function getWalkingDistances(
 origin: Coordinates,
 destinations: WalkingDistanceDestination[],
-diagnostics?: WalkingDistanceDiagnostics
+diagnostics?: WalkingDistanceDiagnostics,
+signal?: AbortSignal
 ): Promise<WalkingDistanceResult[]> {
 let response: Response;
 
 try {
 response = await fetch('/api/walking-distance', {
 method: 'POST',
+signal,
 headers: {
 'Content-Type': 'application/json',
 ...(diagnostics

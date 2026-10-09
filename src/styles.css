@@ -4868,3 +4868,184 @@ font-size: 21px;
 max-height: 210px;
 }
 }
+
+/* Walking screen: local, licensed photograph; styles scoped to walking mode. */
+.app-shell.walking-mode {
+  padding: 0 0 calc(116px + env(safe-area-inset-bottom, 0px));
+  color: #273e31;
+  position: relative;
+  isolation: isolate;
+  background: #d9e7d2;
+}
+.app-shell.walking-mode::before {
+  content: ''; position: fixed; z-index: -1; pointer-events: none;
+  inset: 0; margin-inline: auto; width: min(100%, 430px);
+  background: linear-gradient(180deg, rgba(253,250,229,.12), rgba(248,242,217,.08) 55%, rgba(48,78,37,.22)), url('./assets/walking-park.webp') center / cover no-repeat;
+}
+.walking-screen { min-height: calc(100dvh - 116px); padding: 18px 20px 24px; }
+.walking-header { margin: 0 0 17px; text-align: center; color: #233e2c; }
+.walking-eyebrow { display: inline-block; margin: 0; padding: 6px 17px; border: 1px solid #fff9; border-radius: 30px; background: #fffcebd9; font-size: 11px; font-weight: 800; letter-spacing: .2em; }
+.walking-header h1 { margin: 10px 0 7px; font-size: clamp(23px, 6.3vw, 27px); line-height: 1.4; font-weight: 900; letter-spacing: .015em; text-shadow: 0 1px 3px #fff, 0 0 12px #fff, 0 0 24px #fff; }
+.walking-header > p:last-child { display: inline-block; margin: 0; border-radius: 20px; padding: 5px 12px; background: #fffae9de; font-size: 12px; font-weight: 600; }
+.walking-glass { background: rgba(255, 253, 244, .93); border: 1px solid rgba(255, 255, 255, .95); border-radius: 23px; box-shadow: 0 5px 18px rgba(25, 53, 26, .16); }
+.walking-destination { overflow: hidden; padding: 7px; }
+.walking-destination-photo { display: block; width: 100%; height: 148px; object-fit: cover; border-radius: 17px; background: #e5eadc; }
+.walking-destination-body { padding: 12px 13px 11px; }
+.walking-label { margin: 0 0 5px; font-size: 11px; font-weight: 700; letter-spacing: .09em; color: #53684d; }
+.walking-destination h2 { margin: 0; font-size: 23px; line-height: 1.4; overflow-wrap: anywhere; }
+.walking-route { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 5px 10px; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #73846636; font-size: 11px; }
+.walking-route strong { font-size: 17px; }
+.walking-mission { margin: 12px 0 16px; padding: 14px 19px; }
+.walking-mission h2 { font-size: 12px; margin: 0 0 8px; color: #66734d; }
+.walking-mission p { font-size: 15px; font-weight: 750; line-height: 1.75; margin: 0 0 8px; }
+.walking-mission small { display: block; font-size: 11px; line-height: 1.7; color: #56674e; }
+.walking-actions { display: grid; gap: 11px; }
+.walking-actions button { width: 100%; min-height: 56px; border-radius: 17px; border: 1px solid #ffffffb3; font-size: 16px; font-weight: 800; cursor: pointer; padding: 15px 10px; box-shadow: 0 4px 0 #22402533, inset 0 1px 0 #ffffff73; touch-action: manipulation; }
+.walking-discover { background: linear-gradient(180deg, #168cec, #0874d2); color: #fff; text-shadow: 0 1px 2px #074976; }
+.walking-navigate { background: linear-gradient(180deg, #ffbb53, #ff9f36); color: #512d0b; }
+.walking-arrive { background: linear-gradient(180deg, #fffef9, #f6f3e9); color: #34503c; }
+.walking-actions button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #22402533; }
+.walking-actions button:disabled { opacity: .7; cursor: wait; }
+.walking-actions button:focus-visible, .resume-adventure-button:focus-visible { outline: 3px solid #173f78; outline-offset: 4px; }
+.walking-message { padding: 16px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.resume-adventure-button { display: block; width: 100%; margin: 20px 0; padding: 16px; border: 1px solid #50785e; border-radius: 16px; background: #e7f2dd; color: #224632; font-weight: 700; cursor: pointer; }
+.walking-mode .bottom-nav { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); background: #fffcf1f5; border: 1px solid #fff; box-shadow: 0 5px 24px #17371938; }
+.walking-mode .bottom-nav button { background: #ffffff80; border: 1px solid #dccdac; }
+@media (max-width: 360px) {
+  .walking-screen { padding: 22px 14px 24px; }
+  .walking-destination h2 { font-size: 21px; }
+  .walking-destination-photo { height: 145px; }
+  .walking-mission { padding: 16px; }
+  .walking-mission p { font-size: 15px; }
+}
+
+/* Season 2: home and destination presentation. Shared licensed local scenery. */
+.app-shell.explore-mode { padding: 0 16px calc(130px + env(safe-area-inset-bottom, 0px)); background: #f8efd9; color: #493b2b; }
+.explore-mode button { touch-action: manipulation; }
+.explore-mode button:focus-visible, .home-companion summary:focus-visible { outline: 3px solid #1166a5; outline-offset: 3px; }
+.explore-mode .home-screen { display: block; padding: 0; }
+.explore-hero { margin: 0 -16px; padding: 28px 22px 24px; min-height: 345px; border-radius: 0 0 30px 30px; color: white; background: linear-gradient(180deg,#10383235 0%,#102f2555 40%,#183d35d9 100%),url('./assets/walking-park.webp') center 43% / cover; }
+.explore-brand { margin: 0 0 35px; font-size: 29px; font-weight: 900; letter-spacing: .12em; text-shadow: 0 2px 8px #173729; }
+.explore-brand span { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .15em; }
+.explore-greeting { margin: 0 0 8px; font-size: 12px; }
+.explore-hero h1 { font-size: 30px; line-height: 1.45; margin: 0; letter-spacing: .035em; text-shadow: 0 2px 10px #153c2c; }
+.explore-intro { font-size: 12px; margin: 12px 0 18px; }
+.explore-search { width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 13px; border: 1px solid #fff; border-radius: 15px; background: #fffdf5f5; color: #4d4435; font-size: 13px; font-weight: 750; box-shadow: 0 4px 16px #15291b30; cursor: pointer; }
+.explore-categories { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 17px 0; }
+.explore-categories button { min-height: 76px; border-radius: 18px; border: 1px solid #e9d7b7; background: linear-gradient(#fffef9,#fff9e9); color: #5a4228; font-size: 12px; font-weight: 750; box-shadow: 0 3px 8px #71441d08; cursor: pointer; padding: 9px 3px; }
+.explore-categories button span { display: block; font-size: 24px; margin-bottom: 5px; }
+.explore-categories button:hover { background: #ffe3ab; }
+.explore-recommend { padding: 18px 15px 12px; border: 1px solid #fff; border-radius: 22px; background: #fffdf4eb; box-shadow: 0 5px 16px #825e2510; }
+.explore-eyebrow { font-size: 9px; letter-spacing: .18em; color: #937042; margin: 0 0 4px; font-weight: 800; }
+.explore-recommend h2 { margin: 0 0 15px; font-size: 18px; }
+.explore-recommend button { width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; border: 0; border-radius: 15px; padding: 14px 10px; background: #ecf2df; color: #35513b; cursor: pointer; }
+.explore-recommend button > span:nth-child(2) { flex: 1; min-width: 0; }
+.explore-map-icon { font-size: 30px; }
+.explore-recommend strong { font-size: 13px; display: block; }
+.explore-recommend small { font-size: 10px; display: block; margin-top: 6px; line-height: 1.6; }
+.explore-recommend > p { text-align: center; font-size: 11px; color: #79684f; margin: 12px 0 0; }
+.home-companion { margin: 16px 0; background: #fffaf0; border-radius: 17px; border: 1px solid #e7d8bc; }
+.home-companion summary { cursor: pointer; min-height: 52px; padding: 16px 12px; font-size: 12px; font-weight: 750; }
+.home-companion summary span { float: right; color: #597345; }
+.explore-mode .home-companion .treasure-box-card { margin: 0; width: 100%; box-shadow: none; }
+.explore-mode .treasure-discovery-button { margin: 16px 0 0; background: linear-gradient(#148de0,#0877c6); color: white; border: 1px solid #fff; border-radius: 18px; }
+.explore-mode .bottom-nav { bottom: calc(12px + env(safe-area-inset-bottom,0px)); background: #fffdf4f5; border: 1px solid #fff; border-radius: 22px; box-shadow: 0 4px 25px #50381824; }
+.explore-mode .bottom-nav button { border: 0; background: transparent; border-radius: 15px; min-height: 52px; }
+.explore-mode .bottom-nav button[aria-current="page"] { background: #fff0cf; color: #b55b13; }
+.explore-mode .condition-screen { padding-top: 0; }
+.explore-mode .condition-hero { margin: 0 -16px 20px; padding: 28px 22px; border-radius: 0 0 28px 28px; background: linear-gradient(#12352255,#123522d9),url('./assets/walking-park.webp') center / cover; color: #fff; }
+.explore-mode .condition-hero h2 { color: #fff; font-size: 29px; }
+.explore-mode .condition-welcome, .explore-mode .condition-description { color: #fff; }
+.explore-mode .condition-takaran { width: 70px; align-self: end; }
+.explore-mode .adventure-choice-card, .explore-mode .selected-condition-card { background: #fffdf5ef; border: 1px solid #e9d7b7; border-radius: 20px; box-shadow: 0 4px 14px #7954280c; }
+.explore-mode .choice-button { min-height: 48px; white-space: normal; }
+.explore-mode .choice-button.selected { background: #ffe1a5; color: #71450e; border-color: #d79e45; }
+.explore-mode .normal-result-screen { padding: 26px 0 0; }
+.explore-mode .result-kicker { margin: 0 0 8px; color: #706248; font-size: 12px; text-align: left; }
+.destination-selection-heading { font-size: 23px; font-weight: 850; margin: 0 0 12px; line-height: 1.5; }
+.explore-mode .normal-result-screen > h2 { font-size: 14px; text-align: left; color: #6c654e; margin: 0 0 18px; }
+.explore-mode .normal-result-card { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.explore-mode .normal-result-hero { overflow: hidden; border: 1px solid #fff; border-radius: 24px; background: #fffdf4ed; box-shadow: 0 7px 24px #74562916; }
+.explore-mode .normal-result-hero .gacha-treasure-result-image { display: block; width: 100%; height: 205px; object-fit: cover; border: 0; border-radius: 0; margin: 0; }
+.explore-mode .normal-result-hero-content { padding: 20px; }
+.explore-mode .normal-result-category { display: inline-block; background: #ffebc6; border-radius: 20px; padding: 6px 12px; font-size: 12px; margin: 0 0 10px; }
+.explore-mode .normal-result-hero h3 { font-size: 24px; color: #3a4837; overflow-wrap: anywhere; }
+.explore-mode .normal-result-hero-content .destination-distance { font-size: 14px; color: #635335; font-weight: 750; }
+.destination-photo-placeholder { min-height: 155px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 9px; padding: 20px; background: radial-gradient(circle at 20% 0%,#dcecc6,transparent 75%),#ecf0dd; color: #4a6249; }
+.destination-photo-placeholder > span { font-size: 35px; }
+.destination-photo-placeholder strong { font-size: 14px; }
+.destination-photo-placeholder small { font-size: 11px; }
+.explore-mode .normal-result-inline-map { min-height: 52px; background: linear-gradient(#ffb44d,#f7992e); color: #4b2d0d; border: 1px solid #f2cb83; border-radius: 15px; font-size: 16px; }
+.explore-mode .normal-result-mission, .explore-mode .normal-result-info { background: #fffdf5ec; border: 1px solid #ecddc4; border-radius: 20px; }
+.explore-mode .normal-result-actions button { min-height: 52px; white-space: normal; }
+.explore-mode .normal-result-screen, .explore-mode .condition-screen, .explore-mode .home-screen { overflow-wrap: anywhere; }
+@media(max-width:360px) {
+ .explore-hero { padding-inline: 18px; }
+ .explore-hero h1 { font-size: 27px; }
+ .explore-categories button { font-size: 11px; }
+ .explore-mode .condition-takaran { width: 50px; }
+ .explore-mode .normal-result-hero-content { padding: 16px; }
+}
+.explore-mode .normal-result-screen { padding-top: 0; }
+.destination-select-banner { margin: 0 -16px 18px; padding: 85px 22px 25px; color: #fff; background: linear-gradient(#143b2b33,#153629eb),url('./assets/walking-park.webp') center 50% / cover; border-radius: 0 0 27px 27px; }
+.explore-mode .destination-select-banner .result-kicker { color: #fff8e8; }
+.destination-select-banner h2 { font-size: 13px; margin: 0; line-height: 1.7; }
+.explore-mode .normal-result-category { white-space: normal; }
+.explore-mode .explore-hero h1 { color: #fff; }
+
+/* Season 2 phase 3: bright scenery and reward-independent celebration. */
+.explore-hero { background: linear-gradient(90deg,#063b5c66,transparent 90%),linear-gradient(180deg,#06314f20 45%,#062c4b4d),url('./assets/scenery/coast.webp') center 46% / cover; }
+.explore-hero h1, .explore-brand { text-shadow: 0 2px 7px #123c56b3; }
+.destination-category-photo { position: relative; height: 205px; overflow: hidden; background: linear-gradient(135deg,#e6eedb,#f6ecd2); }
+.destination-category-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.destination-category-photo > span { position: absolute; bottom: 10px; left: 10px; right: 10px; width: fit-content; max-width: calc(100% - 20px); padding: 5px 10px; color: #fff; background: #182e29d9; border: 1px solid #ffffff60; border-radius: 20px; font-size: 11px; line-height: 1.5; }
+.destination-category-photo > p { margin: 0; padding: 60px 15px; font-size: 14px; text-align: center; color: #42533a; }
+.app-shell.arrival-mode { position: relative; isolation: isolate; padding: 0 18px calc(128px + env(safe-area-inset-bottom,0px)); color: #49351f; background: #e7d9a8; }
+.app-shell.arrival-mode::before { content: ''; z-index: -1; position: fixed; inset: 0; margin-inline: auto; width: min(100%,430px); pointer-events: none; background: linear-gradient(180deg,#12372575,#eef0ce18 35%,#5c633159),url('./assets/walking-park.webp') center / cover; }
+.arrival-screen { padding-top: 25px; overflow-wrap: anywhere; }
+.arrival-heading { text-align: center; color: #fff; text-shadow: 0 2px 8px #193b1f; }
+.arrival-heading > p { margin: 0; letter-spacing: .17em; font-weight: 800; font-size: 10px; }
+.arrival-heading h1 { color: #fff; font-size: clamp(43px,13vw,56px); margin: 10px 0 5px; line-height: 1.2; transform: rotate(-4deg); }
+.arrival-heading h2 { display: inline-block; font-size: 17px; margin: 6px 0 0; padding-bottom: 8px; border-bottom: 4px solid #ffc337; }
+.arrival-celebration { height: 165px; position: relative; margin: 8px auto 0; max-width: 310px; perspective: 500px; pointer-events: none; }
+.arrival-rays { position: absolute; inset: -15px -5px; border-radius: 50%; background: radial-gradient(ellipse,#fffbd5 8%,#ffdd6590 30%,#ffe87800 65%); animation: arrival-glow 2.5s ease-out both; }
+.arrival-chest { position: absolute; width: 150px; height: 118px; left: calc(50% - 75px); bottom: 12px; filter: drop-shadow(0 9px 9px #3b291255); }
+.arrival-chest-base { position: absolute; bottom: 0; width: 100%; height: 73px; border: 7px solid #f7c344; border-radius: 5px 5px 16px 16px; background: repeating-linear-gradient(0deg,#995521 0px,#995521 20px,#7d3f20 21px,#b8742e 23px); box-shadow: inset 0 3px 0 #543410,0 4px 0 #93621e; }
+.arrival-chest-base::before, .arrival-chest-base::after { content:''; position:absolute; inset:0 auto 0 18px; width:9px; background:linear-gradient(90deg,#b98624,#ffe697,#cb9233); }
+.arrival-chest-base::after { left:auto; right:18px; }
+.arrival-chest-base span { position:absolute; z-index:1; top:11px; left:calc(50% - 14px); width:28px; height:32px; border-radius:6px; background:#ffdc68; color:#86501e; text-align:center; padding-top:3px; font-size:22px; }
+.arrival-chest-lid { position:absolute; z-index:3; width:150px; height:61px; top:0; border:7px solid #f7c344; border-radius:32px 32px 5px 5px; background:linear-gradient(0deg,#8e5023,#ce8c38); transform-origin:50% 100%; transform:translateY(-28px) rotateX(-30deg); animation:arrival-open 2.5s ease-out both; box-shadow:inset 0 0 0 3px #7e451d,0 2px 0 #87501b; }
+.arrival-jewel { position:absolute; z-index:4; font-size:48px; top:6px; left:45px; filter:drop-shadow(0 0 10px #fff); animation:arrival-jewel 2.5s ease-out both; }
+.arrival-confetti { position:absolute; left:calc(5% + var(--i) * 6.6%); top:12px; color:#ffe17a; font-size:19px; font-style:normal; text-shadow:0 0 5px white; animation:arrival-confetti 2.5s ease-out both; animation-delay:calc(var(--i) * .02s); }
+.arrival-confetti:nth-child(3n) { color:#89e0ff; }
+.arrival-confetti:nth-child(2n) { top:60px; }
+.arrival-exp { display:flex; justify-content:center; align-items:baseline; gap:6px; color:#b84a00; margin:0; text-shadow:0 2px 0 white,2px 0 0 white,-2px 0 0 white,0 -2px 0 white,0 0 16px #fff5cc; line-height:1.05; }
+.arrival-exp strong { font-size:66px; font-weight:950; }
+.arrival-exp span { font-size:25px; font-weight:900; }
+.arrival-congratulations { text-align:center; font-size:12px; font-weight:750; color:#3a3e22; background:#fff9dedb; border-radius:20px; padding:8px; margin:10px 0 15px; }
+.arrival-destination { background:#fffdf3f5; border:1px solid white; border-radius:21px; overflow:hidden; box-shadow:0 5px 20px #29432724; }
+.arrival-destination .gacha-treasure-result-image, .arrival-destination .destination-category-photo { display:block; width:100%; height:125px; object-fit:cover; border:0; border-radius:0; margin:0; }
+.arrival-destination > div:last-child:not(.destination-category-photo) { padding:14px 17px; }
+.arrival-destination p { font-size:10px; color:#796947; margin:0 0 6px; }
+.arrival-destination h2 { margin:0; font-size:21px; line-height:1.45; }
+.arrival-rank { display:inline-block; font-size:11px; font-weight:800; color:#76552a; background:#f9e5b7; padding:5px 10px; border-radius:20px; margin-top:8px; }
+.arrival-record { margin:12px 0; border:1px solid #fff; border-radius:17px; background:#fffaf0f2; font-size:13px; }
+.arrival-record summary { min-height:52px; padding:16px; cursor:pointer; font-weight:800; }
+.arrival-record dl { margin:0; padding:0 16px; }
+.arrival-record dl > div { border-top:1px solid #dfd4bb; padding:10px 0; }
+.arrival-record dt { color:#726752; font-size:11px; }
+.arrival-record dd { margin:5px 0 0; font-weight:750; }
+.arrival-record > p { margin:0; padding:10px 16px 16px; font-size:11px; line-height:1.7; }
+.arrival-actions { display:grid; gap:10px; }
+.arrival-actions button { min-height:54px; border:1px solid white; border-radius:17px; font-size:15px; font-weight:800; cursor:pointer; padding:14px 10px; box-shadow:0 3px 8px #38442b25; touch-action:manipulation; }
+.arrival-next { background:linear-gradient(#ffb744,#ff9b20); color:#53300b; }
+.arrival-home { background:#fffdf3; color:#614221; }
+.arrival-rate { background:#0c79c6; color:white; }
+.arrival-actions button:focus-visible, .arrival-record summary:focus-visible { outline:3px solid #164d7c; outline-offset:3px; }
+.arrival-mode .bottom-nav { bottom:calc(12px + env(safe-area-inset-bottom,0px)); background:#fffdf3f5; border:1px solid white; }
+@keyframes arrival-open { 0%,15% { transform:translateY(36px) rotateX(0); } 70%,100% { transform:translateY(-28px) rotateX(-30deg); } }
+@keyframes arrival-jewel { 0%,20% { opacity:0; transform:translateY(35px) scale(.4); } 70%,100% { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes arrival-glow { 0% { opacity:0; transform:scale(.5); } 70%,100% { opacity:1; transform:scale(1); } }
+@keyframes arrival-confetti { 0%,15% { opacity:0; transform:translateY(50px) scale(.3); } 50% { opacity:1; } 100% { opacity:.8; transform:translateY(0) rotate(40deg); } }
+@media(prefers-reduced-motion:reduce) { .arrival-screen *, .arrival-screen *::before, .arrival-screen *::after { animation:none!important; transition:none!important; } }
+@media(max-width:360px) { .app-shell.arrival-mode { padding-inline:14px; } .arrival-destination h2 { font-size:19px; } .arrival-heading h2 { font-size:15px; } }

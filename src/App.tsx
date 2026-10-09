@@ -25,7 +25,12 @@ import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
 import { AdventureSession, type AdventureTarget } from './features/activeAdventure';
-import { buildGoogleMapsDirectionsUrl } from './features/googleMaps';
+import { buildGoogleMapsDirectionsUrl, navigateAdventureMap } from './features/googleMaps';
+import { HomeExplore, DestinationPhoto } from './components/HomeExplore';
+import { ArrivalScreen } from './components/ArrivalScreen';
+import { WalkingScreen } from './components/WalkingScreen';
+import { adventureRestoreScreen, adventureReturnScreen, isWalkingAdventure } from './features/walkingAdventure';
+import { getDepartureWalkingDistance } from './services/departureWalkingDistance';
 import { scheduleGachaSequence } from './features/gachaSequence';
 import {
 getEligibleRegisteredTreasures,
@@ -360,8 +365,15 @@ const [searchFailed, setSearchFailed] = useState(false);
 const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
 const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
-'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'treasure-register' | 'treasure-map'
->(restoredAdventure ? 'result' : 'home');
+'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map'
+>(adventureRestoreScreen(restoredAdventure));
+const arrivalRatingRequestedRef = useRef(false);
+useEffect(() => {
+if (screen === 'result' && arrivalRatingRequestedRef.current) {
+arrivalRatingRequestedRef.current = false;
+document.querySelector('.treasure-rating-panel')?.scrollIntoView?.({ block: 'center' });
+}
+}, [screen]);
 const startGacha = () => {
 if (gachaStep !== 0) return;
 
@@ -677,9 +689,21 @@ setIsTreasureLocationLoading(false);
 }
 }
 
+function resumeWalkingAdventure() {
+const adventure = adventureSession.current;
+if (!isWalkingAdventure(adventure)) { setScreen('home'); return; }
+setNearbySpot(adventure.result.spot);
+setSelectedGachaTreasure(adventure.result.treasure);
+setChoices((current) => ({ ...current, ...adventure.result.choices }));
+setSpotDistance(adventure.result.distanceKm);
+setHasArrivedAtNormalSpot(false);
+normalArrivalRewardClaimedRef.current = false;
+setScreen(adventureReturnScreen(adventure));
+}
 function closeTreasureRegistration() {
+if (treasureSaveInFlightRef.current) return;
 resetTreasureRegistration();
-setScreen('home');
+resumeWalkingAdventure();
 }
 
 function handleTreasureImageChange(event: ChangeEvent<HTMLInputElement>) {
@@ -1937,15 +1961,21 @@ setAdventureMessage('出発地点を確認しています…');
 try {
 const adventure = await adventureSession.start(target, {
 spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name,
-});
+}, getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
 setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
 // Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
-window.location.assign(buildGoogleMapsDirectionsUrl(adventure.departure, adventure.target));
+setScreen(adventure.rewardClaimed ? 'result' : 'walking');
+navigateAdventureMap(adventure.departure, adventure.target);
 } catch (error) {
 if (operation === adventureOperationRef.current)
 setAdventureMessage(error instanceof Error ? error.message : '冒険を開始できませんでした。もう一度試してください。');
 } finally { if (operation === adventureOperationRef.current) setIsAdventureBusy(false); }
+}
+function resumeAdventureNavigation() {
+const adventure = adventureSession.current;
+if (!isWalkingAdventure(adventure) || isAdventureBusy) return;
+navigateAdventureMap(adventure.departure, adventure.target);
 }
 async function confirmNormalArrival() {
 if (isAdventureBusy) return;
@@ -2014,7 +2044,7 @@ setAchievementMessage(`🏆 実績解除！ ${newAchievement}`);
 return nextCount;
 });
 
-alert(`🎉 到着おめでとう！\n+${rewardExp} EXP 獲得しました！`);
+setScreen('arrival');
 });
 if (operation === adventureOperationRef.current) {
 setAdventureMessage(message);
@@ -2138,7 +2168,7 @@ setIsTreasureRatingSubmitting(false);
 
 
 return (
-<main className={`app-shell ${!hasStarted ? 'title-mode' : ''}`}>
+<main className={`app-shell ${!hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
 
 {!hasStarted ? (
 <div
@@ -2210,27 +2240,35 @@ disabled={!trimmedName}
 
 </form>
 </div>
+) : screen === 'arrival' && adventureSession.current?.rewardClaimed ? (
+<ArrivalScreen
+adventure={adventureSession.current}
+rank={displayedTreasureRank?.label}
+onHome={() => { setScreen('home'); window.scrollTo(0, 0); }}
+onNext={() => { setSearchExpandLevel(0); setCourseStep(1); setScreen('condition'); window.scrollTo(0, 0); }}
+onRate={() => { arrivalRatingRequestedRef.current = true; setScreen('result'); }}
+/>
+) : screen === 'walking' && isWalkingAdventure(adventureSession.current) ? (
+<WalkingScreen
+adventure={adventureSession.current}
+busy={isAdventureBusy}
+registering={isTreasureLocationLoading}
+message={adventureMessage}
+onDiscover={openTreasureRegistration}
+onNavigate={resumeAdventureNavigation}
+onArrive={confirmNormalArrival}
+/>
 ) : screen === 'home' ? (
 <section className="home-screen">
-<div className="home-header">
-<p className="home-welcome">
-🌿 {trimmedName}さん、おかえり！
-</p>
-
-<h2 className="home-message">
-今日だけの宝物を見つけに行こう！
-</h2>
-
-<div className="takaran-home-card">
-<img src={takaranImage} alt="たからん" className="takaran-home-image" />
-
-<div className="takaran-home-speech">
-<p>こんにちは！</p>
-<p>今日も一緒に宝物を探しに行こう！</p>
-</div>
-</div>
-</div>
-
+<HomeExplore name={trimmedName} onExplore={(mood) => {
+if (mood) selectChoice('mood', mood);
+if (!currentLocation) getCurrentLocation();
+setSearchExpandLevel(0);
+setCourseStep(1);
+setScreen('condition');
+}} onCollection={openTreasureMap} />
+<details className="home-companion">
+<summary>🌿 たからんと冒険の記録 <span>Lv.{takaran.level}</span></summary>
 <div
 className="treasure-box-card takaran-tap-card"
 onClick={getCurrentLocation}
@@ -2377,6 +2415,8 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 </div>
 </div>
 
+</details>
+
 <button
 className="treasure-discovery-button"
 type="button"
@@ -2473,7 +2513,7 @@ className="gacha-button treasure-register-primary"
 type="button"
 onClick={closeTreasureRegistration}
 >
-ホームへ戻る
+{isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'ホームへ戻る'}
 </button>
 </div>
 ) : (
@@ -2566,7 +2606,7 @@ type="button"
 onClick={closeTreasureRegistration}
 disabled={isTreasureSaving}
 >
-キャンセル
+{isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'キャンセル'}
 </button>
 <button
 className="gacha-button treasure-register-primary"
@@ -2954,8 +2994,11 @@ setScreen('condition');
 
 ) : screen === 'result' ? (
 <section className={`result-screen ${choices.mood !== 'デート' ? 'normal-result-screen' : ''}`}>
+<header className={choices.mood !== 'デート' ? 'destination-select-banner' : undefined}>
 <p className="result-kicker">今日の宝物が見つかりました</p>
+{choices.mood !== 'デート' && <p className="destination-selection-heading">さあ、この場所へ冒険しよう</p>}
 <h2>{destination.title}</h2>
+</header>
 
 <div className={`result-card ${choices.mood !== 'デート' ? 'normal-result-card' : ''}`}>
 {choices.mood === 'デート' ? (
@@ -3099,13 +3142,7 @@ setCourseStep(5);
 </section>
 )}
 <article className={`normal-result-hero ${selectedGachaTreasure?.image_url ? 'has-image' : ''}`}>
-{selectedGachaTreasure?.image_url && (
-<img
-className="gacha-treasure-result-image"
-src={selectedGachaTreasure.image_url}
-alt={selectedGachaTreasure.name}
-/>
-)}
+<DestinationPhoto url={selectedGachaTreasure?.image_url} name={displayPlace} category={selectedGachaTreasure?.category || choices.mood} />
 <div className="normal-result-hero-content">
 <p className="normal-result-category">
 {selectedGachaTreasure
@@ -3113,6 +3150,7 @@ alt={selectedGachaTreasure.name}
 : `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`}
 </p>
 <h3>{displayPlace}</h3>
+{spotDistance !== null && <p className="destination-distance">👣 {selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
 <p>
 {selectedGachaTreasure
 ? selectedGachaTreasure.comment || 'コメントはありません。'
@@ -3391,9 +3429,12 @@ aria-label="メッセージを閉じる"
 </div>
 )}
 
+{hasStarted && isWalkingAdventure(adventureSession.current) && screen !== 'walking' && screen !== 'treasure-register' && (
+<button className="resume-adventure-button" type="button" onClick={resumeWalkingAdventure}>🚶 冒険の続きに戻る</button>
+)}
 {hasStarted && (
-<nav className="bottom-nav">
-<button type="button" onClick={() => setScreen('home')}>
+<nav className="bottom-nav" aria-label="メインナビゲーション">
+<button type="button" aria-current={screen === 'home' ? 'page' : undefined} onClick={() => setScreen('home')}>
 <span>🏠</span>
 <small>ホーム</small>
 </button>
