@@ -1,3 +1,5 @@
+import { categoryMarkerSvg } from './categoryMarkerSvg';
+import { IconText } from './AppIcon';
 import { divIcon } from 'leaflet';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import type { Treasure } from '../services/treasures';
@@ -30,7 +32,7 @@ position={[currentLocation.latitude, currentLocation.longitude]}
 icon={divIcon({
 className: 'treasure-current-location-shell',
 html: '<span class="treasure-current-location-dot" aria-hidden="true"></span><span class="treasure-current-location-label">現在地</span>',
-iconSize: [72, 42],
+iconSize: [72, 44],
 iconAnchor: [16, 16],
 })}
 title="現在地"
@@ -41,9 +43,9 @@ zIndexOffset={1000}
 const marker = getTreasureCategoryMarker(treasure.category);
 const markerIcon = divIcon({
 className: 'treasure-map-marker-shell',
-html: `<span class="treasure-map-marker treasure-map-marker--${marker.theme}" aria-hidden="true"><span>${marker.icon}</span></span>`,
-iconSize: [42, 52],
-iconAnchor: [21, 51],
+html: `<span class="treasure-map-marker treasure-map-marker--${marker.theme}" aria-hidden="true"><span>${categoryMarkerSvg(marker.theme)}</span></span>`,
+iconSize: [44, 54],
+iconAnchor: [22, 53],
 popupAnchor: [0, -49],
 });
 return <Marker key={treasure.id ?? `${treasure.latitude}-${treasure.longitude}-${index}`}
@@ -60,7 +62,7 @@ eventHandlers={{ click: () => onSelectTreasure(treasure) }} title={treasure.name
 <article className={`treasure-map-detail ${selectedTreasure.image_url ? 'has-image' : ''}`} aria-live="polite">
 {selectedTreasure.image_url && <img src={selectedTreasure.image_url} alt={selectedTreasure.name} />}
 <div className="treasure-map-detail-content">
-<p className="treasure-map-detail-category">{selectedTreasure.category}</p>
+<p className="treasure-map-detail-category"><IconText text={selectedTreasure.category} /></p>
 <h3 className="treasure-map-detail-name">{selectedTreasure.name}</h3>
 <p className="treasure-map-detail-comment">{selectedTreasure.comment || 'コメントはありません。'}</p>
 {currentLocation && (
@@ -71,9 +73,7 @@ onClick={() => window.open(
 buildGoogleMapsDirectionsUrl(currentLocation, selectedTreasure),
 '_blank'
 )}
->
-📍 ここへ行く
-</button>
+><IconText text=" 📍 ここへ行く " /></button>
 )}
 </div>
 </article>

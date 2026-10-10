@@ -74,7 +74,7 @@ describe('walking and treasure registration screens', () => {
       Simulate.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['photo'], 'test.jpg', { type: 'image/jpeg' })] } } as never);
     });
     await act(async () => { Simulate.submit(container.querySelector('form')!); });
-    expect(uploadTreasureImage).toHaveBeenCalledOnce(); expect(createTreasure).toHaveBeenCalledWith(expect.objectContaining({ name: '途中で見つけた看板', image_url: 'https://example.com/test.jpg' }));
+    expect(uploadTreasureImage).toHaveBeenCalledOnce(); expect(createTreasure).toHaveBeenCalledWith(expect.objectContaining({ name: '途中で見つけた看板', category: '📷 写真スポット', image_url: 'https://example.com/test.jpg' }));
     expect(container.textContent).toContain('宝物を登録しました'); expect(saved()).toEqual(original);
     await click('冒険の続きに戻る'); expect(container.textContent).toContain('ウォーキング中！');
     expect(container.textContent).toContain('森の公園'); expect(saved()).toEqual(original);

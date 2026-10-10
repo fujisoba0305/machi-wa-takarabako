@@ -1,3 +1,4 @@
+import { IconText } from './AppIcon';
 import { useMemo, useState } from 'react';
 import type { Treasure } from '../services/treasures';
 import type { TreasureRatingSummaryMap } from '../features/treasureCollection';
@@ -66,7 +67,7 @@ return (
 {detail.treasure.image_url && <img src={detail.treasure.image_url} alt={detail.treasure.name} />}
 <p className="collection-rank-label">{props.ratingSummariesAvailable ? detail.rank.label : 'RANK 集計待ち'}</p>
 <h2>{detail.treasure.name}</h2>
-<p className="collection-category">{detail.treasure.category}</p>
+<p className="collection-category"><IconText text={detail.treasure.category} /></p>
 <p className="collection-comment">{detail.treasure.comment || 'コメントはありません。'}</p>
 {detailDiscovery && formatAdventureDiscoveryDate(detailDiscovery.firstDiscoveredAt) && (
 <section className="collection-discovery-plaque" aria-label="あなたが発見した日">
@@ -107,7 +108,7 @@ buildGoogleMapsDirectionsUrl(props.currentLocation!, detail.treasure), '_blank'
 return (
 <div className="treasure-collection">
 <header className="collection-header">
-<p>📖 TREASURE COLLECTION</p><h2>街の宝物図鑑</h2>
+<p><IconText text="📖 TREASURE COLLECTION" /></p><h2>街の宝物図鑑</h2>
 <span>あなたが街で見つけていく宝物たち</span>
 </header>
 <section className="collection-summary" aria-label="みんなの宝物の集計">
@@ -119,13 +120,13 @@ return (
 <small>※本人の発見数ではなく、現在公開されている宝物の集計です。</small>
 </section>
 <div className="collection-tabs" role="tablist">
-<button type="button" className={tab === 'adventure' ? 'selected' : ''} onClick={() => setTab('adventure')}>🧭 冒険の記録</button>
-<button type="button" className={tab === 'community' ? 'selected' : ''} onClick={() => setTab('community')}>💎 みんなの宝物</button>
+<button type="button" className={tab === 'adventure' ? 'selected' : ''} onClick={() => setTab('adventure')}><IconText text="🧭 冒険の記録" /></button>
+<button type="button" className={tab === 'community' ? 'selected' : ''} onClick={() => setTab('community')}><IconText text="💎 みんなの宝物" /></button>
 </div>
 {tab === 'adventure' ? (
 <>
 <section className="adventure-collection-summary">
-<p>🧭 MY ADVENTURE COLLECTION</p><div><span>発見した宝物</span><strong>{adventureItems.length}</strong></div>
+<p><IconText text="🧭 MY ADVENTURE COLLECTION" /></p><div><span>発見した宝物</span><strong>{adventureItems.length}</strong></div>
 <small>街を歩いて見つけた、あなただけの冒険記録</small>
 </section>
 {adventureItems.length ? (
@@ -133,20 +134,20 @@ return (
 {adventureItems.map((item) => (
 <article key={item.treasureId} className={`collection-card adventure-collection-card collection-rank--${item.rank.key} ${item.treasure.image_url ? 'has-image' : ''}`}>
 {item.treasure.image_url && <img src={item.treasure.image_url} alt={item.treasure.name} />}
-<div><p className="collection-discovered-badge">✨ 発見済み</p>
+<div><p className="collection-discovered-badge"><IconText text="✨ 発見済み" /></p>
 <p className="collection-rank-label">{props.ratingSummariesAvailable ? item.rank.label : 'RANK 集計待ち'}</p>
-<h3>{item.treasure.name}</h3><p className="collection-category">{item.treasure.category}</p>
-<p className="collection-card-stats">⭐ {props.ratingSummariesAvailable ? (item.summary.ratingCount ? `${item.summary.averageRating.toFixed(1)}（${item.summary.ratingCount}件）` : '未評価') : '集計待ち'} <span>👣 {item.treasure.discovery_count ?? 0}回</span></p>
+<h3>{item.treasure.name}</h3><p className="collection-category"><IconText text={item.treasure.category} /></p>
+<p className="collection-card-stats"><IconText text="⭐ " />{props.ratingSummariesAvailable ? (item.summary.ratingCount ? `${item.summary.averageRating.toFixed(1)}（${item.summary.ratingCount}件）` : '未評価') : '集計待ち'} <span><IconText text="👣 " />{item.treasure.discovery_count ?? 0}回</span></p>
 {formatAdventureDiscoveryDate(item.firstDiscoveredAt) && (
-<div className="collection-discovered-date"><span>✨ あなたが発見した日</span><strong>📅 {formatAdventureDiscoveryDate(item.firstDiscoveredAt)}</strong></div>
+<div className="collection-discovered-date"><span><IconText text="✨ あなたが発見した日" /></span><strong><IconText text="📅 " />{formatAdventureDiscoveryDate(item.firstDiscoveredAt)}</strong></div>
 )}
-<button type="button" onClick={() => setDetailSelection({ id: item.treasureId, fromAdventure: true })}>詳しく見る →</button></div>
+<button type="button" onClick={() => setDetailSelection({ id: item.treasureId, fromAdventure: true })}>詳しく見る <IconText text="→" /></button></div>
 </article>
 ))}
 </div>
 ) : (
 <section className="collection-empty">
-<span aria-hidden="true">🧭</span><h3>まだ冒険の記録がありません</h3>
+<span aria-hidden="true"><IconText text="🧭" /></span><h3>まだ冒険の記録がありません</h3>
 <p>ガチャを回して、街に隠れた宝物を探しに行こう！</p>
 <button type="button" onClick={props.onStartAdventure}>宝物を探しに行く</button>
 </section>
@@ -160,7 +161,7 @@ return (
 <div className="collection-filters" aria-label="ランクで絞り込む">
 {filters.map((item) => <button key={item.key} type="button" disabled={!props.ratingSummariesAvailable && item.key !== 'all'} className={filter === item.key ? 'selected' : ''} onClick={() => setFilter(item.key)} aria-label={`${item.label}ランクを表示`}>{item.label}</button>)}
 </div>
-<button className="collection-map-toggle" type="button" onClick={() => setShowMap((value) => !value)}>{showMap ? 'カードを見る' : '🗺️ 地図で見る'}</button>
+<button className="collection-map-toggle" type="button" onClick={() => setShowMap((value) => !value)}><IconText text={showMap ? 'カードを見る' : '🗺️ 地図で見る'} /></button>
 </div>
 {showMap ? (
 <TreasureMap treasures={props.treasures} selectedTreasure={props.selectedMapTreasure} onSelectTreasure={props.onSelectMapTreasure} currentLocation={props.currentLocation} />
@@ -171,15 +172,15 @@ return (
 {item.treasure.image_url && <img src={item.treasure.image_url} alt={item.treasure.name} />}
 <div><p className="collection-rank-label">{props.ratingSummariesAvailable ? item.rank.shortLabel : 'RANK 集計待ち'}</p><h3>{item.treasure.name}</h3>
 {!item.treasure.image_url && <p className="collection-comment">{item.treasure.comment || 'コメントはありません。'}</p>}
-<p className="collection-card-stats">⭐ {props.ratingSummariesAvailable ? (item.summary.ratingCount ? item.summary.averageRating.toFixed(1) : '未評価') : '集計待ち'} <span>👣 {item.treasure.discovery_count ?? 0}回</span></p>
-<button type="button" onClick={() => item.treasure.id !== undefined && setDetailSelection({ id: item.treasure.id, fromAdventure: false })}>詳しく見る →</button></div>
+<p className="collection-card-stats"><IconText text="⭐ " />{props.ratingSummariesAvailable ? (item.summary.ratingCount ? item.summary.averageRating.toFixed(1) : '未評価') : '集計待ち'} <span><IconText text="👣 " />{item.treasure.discovery_count ?? 0}回</span></p>
+<button type="button" onClick={() => item.treasure.id !== undefined && setDetailSelection({ id: item.treasure.id, fromAdventure: false })}>詳しく見る <IconText text="→" /></button></div>
 </article>
 ))}
 </div>
 ) : props.treasures.length ? (
-<section className="collection-empty"><span>🔎</span><h3>このランクの宝物はまだありません</h3><p>別のランクを選んでみてください。</p></section>
+<section className="collection-empty"><span><IconText text="🔎" /></span><h3>このランクの宝物はまだありません</h3><p>別のランクを選んでみてください。</p></section>
 ) : (
-<section className="collection-empty"><span>💎</span><h3>まだ宝物がありません</h3><p>この街の最初の宝物を見つけてみませんか？</p><button type="button" onClick={props.onRegisterTreasure}>宝物を登録する</button></section>
+<section className="collection-empty"><span><IconText text="💎" /></span><h3>まだ宝物がありません</h3><p>この街の最初の宝物を見つけてみませんか？</p><button type="button" onClick={props.onRegisterTreasure}>宝物を登録する</button></section>
 )}
 </>
 )}

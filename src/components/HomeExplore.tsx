@@ -1,3 +1,4 @@
+import { IconText } from './AppIcon';
 import { useState } from 'react';
 import { categoryScenery } from '../features/categoryScenery';
 
@@ -14,14 +15,14 @@ export function HomeExplore({ name, onExplore, onCollection }: {
       <p className="explore-greeting">{name}さん、おかえり！</p>
       <h1>今日はどこへ<br />冒険しよう？</h1>
       <p className="explore-intro">いつもの街に、まだ知らない宝物。</p>
-      <button className="explore-search" type="button" onClick={() => onExplore()}>🧭 距離と気分から宝物を探す <span aria-hidden="true">→</span></button>
+      <button className="explore-search" type="button" onClick={() => onExplore()}><IconText text="🧭 距離と気分から宝物を探す " /><span aria-hidden="true"><IconText text="→" /></span></button>
     </header>
     <section className="explore-categories" aria-label="冒険のカテゴリ">
-      {categories.map(([icon, label, mood]) => <button key={mood} type="button" onClick={() => onExplore(mood)}><span aria-hidden="true">{icon}</span>{label}</button>)}
+      {categories.map(([icon, label, mood]) => <button key={mood} type="button" onClick={() => onExplore(mood)}><span aria-hidden="true"><IconText text={icon} /></span>{label}</button>)}
     </section>
     <section className="explore-recommend" aria-labelledby="explore-recommend-title">
       <div><p className="explore-eyebrow">NEXT ADVENTURE</p><h2 id="explore-recommend-title">次の冒険のヒント</h2></div>
-      <button type="button" onClick={onCollection}><span className="explore-map-icon" aria-hidden="true">🗺️</span><span><strong>みんなが見つけた宝物へ</strong><small>図鑑とマップで、街の発見を見てみよう</small></span><span aria-hidden="true">›</span></button>
+      <button type="button" onClick={onCollection}><span className="explore-map-icon" aria-hidden="true"><IconText text="🗺️" /></span><span><strong>みんなが見つけた宝物へ</strong><small>図鑑とマップで、街の発見を見てみよう</small></span><span aria-hidden="true"><IconText text="›" /></span></button>
       <p>行き先に迷ったら、ガチャにおまかせ。</p>
     </section>
   </>;
@@ -35,6 +36,6 @@ export function DestinationPhoto({ url, name, category = '' }: { url?: string | 
   return <div className="destination-category-photo">
     {failedCategory !== scenery.url && <img src={scenery.url} alt="" onError={() => setFailedCategory(scenery.url)} />}
     <span>カテゴリイメージ · {scenery.label}</span>
-    {failedCategory === scenery.url && <p>🧭 どんな景色に出会えるかな</p>}
+    {failedCategory === scenery.url && <p><IconText text="🧭 どんな景色に出会えるかな" /></p>}
   </div>;
 }

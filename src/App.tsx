@@ -1,12 +1,5 @@
+import { AppIcon, IconText, plainIconLabel } from './components/AppIcon';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
-import {
-Compass,
-BookOpen,
-MapPinned,
-UserRound,
-Gem,
-Sparkles,
-} from 'lucide-react';
 
 import {
 getNearbyParks,
@@ -2181,9 +2174,7 @@ backgroundRepeat: 'no-repeat',
 }}
 >
 <section className="intro" aria-labelledby="app-title">
-<p className="eyebrow">
-🌿 お散歩が、もっとワクワクする。
-</p>
+<p className="eyebrow"><IconText text=" 🌿 お散歩が、もっとワクワクする。 " /></p>
 
 <div className="title-main-row">
 <img
@@ -2212,11 +2203,9 @@ className="title-main-takaran"
 </section>
 
 <form className="name-form" onSubmit={handleSubmit}>
-<label htmlFor="player-name" className="name-label">
-君の名前を教えてね😊
-</label>
+<label htmlFor="player-name" className="name-label"><IconText text=" 君の名前を教えてね😊 " /></label>
 <div className="name-input-wrap">
-<span className="name-input-icon">🌿</span>
+<span className="name-input-icon"><IconText text="🌿" /></span>
 
 <input
 id="player-name"
@@ -2233,9 +2222,9 @@ type="submit"
 className="start-location-button"
 disabled={!trimmedName}
 >
-<Compass size={24} />
+<AppIcon name="compass" />
 現在地を取得して始める
-<span className="button-sparkles">✨</span>
+<span className="button-sparkles"><IconText text="✨" /></span>
 </button>
 
 </form>
@@ -2268,7 +2257,7 @@ setCourseStep(1);
 setScreen('condition');
 }} onCollection={openTreasureMap} />
 <details className="home-companion">
-<summary>🌿 たからんと冒険の記録 <span>Lv.{takaran.level}</span></summary>
+<summary><IconText text="🌿 たからんと冒険の記録 " /><span>Lv.{takaran.level}</span></summary>
 <div
 className="treasure-box-card takaran-tap-card"
 onClick={getCurrentLocation}
@@ -2293,8 +2282,7 @@ className="takaran-main-image"
 />
 </button>
 
-<div className="takaran-level-badge">
-🌟 Lv.{takaran.level}
+<div className="takaran-level-badge"><IconText text=" 🌟 Lv." />{takaran.level}
 </div>
 
 <h2 className="takaran-name">
@@ -2302,7 +2290,7 @@ className="takaran-main-image"
 </h2>
 
 <div className="takaran-speech-bubble">
-<span className="speech-sparkle">✨</span>
+<span className="speech-sparkle"><IconText text="✨" /></span>
 
 <p>
 {takaranSpeech}
@@ -2311,11 +2299,9 @@ className="takaran-main-image"
 
 <small>
 {currentLocation ? (
-"🧭 冒険に出発しよう！"
+<IconText text="🧭 冒険に出発しよう！" />
 ) : (
-<>
-📍 現在地を取得します
-<br />
+<><IconText text=" 📍 現在地を取得します " /><br />
 君の近くに眠る宝物を探すため、
 <br />
 現在地を取得します。
@@ -2339,19 +2325,17 @@ setCourseStep(1);
 setScreen('condition');
 }}
 >
-{currentLocation ? '✨ 宝物を探しに行く' : '📍 たからんを押して現在地を取得'}
+<IconText text={currentLocation ? '✨ 宝物を探しに行く' : '📍 たからんを押して現在地を取得'} />
 </button>
 <p className="adventure-ready">
-{currentLocation
+<IconText text={currentLocation
 ? '🧭 冒険の準備完了！'
-: '📍 たからんを押して現在地を取得しよう！'}
+: '📍 たからんを押して現在地を取得しよう！'} />
 </p>
 
 {takaranNextInfo.remainingExp > 0 ? (
 <div className="takaran-evolution-card">
-<p className="takaran-next-title">
-⭐ 次の進化まであと
-</p>
+<p className="takaran-next-title"><IconText text=" ⭐ 次の進化まであと " /></p>
 
 <strong className="takaran-next-exp">
 {takaranNextInfo.remainingExp} EXP
@@ -2375,9 +2359,7 @@ width: `${Math.min(
 </div>
 ) : (
 <div className="takaran-evolution-card">
-<p className="takaran-next-title">
-🎉 たからんは最高レベルです！
-</p>
+<p className="takaran-next-title"><IconText text=" 🎉 たからんは最高レベルです！ " /></p>
 </div>
 )}
 
@@ -2409,8 +2391,7 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 />
 </div>
 
-<p className="walk-rank-next">
-次のランク：🌱 {walkRankInfo.nextRank}
+<p className="walk-rank-next"><IconText text=" 次のランク：🌱 " />{walkRankInfo.nextRank}
 </p>
 </div>
 </div>
@@ -2423,7 +2404,7 @@ type="button"
 onClick={openTreasureRegistration}
 disabled={isTreasureLocationLoading}
 >
-<span aria-hidden="true">💎</span>
+<span aria-hidden="true"><IconText text="💎" /></span>
 <span>
 <strong>
 {isTreasureLocationLoading ? '今いる場所を確認中…' : '宝物を発見！'}
@@ -2442,7 +2423,7 @@ disabled={isTreasureLocationLoading}
 ) : treasureMapError ? (
 <div className="treasure-map-message" role="alert">
 <p>{treasureMapError}</p>
-<button type="button" onClick={openTreasureMap}>もう一度読み込む</button>
+<button type="button" aria-current={screen === 'treasure-map' ? 'page' : undefined} onClick={openTreasureMap}>もう一度読み込む</button>
 </div>
 ) : (
 <TreasureCollection
@@ -2461,14 +2442,14 @@ adventureHistory={adventureHistory}
 ) : screen === 'treasure-register' ? (
 <section className="treasure-register-screen" aria-live="polite">
 <div className="treasure-register-header">
-<p className="treasure-register-kicker">💎 街の宝物メモ</p>
+<p className="treasure-register-kicker"><IconText text="💎 街の宝物メモ" /></p>
 <h2>ここを宝物として残そう！</h2>
 <p>写真とひとことだけで、すぐに記録できます。</p>
 </div>
 
 {registeredTreasure ? (
 <div className="treasure-registration-complete">
-<div className="treasure-registration-icon" aria-hidden="true">✨💎✨</div>
+<div className="treasure-registration-icon" aria-hidden="true"><IconText text="✨💎✨" /></div>
 <h3>宝物を登録しました！</h3>
 <p className="treasure-registration-note">
 宝物の情報を保存しました。
@@ -2489,7 +2470,7 @@ className="treasure-photo-preview"
 </div>
 <div>
 <dt>カテゴリ</dt>
-<dd>{registeredTreasure.category}</dd>
+<dd><IconText text={registeredTreasure.category} /></dd>
 </div>
 <div>
 <dt>ひとこと</dt>
@@ -2513,13 +2494,13 @@ className="gacha-button treasure-register-primary"
 type="button"
 onClick={closeTreasureRegistration}
 >
-{isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'ホームへ戻る'}
+<IconText text={isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'ホームへ戻る'} />
 </button>
 </div>
 ) : (
 <form className="treasure-register-form" onSubmit={handleTreasureRegistration}>
 <div className="treasure-location-card">
-<span aria-hidden="true">📍</span>
+<span aria-hidden="true"><IconText text="📍" /></span>
 <div>
 <strong>この場所の現在地</strong>
 {treasureLocation ? (
@@ -2587,7 +2568,7 @@ required
 <option value="">選んでください</option>
 {treasureCategories.map((category) => (
 <option key={category} value={category}>
-{category}
+{plainIconLabel(category)}
 </option>
 ))}
 </select>
@@ -2606,7 +2587,7 @@ type="button"
 onClick={closeTreasureRegistration}
 disabled={isTreasureSaving}
 >
-{isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'キャンセル'}
+<IconText text={isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'キャンセル'} />
 </button>
 <button
 className="gacha-button treasure-register-primary"
@@ -2618,7 +2599,7 @@ isTreasureSaving ||
 !treasureCategory
 }
 >
-{isTreasureSaving ? '💎 宝物を保存しています…' : '💎 登録する'}
+<IconText text={isTreasureSaving ? '💎 宝物を保存しています…' : '💎 登録する'} />
 </button>
 </div>
 </form>
@@ -2629,7 +2610,7 @@ isTreasureSaving ||
 <section className="condition-screen" aria-live="polite">
 <div className="condition-hero">
 <div>
-<p className="condition-board">🌿 冒険の準備</p>
+<p className="condition-board"><IconText text="🌿 冒険の準備" /></p>
 
 <p className="condition-welcome">
 {trimmedName}さん、
@@ -2641,9 +2622,7 @@ isTreasureSaving ||
     どんな冒険にする？
     </h2>
 
-<p className="condition-description">
-距離と気分を選ぶと、冒険コインが作られるよ✨
-</p>
+<p className="condition-description"><IconText text=" 距離と気分を選ぶと、冒険コインが作られるよ✨ " /></p>
 </div>
 
 <img
@@ -2670,11 +2649,11 @@ className="choice-group adventure-choice-card"
 key={group.key}
 >
 <legend>
-{group.key === 'distance'
+<IconText text={group.key === 'distance'
 ? '🥾 距離を選ぼう'
 : group.key === 'mood'
 ? '😊 気分を選ぼう'
-: group.label}
+: group.label} />
 </legend>
 
 <div className="choice-buttons">
@@ -2690,7 +2669,7 @@ onClick={() => selectChoice(group.key, option)}
 type="button"
 >
 <span className="choice-icon">
-{getOptionIcon(option)}
+<IconText text={getOptionIcon(option)} />
 </span>
 
 <span>{option}</span>
@@ -2702,16 +2681,14 @@ type="button"
 </div>
 
 <div className="selected-condition-card">
-<p className="result-label">
-🪙 今日の冒険コイン
-</p>
+<p className="result-label"><IconText text=" 🪙 今日の冒険コイン " /></p>
 
 <div className="coin-grid">
 <div className="coin-item">
 <span className="coin-title">距離</span>
 
 <strong>
-{getOptionIcon(choices.distance)}
+<IconText text={getOptionIcon(choices.distance)} />
 {' '}
 {choices.distance || '未選択'}
 </strong>
@@ -2721,7 +2698,7 @@ type="button"
 <span className="coin-title">気分</span>
 
 <strong>
-{getOptionIcon(choices.mood)}
+<IconText text={getOptionIcon(choices.mood)} />
 {' '}
 {choices.mood || '未選択'}
 </strong>
@@ -2767,16 +2744,14 @@ setCourseStep(1);
 setScreen('coin');
 }}
 >
-<span className="adventure-coin-icon">🪙</span>
+<span className="adventure-coin-icon"><IconText text="🪙" /></span>
 
 <span>
 <strong>冒険コインを作る</strong>
 <small>選んだ条件で宝物を探しに行こう！</small>
 </span>
 
-<span className="coin-button-sparkle">
-✨
-</span>
+<span className="coin-button-sparkle"><IconText text=" ✨ " /></span>
 </button>
 </section>
 
@@ -2789,35 +2764,29 @@ alt="たからん"
 className="coin-takaran"
 />
 
-<p className="coin-ready">
-🪙 冒険コイン完成！
-</p>
+<p className="coin-ready"><IconText text=" 🪙 冒険コイン完成！ " /></p>
 
 <h2>できたよ！</h2>
 
-<p className="coin-subtitle">
-今日だけの冒険コインだよ✨
-</p>
+<p className="coin-subtitle"><IconText text=" 今日だけの冒険コインだよ✨ " /></p>
 </div>
 
 <div className="adventure-coin">
-<span className="coin-label">🪙 今日の冒険コイン</span>
+<span className="coin-label"><IconText text="🪙 今日の冒険コイン" /></span>
 
 <div className="coin-detail">
-<span>🥾 距離</span>
+<span><IconText text="🥾 距離" /></span>
 <strong>{choices.distance}</strong>
 </div>
 
 <div className="coin-detail">
-<span>😊 気分</span>
+<span><IconText text="😊 気分" /></span>
 <strong>
-{getOptionIcon(choices.mood)} {choices.mood}
+<IconText text={getOptionIcon(choices.mood)} /> {choices.mood}
 </strong>
 </div>
 
-<p className="coin-message">
-このコインが、今日の宝物へ導いてくれるよ✨
-</p>
+<p className="coin-message"><IconText text=" このコインが、今日の宝物へ導いてくれるよ✨ " /></p>
 </div>
 
 <button
@@ -2843,9 +2812,7 @@ capsuleIcons[choices.mood] ?? '🎁'
 setScreen('gacha');
 
 }}
->
-🎰 ガチャスタート！
-</button>
+><IconText text=" 🎰 ガチャスタート！ " /></button>
 </section>
 
 ) : screen === 'gacha' ? (
@@ -2856,12 +2823,9 @@ className="gacha-background"
 alt=""
 />
 
-<h1 className="gacha-main-title">✨　街の宝ガチャ　✨</h1>
+<h1 className="gacha-main-title"><IconText text="✨ 街の宝ガチャ ✨" /></h1>
 
-<p className="gacha-sub">
-たからんが宝物を見つけたよ✨
-ハンドルを回して取り出そう！
-</p>
+<p className="gacha-sub"><IconText text=" たからんが宝物を見つけたよ✨ ハンドルを回して取り出そう！ " /></p>
 
 <div
 className={`treasure-gacha-machine ${
@@ -3003,11 +2967,11 @@ setScreen('condition');
 <div className={`result-card ${choices.mood !== 'デート' ? 'normal-result-card' : ''}`}>
 {choices.mood === 'デート' ? (
 <>
-<p className="result-label">❤️ 今日のデートコース</p>
+<p className="result-label"><IconText text="❤️ 今日のデートコース" /></p>
 
 <div className="spot-card-list">
 <div className="spot-card">
-<p className="spot-card-label">☕ 経由地</p>
+<p className="spot-card-label"><IconText text="☕ 経由地" /></p>
 <h3>{nearbySpot?.tags?.name || '経由地が見つかりませんでした'}</h3>
 <p>まずはここへ向かいましょう。</p>
 </div>
@@ -3015,7 +2979,7 @@ setScreen('condition');
 <div className="route-arrow">↓</div>
 
 <div className="spot-card main-spot">
-<p className="spot-card-label">💎 最終目的地</p>
+<p className="spot-card-label"><IconText text="💎 最終目的地" /></p>
 <h3>{dateFinalSpot?.tags?.name || '目的地が見つかりませんでした'}</h3>
 <p>今日の宝物が眠っている場所です。</p>
 </div>
@@ -3023,7 +2987,7 @@ setScreen('condition');
 
 {dateCourse && (
 <div className="mission-card">
-<p className="result-label">🎯 今日のミッション</p>
+<p className="result-label"><IconText text="🎯 今日のミッション" /></p>
 {dateCourse.map((step, index) => (
 <p key={step}>
 {index + 1}. {step}
@@ -3040,9 +3004,7 @@ onClick={() => {
 openWaypointMap();
 setCourseStep(2);
 }}
->
-🚶 経由地まで地図を開く
-</button>
+><IconText text=" 🚶 経由地まで地図を開く " /></button>
 )}
 
 {courseStep === 2 && (
@@ -3050,15 +3012,13 @@ setCourseStep(2);
 className="gacha-button"
 type="button"
 onClick={() => setCourseStep(3)}
->
-☕ 経由地に到着した
-</button>
+><IconText text=" ☕ 経由地に到着した " /></button>
 )}
 
 {courseStep === 3 && (
 <>
 <div className="arrival-card">
-<p>☕ 経由地に到着しました！</p>
+<p><IconText text="☕ 経由地に到着しました！" /></p>
 <p>次は最終目的地へ向かいましょう。</p>
 </div>
 
@@ -3069,9 +3029,7 @@ onClick={() => {
 openFinalMap();
 setCourseStep(4);
 }}
->
-💎 最終目的地まで地図を開く
-</button>
+><IconText text=" 💎 最終目的地まで地図を開く " /></button>
 </>
 )}
 
@@ -3105,14 +3063,12 @@ return nextCount;
 
 setCourseStep(5);
 }}
->
-🎉 ゴールした
-</button>
+><IconText text=" 🎉 ゴールした " /></button>
 )}
 
 {courseStep === 5 && (
 <div className="clear-card">
-<h3>🎉 冒険達成！</h3>
+<h3><IconText text="🎉 冒険達成！" /></h3>
 <p>お疲れさまでした</p>
 
 {levelUpMessage && (
@@ -3145,21 +3101,21 @@ setCourseStep(5);
 <DestinationPhoto url={selectedGachaTreasure?.image_url} name={displayPlace} category={selectedGachaTreasure?.category || choices.mood} />
 <div className="normal-result-hero-content">
 <p className="normal-result-category">
-{selectedGachaTreasure
+<IconText text={selectedGachaTreasure
 ? selectedGachaTreasure.category
-: `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`}
+: `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`} />
 </p>
 <h3>{displayPlace}</h3>
-{spotDistance !== null && <p className="destination-distance">👣 {selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
+{spotDistance !== null && <p className="destination-distance"><IconText text="👣 " />{selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
 <p>
 {selectedGachaTreasure
 ? selectedGachaTreasure.comment || 'コメントはありません。'
 : destination.description}
 </p>
 <button className="normal-result-inline-map" type="button" disabled={isAdventureBusy} onClick={startNormalAdventure}>
-{isAdventureBusy ? '📍 現在地を確認中…' : '📍 ここへ行く'}
+<IconText text={isAdventureBusy ? '📍 現在地を確認中…' : '📍 ここへ行く'} />
 </button>
-{adventureMessage && <p role="status" aria-live="polite">{adventureMessage}</p>}
+{adventureMessage && <p role="status" aria-live="polite"><IconText text={adventureMessage} /></p>}
 </div>
 </article>
 
@@ -3183,8 +3139,7 @@ aria-labelledby="treasure-status-rank"
 <p className="treasure-status-rating-count">
 {displayedTreasureRatingSummary.ratingCount}人の冒険者が評価
 </p>
-<p className="treasure-status-discoveries">
-👣 発見回数　{selectedGachaTreasure.discovery_count ?? 0}回
+<p className="treasure-status-discoveries"><IconText text=" 👣 発見回数 " />{selectedGachaTreasure.discovery_count ?? 0}回
 </p>
 <p className="treasure-status-description">{displayedTreasureRank.description}</p>
 {isTreasureRatingLoading && (
@@ -3214,25 +3169,25 @@ aria-live="polite"
 )}
 
 <section className="normal-result-mission" aria-labelledby="normal-result-mission-title">
-<h3 id="normal-result-mission-title">🎯 今日のミッション</h3>
+<h3 id="normal-result-mission-title"><IconText text="🎯 今日のミッション" /></h3>
 <p>{destination.mission}</p>
 </section>
 
 <section className="normal-result-info" aria-label="今日の冒険情報">
-<h3>🧭 今日の冒険情報</h3>
+<h3><IconText text="🧭 今日の冒険情報" /></h3>
 <dl>
 {spotDistance !== null && (
 <div>
-<dt>{choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'}</dt>
+<dt><IconText text={choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'} /></dt>
 <dd>約{spotDistance.toFixed(1)}km</dd>
 </div>
 )}
 <div>
-<dt>📍 今日の条件</dt>
+<dt><IconText text="📍 今日の条件" /></dt>
 <dd>{choices.distance}・{choices.mood}・{choices.budget}・{choices.time}</dd>
 </div>
 <div>
-<dt>🔍 ヒント</dt>
+<dt><IconText text="🔍 ヒント" /></dt>
 <dd>{destination.description}</dd>
 </div>
 </dl>
@@ -3241,12 +3196,12 @@ aria-live="polite"
 <section className="treasure-rating-panel" aria-labelledby="treasure-rating-title">
 {hasSubmittedTreasureRating ? (
 <div className="treasure-rating-thanks" role="status">
-<span aria-hidden="true">✨</span>
+<span aria-hidden="true"><IconText text="✨" /></span>
 <strong>評価ありがとう！</strong>
 </div>
 ) : (
 <>
-<h3 id="treasure-rating-title">⭐ この宝物を評価する</h3>
+<h3 id="treasure-rating-title"><IconText text="⭐ この宝物を評価する" /></h3>
 <div className="treasure-rating-stars" role="group" aria-label="宝物の評価">
 {[1, 2, 3, 4, 5].map((rating) => (
 <button
@@ -3260,7 +3215,7 @@ setTreasureRatingError('');
 aria-label={`${rating}つ星`}
 aria-pressed={rating === selectedTreasureRating}
 >
-★
+<AppIcon name="star" />
 </button>
 ))}
 </div>
@@ -3353,9 +3308,7 @@ setScreen('condition');
 ) : (
 <div className="normal-result-actions">
 {adventureMessage && <p>{adventureMessage}</p>}
-<button className="gacha-button normal-result-map-button" type="button" onClick={openGoogleMap}>
-📍 地図で場所を確認する
-</button>
+<button className="gacha-button normal-result-map-button" type="button" onClick={openGoogleMap}><IconText text=" 📍 地図で場所を確認する " /></button>
 <button
 className="gacha-button normal-result-secondary-button"
 type="button"
@@ -3363,11 +3316,9 @@ onClick={() => {
 setCourseStep(1);
 setScreen('condition');
 }}
->
-🎁 もう一度ガチャを引く
-</button>
+><IconText text=" 🎁 もう一度ガチャを引く " /></button>
 {selectedGachaTreasure && (
-<p className="secret-treasure-exp-bonus">💎 宝物発見ボーナス +30 EXP</p>
+<p className="secret-treasure-exp-bonus"><IconText text="💎 宝物発見ボーナス +30 EXP" /></p>
 )}
 <button
 className="gacha-button normal-result-arrival-button"
@@ -3375,7 +3326,7 @@ type="button"
 disabled={hasArrivedAtNormalSpot || isAdventureBusy}
 onClick={confirmNormalArrival}
 >
-{hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : isAdventureBusy ? '📍 現在地を確認中…' : '🎉 到着した！'}
+<IconText text={hasArrivedAtNormalSpot ? '✅ 到着済み（EXP獲得済み）' : isAdventureBusy ? '📍 現在地を確認中…' : '🎉 到着した！'} />
 </button>
 <button
 className="gacha-button normal-result-expand-button"
@@ -3405,15 +3356,13 @@ onClick={openTreasureRegistration}
 aria-label="今いる場所で宝物を発見する"
 title="宝物を発見"
 >
-<span aria-hidden="true">💎</span>
+<span aria-hidden="true"><IconText text="💎" /></span>
 <small>＋</small>
 </button>
 )}
 
 {isTreasureLocationLoading && (
-<div className="treasure-location-status" role="status" aria-live="polite">
-📍 今いる場所を確認しています…
-</div>
+<div className="treasure-location-status" role="status" aria-live="polite"><IconText text=" 📍 今いる場所を確認しています… " /></div>
 )}
 
 {treasureLocationError && !isTreasureLocationLoading && (
@@ -3430,22 +3379,23 @@ aria-label="メッセージを閉じる"
 )}
 
 {hasStarted && isWalkingAdventure(adventureSession.current) && screen !== 'walking' && screen !== 'treasure-register' && (
-<button className="resume-adventure-button" type="button" onClick={resumeWalkingAdventure}>🚶 冒険の続きに戻る</button>
+<button className="resume-adventure-button" type="button" onClick={resumeWalkingAdventure}><IconText text="🚶 冒険の続きに戻る" /></button>
 )}
 {hasStarted && (
 <nav className="bottom-nav" aria-label="メインナビゲーション">
 <button type="button" aria-current={screen === 'home' ? 'page' : undefined} onClick={() => setScreen('home')}>
-<span>🏠</span>
+<span><IconText text="🏠" /></span>
 <small>ホーム</small>
 </button>
 
-<button type="button" onClick={openTreasureMap}>
-<span>📖</span>
+<button type="button" aria-current={screen === 'treasure-map' ? 'page' : undefined} onClick={openTreasureMap}>
+<span><IconText text="📖" /></span>
 <small>図鑑</small>
 </button>
 
 <button
 type="button"
+aria-current={['condition', 'coin', 'gacha', 'searching', 'result', 'walking', 'arrival'].includes(screen) ? 'page' : undefined}
 onClick={() => {
 if (!currentLocation) {
 alert('まずはたからんを押して、現在地を取得してね！');
@@ -3458,12 +3408,12 @@ setCourseStep(1);
 setScreen('condition');
 }}
 >
-<span>📦</span>
+<span><IconText text="📦" /></span>
 <small>宝箱</small>
 </button>
 
 <button type="button">
-<span>👤</span>
+<span><IconText text="👤" /></span>
 <small>マイページ</small>
 </button>
 </nav>

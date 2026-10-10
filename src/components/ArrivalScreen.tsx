@@ -1,3 +1,4 @@
+import { IconText } from './AppIcon';
 import type { CSSProperties } from 'react';
 import type { ActiveAdventure } from '../features/activeAdventure';
 import { getNormalArrivalRewardExp } from '../features/normalArrivalReward';
@@ -24,7 +25,7 @@ export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate }: Props
       <DestinationPhoto url={destination.imageUrl} name={destination.name} category={adventure.result.treasure?.category || adventure.result.choices.mood} />
       <div><p>今回の目的地</p><h2>{destination.name}</h2>{rank && <span className="arrival-rank">🏅 {rank}</span>}</div>
     </article>
-    <details className="arrival-record"><summary>🗺️ 今回の冒険の記録</summary><dl>
+    <details className="arrival-record"><summary><IconText text="🗺️ 今回の冒険の記録" /></summary><dl>
       <div><dt>目的地</dt><dd>{destination.name}</dd></div>
       <div><dt>獲得EXP</dt><dd>+{reward} EXP</dd></div>
       <div><dt>到着日時</dt><dd><time dateTime={new Date(adventure.completedAt).toISOString()}>{new Date(adventure.completedAt).toLocaleString('ja-JP')}</time></dd></div>
@@ -32,9 +33,9 @@ export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate }: Props
       <div><dt>冒険開始からの経過時間</dt><dd>{elapsedMinutes < 1 ? '1分未満' : `${elapsedMinutes}分`}</dd></div>
     </dl><p>ルート距離は出発時の案内です。実際に歩いた距離ではありません。</p></details>
     <div className="arrival-actions">
-      {adventure.target.kind === 'treasure' && <button type="button" className="arrival-rate" onClick={onRate}>⭐ この宝物を評価する</button>}
-      <button type="button" className="arrival-next" onClick={onNext}>🧭 次の冒険に行く</button>
-      <button type="button" className="arrival-home" onClick={onHome}>🏠 ホームに戻る</button>
+      {adventure.target.kind === 'treasure' && <button type="button" className="arrival-rate" onClick={onRate}><IconText text="⭐ この宝物を評価する" /></button>}
+      <button type="button" className="arrival-next" onClick={onNext}><IconText text="🧭 次の冒険に行く" /></button>
+      <button type="button" className="arrival-home" onClick={onHome}><IconText text="🏠 ホームに戻る" /></button>
     </div>
   </section>;
 }

@@ -5049,3 +5049,50 @@ max-height: 210px;
 @keyframes arrival-confetti { 0%,15% { opacity:0; transform:translateY(50px) scale(.3); } 50% { opacity:1; } 100% { opacity:.8; transform:translateY(0) rotate(40deg); } }
 @media(prefers-reduced-motion:reduce) { .arrival-screen *, .arrival-screen *::before, .arrival-screen *::after { animation:none!important; transition:none!important; } }
 @media(max-width:360px) { .app-shell.arrival-mode { padding-inline:14px; } .arrival-destination h2 { font-size:19px; } .arrival-heading h2 { font-size:15px; } }
+
+/* Season 2: shared SVG icon rhythm. Color inherits on filled action buttons. */
+:root { --icon-brown: #715139; --icon-orange: #c86a16; --icon-blue: #087cb6; }
+.app-icon { display: inline-block; width: 22px; height: 22px; flex-shrink: 0; vertical-align: -0.25em; color: inherit; }
+.app-icon--gem { color: var(--icon-blue); }
+.app-icon--next, .app-icon--back, .app-icon--chevron { width: 18px; height: 18px; }
+.explore-categories .app-icon, .choice-icon .app-icon { width: 26px; height: 26px; color: var(--icon-brown); }
+.choice-button.selected .app-icon { color: var(--icon-orange); }
+.explore-map-icon .app-icon { width: 30px; height: 30px; color: var(--icon-blue); }
+.explore-search .app-icon { color: var(--icon-brown); }
+.bottom-nav .app-icon { display: block; width: 24px; height: 24px; color: var(--icon-brown); }
+.bottom-nav button[aria-current="page"] .app-icon { color: var(--icon-orange); }
+.walking-actions .app-icon, .arrival-actions .app-icon { margin-right: 6px; }
+.walking-discover .app-icon, .walking-navigate .app-icon, .arrival-next .app-icon { color: inherit; }
+.walking-header .app-icon { width: 28px; height: 28px; }
+.walking-mission .app-icon { color: var(--icon-brown); }
+.collection-card-stats .app-icon, .collection-discovered-date .app-icon, .collection-category .app-icon { width: 16px; height: 16px; }
+.collection-empty > span .app-icon { width: 44px; height: 44px; color: var(--icon-blue); }
+.collection-tabs button, .collection-filters button, .collection-map-toggle, .collection-back,
+.collection-card button, .collection-empty button, .treasure-map-directions-button,
+.normal-result-inline-map, .resume-adventure-button { min-height: 44px; }
+.collection-filters button { min-width: 44px; }
+.treasure-map-marker { width: 44px; height: 44px; color: #fff; }
+.treasure-map-marker .app-icon { display: block; }
+.treasure-rating-stars button { min-width: 44px; min-height: 44px; }
+.treasure-rating-stars .app-icon { width: 28px; height: 28px; }
+.treasure-rating-stars button.selected .app-icon { fill: currentColor; }
+.treasure-registration-icon .app-icon { width: 34px; height: 34px; }
+.treasure-floating-button .app-icon { color: inherit; }
+button:focus-visible, summary:focus-visible { outline: 3px solid #087cb6; outline-offset: 3px; }
+@media (max-width: 360px) {
+  .collection-tabs .app-icon { width: 18px; height: 18px; }
+  .walking-actions .app-icon { width: 20px; height: 20px; margin-right: 3px; }
+}
+
+.treasure-discovery-button .app-icon { width: 28px; height: 28px; color: inherit; }
+.collection-tabs .selected .app-icon, .collection-header .app-icon { color: inherit; }
+.bottom-nav button[aria-current="page"] { background: #fff0cf; border-color: #efd3a4; color: #ad5814; }
+.collection-filters button { padding-inline: 3px; white-space: nowrap; }
+@media (max-width: 360px) {
+  .collection-tabs button { padding-inline: 3px; font-size: 12px; white-space: nowrap; }
+  .collection-filters button { font-size: 12px; }
+}
+/* Keep Leaflet's absolutely positioned markers inside a full-width grid item. */
+.treasure-map-layout { width: 100%; min-width: 0; }
+.treasure-map .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
+.collection-map-button { min-height: 44px; }
