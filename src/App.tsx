@@ -24,7 +24,8 @@ import { ArrivalScreen } from './components/ArrivalScreen';
 import { WalkingScreen } from './components/WalkingScreen';
 import { adventureRestoreScreen, adventureReturnScreen, isWalkingAdventure } from './features/walkingAdventure';
 import { getDepartureWalkingDistance } from './services/departureWalkingDistance';
-import { scheduleGachaSequence } from './features/gachaSequence';
+import { AdventureCoinScreen } from './components/AdventureCoinScreen';
+import { GachaScreen } from './components/GachaScreen';
 import {
 getEligibleRegisteredTreasures,
 loadNormalSearchSources,
@@ -68,12 +69,6 @@ uploadTreasureImage,
 import takaranImage from './assets/takaran/takaran.png';
 import titleBackground from './assets/title-background.png';
 import takaranWelcome from "./assets/takaran/takaran-welcome.png";
-import backgroundTown from './assets/gacha/background-town.png';
-import gachaMachine from './assets/gacha/gacha-machine.png';
-import gachaGearBase from './assets/gacha/gacha-gear-base.png';
-import gachaCrank from './assets/gacha/gacha-crank.png';
-import capsuleEmpty from './assets/gacha/capsule-empty.png';
-import treasureChest from './assets/gacha/treasure-chest.png';
 import takaranSearch from './assets/takaran/takaran-search.png';
 
 
@@ -338,8 +333,6 @@ maximumAge: 0,
 });
 }
 
-const decorativeCapsuleIcons = ['☕', '🌳', '📷', '⛩️', '🍴', '🎵'];
-
 export default function App() {
 const [adventureSession] = useState(() => new AdventureSession(localStorage));
 const [restoredAdventure] = useState(() => adventureSession.current);
@@ -351,12 +344,7 @@ const [hasStarted, setHasStarted] = useState(Boolean(restoredAdventure));
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
-const [gachaStep, setGachaStep] = useState(0);
-const [capsuleIcon, setCapsuleIcon] = useState("🎁");
-const [showCapsule, setShowCapsule] = useState(false);
 const [searchFailed, setSearchFailed] = useState(false);
-const [isCapsuleOpening, setIsCapsuleOpening] = useState(false);
-const [showTreasureBox, setShowTreasureBox] = useState(false);
 const [screen, setScreen] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map'
 >(adventureRestoreScreen(restoredAdventure));
@@ -367,23 +355,6 @@ arrivalRatingRequestedRef.current = false;
 document.querySelector('.treasure-rating-panel')?.scrollIntoView?.({ block: 'center' });
 }
 }, [screen]);
-const startGacha = () => {
-if (gachaStep !== 0) return;
-
-scheduleGachaSequence({
-setStep: setGachaStep,
-showSearching: () => {
-if (activeNormalSearchIdRef.current) {
-console.info('[normal-search] searching_screen_transition', {
-searchId: activeNormalSearchIdRef.current,
-distance: choices.distance,
-at: new Date().toISOString(),
-});
-}
-setScreen('searching');
-},
-});
-};
 
 const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
 distance: '',
@@ -778,7 +749,6 @@ if (screen !== 'gacha') return;
 let isCancelled = false;
 
 async function runGacha() {
-setShowCapsule(false);
 setIsSearching(true);
 setSearchFailed(false);
 
@@ -790,7 +760,6 @@ const waitTime = choices.mood === 'デート' ? 2200 : 1200;
 
 setTimeout(() => {
 if (!isCancelled) {
-setShowCapsule(true);
 setIsSearching(false);
 }
 }, waitTime);
@@ -1080,7 +1049,7 @@ setNearbySpot(waypoint);
 setDateFinalSpot(finalSpot);
 setSpotDistance(distanceToWaypoint + distanceWaypointToFinal);
 
-setShowCapsule(true);
+
 return;
 }
 }
@@ -1185,7 +1154,6 @@ setNearbySpot(selectedCourse.waypoint);
 setDateFinalSpot(selectedCourse.finalSpot);
 setSpotDistance(selectedCourse.totalDistance);
 
-setShowCapsule(true);
 
 } else {
 setNearbySpot(null);
@@ -1309,7 +1277,7 @@ setSpotDistance(selectedCandidate.distanceKm);
 } else {
 setSelectedSpot(selectedCandidate.candidate);
 }
-setShowCapsule(true);
+
 return;
 }
 
@@ -1472,7 +1440,6 @@ setSpotDistance(selectedCandidate.distanceKm);
 setSelectedSpot(selectedCandidate.candidate.spot);
 setSpotDistance(selectedCandidate.candidate.distanceMeters / 1000);
 }
-setShowCapsule(true);
 
 } catch (error) {
 console.error(error);
@@ -2756,43 +2723,11 @@ setScreen('coin');
 </section>
 
 ) : screen === 'coin' ? (
-<section className="coin-screen">
-<div className="coin-header">
-<img
-src={takaranWelcome}
-alt="たからん"
-className="coin-takaran"
-/>
-
-<p className="coin-ready"><IconText text=" 🪙 冒険コイン完成！ " /></p>
-
-<h2>できたよ！</h2>
-
-<p className="coin-subtitle"><IconText text=" 今日だけの冒険コインだよ✨ " /></p>
-</div>
-
-<div className="adventure-coin">
-<span className="coin-label"><IconText text="🪙 今日の冒険コイン" /></span>
-
-<div className="coin-detail">
-<span><IconText text="🥾 距離" /></span>
-<strong>{choices.distance}</strong>
-</div>
-
-<div className="coin-detail">
-<span><IconText text="😊 気分" /></span>
-<strong>
-<IconText text={getOptionIcon(choices.mood)} /> {choices.mood}
-</strong>
-</div>
-
-<p className="coin-message"><IconText text=" このコインが、今日の宝物へ導いてくれるよ✨ " /></p>
-</div>
-
-<button
-className="gacha-button adventure-start-button"
-type="button"
-onClick={() => {
+<AdventureCoinScreen
+  distance={choices.distance}
+  mood={choices.mood}
+  moodIcon={getOptionIcon(choices.mood)}
+  onContinue={() => {
 if (!resetNormalAdventure()) return;
 setSearchFailed(false);
 setNearbySpot(null);
@@ -2800,110 +2735,26 @@ setSelectedGachaTreasure(null);
 setDateFinalSpot(null);
 setSelectedSpot(null);
 setSpotDistance(null);
-setShowCapsule(false);
-setGachaStep(0);
-setIsCapsuleOpening(false);
-setShowTreasureBox(false);
-
-setCapsuleIcon(
-capsuleIcons[choices.mood] ?? '🎁'
-);
-
 setScreen('gacha');
 
 }}
-><IconText text=" 🎰 ガチャスタート！ " /></button>
-</section>
+/>
 
 ) : screen === 'gacha' ? (
-<section className="gacha-screen treasure-gacha-stage">
-<img
-src={backgroundTown}
-className="gacha-background"
-alt=""
+<GachaScreen
+  capsuleIcon={capsuleIcons[choices.mood] ?? '🎁'}
+  mood={choices.mood}
+  distance={choices.distance}
+  onReveal={() => {
+    if (activeNormalSearchIdRef.current) {
+      console.info('[normal-search] searching_screen_transition', {
+        searchId: activeNormalSearchIdRef.current, distance: choices.distance,
+        at: new Date().toISOString(),
+      });
+    }
+    setScreen('searching');
+  }}
 />
-
-<h1 className="gacha-main-title"><IconText text="✨ 街の宝ガチャ ✨" /></h1>
-
-<p className="gacha-sub"><IconText text=" たからんが宝物を見つけたよ✨ ハンドルを回して取り出そう！ " /></p>
-
-<div
-className={`treasure-gacha-machine ${
-gachaStep >= 2 ? 'gacha-found' : ''
-}`}
->
-<div className="gacha-machine-frame">
-<img
-src={gachaMachine}
-className="gacha-machine-image"
-alt="街の宝ガチャ"
-/>
-
-<div className="gacha-handle-assembly">
-<img
-src={gachaGearBase}
-className="gacha-gear-base-image"
-alt=""
-aria-hidden="true"
-/>
-<button
-type="button"
-className={`gacha-handle-button ${
-gachaStep >= 1 ? 'is-turning' : ''
-}`}
-onClick={startGacha}
-disabled={gachaStep !== 0}
-aria-label="ガチャのハンドルを回す"
->
-<img
-src={gachaCrank}
-className="gacha-handle-image"
-alt=""
-/>
-</button>
-</div>
-</div>
-
-{gachaStep < 2 && (
-<div
-className={`gacha-capsule-cluster ${gachaStep === 1 ? 'is-mixing' : ''}`}
-aria-hidden="true"
->
-{decorativeCapsuleIcons.map((icon) => (
-<div className="decorative-capsule" key={icon}>
-<img
-src={capsuleEmpty}
-alt=""
-className="capsule-shell"
-/>
-
-<div className="capsule-inner-icon">
-{icon}
-</div>
-</div>
-))}
-</div>
-)}
-
-
-{gachaStep === 2 && (
-<>
-<div className="capsule-wrap popping-capsule-wrap">
-<img
-src={capsuleEmpty}
-alt="選ばれたカプセル"
-className="capsule-shell"
-/>
-
-<div className="capsule-inner-icon">
-{capsuleIcon}
-</div>
-</div>
-</>
-)}
-
-</div>
-</section>
 ) : screen === 'searching' ? (
 
 <section className="searching-screen">

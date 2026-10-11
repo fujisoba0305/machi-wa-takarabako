@@ -14,3 +14,7 @@ Local derivative: walking-park.webp, resized to 720 × 960 or smaller preserving
 The user-supplied reference informed the visual direction only; its source/license could not be independently established and it is not bundled in the app.
 
 Season 2 reuse: this same local decorative photograph is also used for the home and search-condition heroes. It does not represent any destination candidate.
+
+Season 2 phase 5: reused as decorative gacha scenery. The machine, glass dome, capsules and animations are original React/CSS artwork created for this project; no third-party animation assets. Existing Takaran artwork is reused unchanged.
+
+Season 2 phase 6: also reused on the adventure coin completion screen. The gold coin, ribbon, cards and light animation are original React/CSS; Takaran artwork is reused unchanged.

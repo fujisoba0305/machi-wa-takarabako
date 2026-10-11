@@ -1,0 +1,61 @@
+.coin-celebration {
+  position: relative; isolation: isolate; overflow: hidden; text-align: center;
+  padding: 28px 20px 24px; border-radius: 28px; color: #654322;
+  background: linear-gradient(180deg,#173e36a6,#26432b12 44%,#27452c99),url('../assets/walking-park.webp') center / cover;
+  box-shadow: 0 12px 30px #57442730;
+}
+.coin-celebration-ribbon { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 -5px; padding: 12px 8px; border: 1px solid #fff0bf; background: linear-gradient(120deg,#b47720,#f0ca6c 45%,#e6b74c 70%,#a96c1c); color: #51370e; font-size: 17px; font-weight: 800; box-shadow: 0 5px 0 #81551d,0 8px 20px #22382966; border-radius: 4px 4px 12px 12px; animation: coin-card-in .45s .85s both; }
+.coin-celebration-heading { margin: 25px 0 22px; color: #fffbea; text-shadow: 0 2px 8px #14342c; }
+.coin-celebration-heading p { margin: 0; font-size: 9px; font-weight: 700; letter-spacing: .2em; }
+.coin-celebration-heading h2 { margin: 5px 0 8px; color: #fffbea; font-size: clamp(38px,11vw,48px); line-height: 1.2; letter-spacing: .06em; }
+.coin-celebration-heading > span { font-size: 12px; }
+.coin-celebration-card { position: relative; padding: 19px 16px 15px; border: 2px solid #f5d68d; border-radius: 21px; background: linear-gradient(120deg,#fffcf2f7,#fff2d8ed); box-shadow: inset 0 0 0 4px #ffffffa3,0 6px 0 #bda064,0 13px 24px #1736274d; animation: coin-card-in .55s 1.3s both; }
+.coin-celebration-card > p { display: flex; gap: 6px; align-items: center; justify-content: center; margin: 0 0 15px; font-size: 13px; font-weight: 700; color: #876124; }
+.coin-celebration-card dl { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); margin: 0; }
+.coin-celebration-card dl > div + div { border-left: 1px solid #dbc690; }
+.coin-celebration-card dt { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; color: #8a704f; }
+.coin-celebration-card dd { margin: 8px 3px 0; font-size: clamp(20px,6vw,26px); font-weight: 800; line-height: 1.4; overflow-wrap: anywhere; }
+.coin-celebration-card > span { display: block; font-size: 10px; margin-top: 16px; color: #8a704f; }
+.coin-celebration-stage { position: relative; height: 175px; margin: 16px auto 0; max-width: 300px; }
+.coin-celebration-token { position: absolute; z-index: 2; left: 14px; top: 30px; width: 144px; height: 144px; border-radius: 50%; border: 5px solid #ffe7a1; background: repeating-conic-gradient(#d39627 0deg 4deg,#f9d776 4deg 8deg); box-shadow: 5px 7px 0 #ab731a,9px 13px 18px #28352255; animation: coin-mint 1s cubic-bezier(.22,.75,.35,1) both; }
+.coin-celebration-token > span { position: absolute; inset: 5px; border-radius: 50%; border: 2px solid #ba7a1d; background: linear-gradient(130deg,#fff1b4,#edb849 40%,#ffe6a0 65%,#d69729); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #a56b16; box-shadow: inset 0 0 0 4px #ffe5a9; }
+.coin-celebration-token .app-icon { width: 58px; height: 58px; stroke-width: 1.3; filter: drop-shadow(0 1px 0 #fff5cc); }
+.coin-celebration-token small { font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.coin-celebration-takaran { position: absolute; z-index: 3; width: 146px; height: 164px; object-fit: contain; right: -9px; bottom: 7px; animation: coin-takaran-cheer .65s .7s 2; }
+.coin-celebration-glow { position: absolute; inset: -10px -12px 0; border-radius: 50%; background: radial-gradient(ellipse,#fff6bbaa 0%,#fff0a333 45%,transparent 70%); animation: coin-light 1.6s .4s both; }
+.coin-celebration-sparkles { position: absolute; inset: 0; color: #fff2b2; pointer-events: none; }
+.coin-celebration-sparkles span { position: absolute; animation: coin-spark 1.6s .4s both; }
+.coin-celebration-sparkles span:nth-child(1) { top: 7px; left: 15px; }
+.coin-celebration-sparkles span:nth-child(2) { top: 18px; right: 30px; }
+.coin-celebration-sparkles span:nth-child(3) { top: 95px; left: -10px; }
+.coin-celebration-sparkles span:nth-child(4) { bottom: 5px; left: 50px; }
+.coin-celebration-sparkles span:nth-child(5) { top: 0; left: 130px; }
+.coin-celebration-sparkles span:nth-child(6) { bottom: 28px; right: 8px; }
+.coin-celebration-message { margin: 0 0 16px; color: #fffdf0; font-size: 12px; line-height: 1.8; text-shadow: 0 1px 5px #153e2b,0 1px 2px #153e2b; }
+.coin-celebration-next { display: flex; justify-content: center; align-items: center; gap: 7px; width: 100%; min-height: 56px; padding: 14px 9px; border: 1px solid #fff0b5; border-radius: 16px; font-size: 15px; font-weight: 800; color: #593b17; background: linear-gradient(120deg,#fff2b7,#f5c354); box-shadow: 0 5px 0 #aa731e,0 8px 15px #16362940; cursor: pointer; animation: coin-card-in .55s 1.9s both; }
+.coin-celebration-next .app-icon { flex-shrink: 0; width: 20px; }
+.coin-celebration-next:focus-visible { outline: 3px solid #1a9ac6; outline-offset: 4px; }
+@keyframes coin-mint { from { opacity: 0; transform: translateY(24px) rotateY(-300deg) scale(.45); } to { opacity: 1; transform: translateY(0) rotateY(0) scale(1); } }
+@keyframes coin-light { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: scale(1); } }
+@keyframes coin-spark { from { opacity: 0; transform: scale(.3) rotate(-30deg); } 55% { opacity: 1; transform: scale(1.2); } to { opacity: .75; transform: scale(1); } }
+@keyframes coin-card-in { from { opacity: 0; visibility: hidden; transform: translateY(12px); } to { opacity: 1; visibility: visible; transform: translateY(0); } }
+@keyframes coin-takaran-cheer { 50% { transform: translateY(-7px) rotate(3deg); } }
+@media (max-width:350px) {
+  .coin-celebration { padding: 24px 14px 22px; }
+  .coin-celebration-token { left: 3px; width: 126px; height: 126px; }
+  .coin-celebration-takaran { width: 125px; right: -9px; }
+  .coin-celebration-next { font-size: 13px; gap: 4px; }
+  .coin-celebration-card { padding-left: 10px; padding-right: 10px; }
+  .coin-celebration-card dd { font-size: 18px; }
+}
+@media (max-height:800px) {
+  .coin-celebration { padding-top: 18px; }
+  .coin-celebration-heading { margin: 16px 0 12px; }
+  .coin-celebration-stage { height: 140px; margin-top: 8px; }
+  .coin-celebration-token { top: 5px; }
+  .coin-celebration-card { padding-top: 12px; padding-bottom: 10px; }
+  .coin-celebration-takaran { height: 126px; bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coin-celebration * { animation: none !important; transition: none !important; }
+}
