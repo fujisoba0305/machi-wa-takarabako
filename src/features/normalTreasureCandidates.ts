@@ -52,8 +52,11 @@ export function getEligibleRegisteredTreasures(
 treasures: Treasure[],
 currentLocation: { latitude: number; longitude: number },
 mood: string,
-distanceRangeKm: { min: number; max: number }
+distanceRangeKm: { min: number; max: number },
+foodGenre = ''
 ): RegisteredTreasureCandidate[] {
+// Existing treasure records have no cuisine field. Do not guess from their names.
+if (mood === 'グルメ' && foodGenre && foodGenre !== 'おまかせ') return [];
 return treasures.flatMap((treasure) => {
 if (
 !Number.isFinite(treasure.latitude) ||

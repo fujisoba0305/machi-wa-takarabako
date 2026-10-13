@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabase';
+import { imageDiagnostic, saveDiagnostic, TreasureSaveError, type TreasureSaveStage } from '../features/treasureSaveDiagnostics';
 
 const TREASURE_IMAGE_BUCKET = 'treasure-images';
 
@@ -23,6 +24,8 @@ return mimeExtension && /^[a-z0-9]+$/.test(mimeExtension)
 export async function uploadTreasureImage(
 file: File
 ): Promise<UploadedTreasureImage> {
+let stage: TreasureSaveStage = 'image_upload';
+try {
 const supabase = getSupabaseClient();
 const path = `${crypto.randomUUID()}.${getFileExtension(file)}`;
 const { error } = await supabase.storage
@@ -33,20 +36,24 @@ upsert: false,
 });
 
 if (error) {
-console.error('[treasure-image] Upload failed', {
-message: error.message,
-});
-throw new Error('Treasure image upload failed');
+throw new TreasureSaveError(saveDiagnostic(error, 'image_upload'));
 }
 
+stage = 'image_url';
 const { data } = supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
 .getPublicUrl(path);
+if (typeof data?.publicUrl !== 'string' || !data.publicUrl) throw new TreasureSaveError(saveDiagnostic({}, 'image_url'));
 
 return {
 path,
 publicUrl: data.publicUrl,
 };
+} catch (error) {
+const diagnostic = saveDiagnostic(error, stage);
+console.error('[treasure-image] failed', { ...diagnostic, ...imageDiagnostic(file) });
+throw error instanceof TreasureSaveError ? error : new TreasureSaveError(diagnostic);
+}
 }
 
 export async function deleteTreasureImage(path: string) {
@@ -56,10 +63,8 @@ const { error } = await supabase.storage
 .remove([path]);
 
 if (error) {
-console.error('[treasure-image] Delete failed', {
-path,
-message: error.message,
-});
-throw new Error('Treasure image delete failed');
+const diagnostic = saveDiagnostic(error, 'image_cleanup');
+console.error('[treasure-image] cleanup_failed', diagnostic);
+throw new TreasureSaveError(diagnostic);
 }
 }

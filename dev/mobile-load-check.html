@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>スマホ静的データ読み込み確認</title>
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self'">
+<style>body{font:16px/1.8 sans-serif;margin:24px auto;padding:16px;max-width:600px;color:#493623;background:#fff9ee}button{min-height:48px;padding:12px 20px;font:inherit}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;padding:16px}</style></head>
+<body><h1>静的データの読み込み確認</h1><p>公開テスト座標でカフェ検索を行います。端末GPS・ログイン・報酬・外部APIは使用しません。本体画面全体の読み込み時間とは別の測定です。</p>
+<button id="check">読み込みを測定する</button><pre id="result" role="status">初回と2回目を比較してください。</pre>
+<p>初回通信の再測定は新しいタブだけではブラウザキャッシュが残る場合があります。記録を消すための「Webサイトデータ削除」は行わないでください。</p>
+<script type="module">
+import {loadLocalStaticFacilities} from '/src/services/staticFacilities.ts';
+const button=document.getElementById('check'), result=document.getElementById('result');
+const fetchOriginal=window.fetch.bind(window);
+window.fetch=(url,options)=>{if(typeof url!=='string'||!url.startsWith('/facilities-local-v1/'))throw Error('外部通信は禁止');return fetchOriginal(url,options)};
+let run=0;
+button.onclick=async()=>{button.disabled=true;const started=performance.now();try{
+const rows=await loadLocalStaticFacilities({latitude:35.681236,longitude:139.767125},{mood:'カフェ',distance:'？km'},3000);
+const resources=performance.getEntriesByType('resource').filter(e=>new URL(e.name).pathname.startsWith('/facilities-local-v1/'));
+const lines=resources.map(e=>`${new URL(e.name).pathname.split('/').pop()}：${Math.round(e.duration)}ms／転送 ${e.transferSize>0?Math.round(e.transferSize/1024)+'KiB':'取得不可またはキャッシュ'}／展開後 ${Math.round(e.decodedBodySize/1024)}KiB`);
+result.textContent=`測定${++run}回目：${Math.round(performance.now()-started)}ms\n候補：${rows?.length??0}件\n${lines.join('\n')}\n転送情報はページ読込以降の累積です。0は通信なしの証明ではありません。`;
+}catch{result.textContent='ローカル静的データを取得できませんでした。外部APIへ切り替えていません。'}finally{button.disabled=false}};
+</script></body></html>

@@ -15,26 +15,55 @@ name?: string;
 
 type OverpassResponse = {
 elements: Spot[];
+remark?: unknown;
 };
 
-const overpassCache = new Map<string, Spot[]>();
+export const EMPTY_CACHE_MS = 30_000;
+export const RESULT_CACHE_MS = 5 * 60_000;
+const overpassCache = new Map<string, { elements: Spot[]; expires: number }>();
 
+const inFlight = new Map<string, Promise<Spot[]>>();
+let clientRateLimitedUntil = 0;
+// Bound load per browser tab; identical requests share the same completion.
+let activeRequests = 0;
+const waiting: (() => void)[] = [];
 async function fetchOverpass(query: string): Promise<Spot[]> {
+const cached = overpassCache.get(query);
+if (cached && cached.expires > Date.now()) {
+console.info('[overpass-client]', { endpoint: '/api/overpass', status: 'cache-hit', count: cached.elements.length });
+return cached.elements;
+}
+if (clientRateLimitedUntil > Date.now()) throw new Error('Overpass cooldown; retry later');
+const existing = inFlight.get(query);
+if (existing) return existing;
+if (activeRequests >= 2 && waiting.length >= 4) throw new Error('Overpass busy; retry later');
+const task = (async () => {
+if (activeRequests >= 2) await new Promise<void>(resolve => waiting.push(resolve));
+else activeRequests++;
+try { return await fetchOverpassOnce(query); }
+finally { const next = waiting.shift(); if (next) next(); else activeRequests--; }
+})();
+inFlight.set(query, task);
+try { return await task; } finally { inFlight.delete(query); }
+}
+async function fetchOverpassOnce(query: string): Promise<Spot[]> {
 const cacheKey = query;
 
-if (overpassCache.has(cacheKey)) {
-console.log('キャッシュから取得');
-return overpassCache.get(cacheKey) ?? [];
+const cached = overpassCache.get(cacheKey);
+if (cached && cached.expires > Date.now()) {
+console.info('[overpass-client]', { endpoint: '/api/overpass', status: 'cache-hit', count: cached.elements.length });
+return cached.elements;
 }
+overpassCache.delete(cacheKey);
 
+const controller = new AbortController();
+const timer = setTimeout(() => controller.abort(), 55000);
 try {
 const response = await fetch(
-window.location.hostname === 'localhost' ||
-window.location.hostname === '127.0.0.1'
-? '/api/overpass'
-: '/api/overpass?v=20260708',
+'/api/overpass',
 {
 method: 'POST',
+signal: controller.signal,
 headers: {
 'Content-Type': 'application/json',
 },
@@ -43,21 +72,34 @@ body: JSON.stringify({ query }),
 );
 
 if (!response.ok) {
-console.error('API Error:', response.status);
-return [];
+if ([429, 403, 406].includes(response.status)) {
+const retry = response.headers?.get('Retry-After');
+const numeric = retry && /^\d+$/.test(retry) ? Number(retry) : NaN;
+const dateWait = retry ? Date.parse(retry) - Date.now() : NaN;
+const wait = Math.max(30_000, Number.isFinite(numeric) ? numeric * 1000 : Number.isFinite(dateWait) ? dateWait : 0);
+clientRateLimitedUntil = Math.max(clientRateLimitedUntil, Date.now() + wait);
+console.info('[overpass-client]', { endpoint: '/api/overpass', status: 'cooldown', retryAfterMs: wait });
+}
+throw new Error('Overpass HTTP error: ' + response.status);
 }
 
 const data: OverpassResponse = await response.json();
-const elements = data.elements ?? [];
+if (!data || !Array.isArray(data.elements) || data.remark) {
+throw new Error('Overpass returned an incomplete or invalid result');
+}
+const elements = data.elements;
 
-console.log('取得件数:', elements.length);
+console.info('[overpass-client]', { endpoint: '/api/overpass', status: 'success', count: elements.length, provider: ['vk-maps', 'private-coffee'].includes(response.headers?.get('X-Machi-Overpass-Provider') ?? '') ? response.headers?.get('X-Machi-Overpass-Provider') : 'unknown', environment: response.headers?.get('X-Machi-API-Environment') === 'local' ? 'local' : 'deployed' });
 
-overpassCache.set(cacheKey, elements);
+if (overpassCache.size >= 100) overpassCache.delete(overpassCache.keys().next().value!);
+overpassCache.set(cacheKey, { elements, expires: Date.now() + (elements.length ? RESULT_CACHE_MS : EMPTY_CACHE_MS) });
 
 return elements;
 } catch (error) {
-console.error('Overpass error:', error);
-return [];
+console.warn('[overpass-client]', { endpoint: '/api/overpass', status: controller.signal.aborted ? 'timeout' : 'failure', cached: false });
+throw error;
+} finally {
+clearTimeout(timer);
 }
 }
 
@@ -77,7 +119,7 @@ latitude: number,
 longitude: number,
 radius: number
 ): string {
-return `node${filter}(around:${radius},${latitude},${longitude});`;
+return `node${filter}[name](around:${radius},${latitude},${longitude});`;
 }
 
 function nodeAndWay(
@@ -88,7 +130,7 @@ radius: number
 ): string {
 return `
 node${filter}(around:${radius},${latitude},${longitude});
-way${filter}(around:${radius},${latitude},${longitude});
+way${filter}[name](around:${radius},${latitude},${longitude});
 `;
 }
 

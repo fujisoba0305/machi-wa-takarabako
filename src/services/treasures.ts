@@ -1,4 +1,5 @@
 import { getSupabaseClient } from './supabase';
+import { saveDiagnostic, TreasureSaveError } from '../features/treasureSaveDiagnostics';
 
 export type TreasureInsert = {
 name: string;
@@ -87,28 +88,16 @@ const supabase = getSupabaseClient();
 console.info('[treasure-save] client_init_success');
 
 console.info('[treasure-save] request_start');
-const { error } = await supabase.from('treasures').insert(treasure);
+const { error, status } = await supabase.from('treasures').insert(treasure);
 requestComplete = true;
 console.info('[treasure-save] request_complete');
 
 if (error) {
-console.error('[treasure-save] Supabase INSERT failed', {
-code: error.code,
-message: error.message,
-details: error.details,
-hint: error.hint,
-});
-
-throw new Error('Treasure insert failed');
+throw new TreasureSaveError(saveDiagnostic({ code: error.code, status }, 'db_insert'));
 }
 } catch (error) {
-if (!requestComplete) {
-console.error('[treasure-save] pre-request exception', {
-name: error instanceof Error ? error.name : 'UnknownError',
-message: error instanceof Error ? error.message : 'Unknown error',
-});
-}
-
-throw error;
+const diagnostic = saveDiagnostic(error, 'db_insert');
+console.error('[treasure-save] failed', { ...diagnostic, responseReceived: requestComplete });
+throw error instanceof TreasureSaveError ? error : new TreasureSaveError(diagnostic);
 }
 }

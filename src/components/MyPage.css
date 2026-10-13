@@ -1,0 +1,20 @@
+.my-page { min-height: 100svh; padding: 28px 16px calc(120px + env(safe-area-inset-bottom)); color: #543b26; background: linear-gradient(180deg,rgba(13,55,41,.12),rgba(248,239,214,.88) 62%),url('../assets/walking-park.webp') center top/cover; }
+.my-page-hero { color: white; text-shadow: 0 2px 8px #163f28; padding: 22px 8px 35px; }
+.my-page-hero h1 { font-size: clamp(28px,8vw,38px); margin: 12px 0; }
+.my-page-hero p { font-weight: 700; }
+.my-page-card { background: rgba(255,252,242,.95); border: 1px solid #fff7df; border-radius: 24px; padding: 24px 18px; margin-bottom: 16px; box-shadow: 0 12px 28px #24391f22; overflow-wrap: anywhere; }
+.my-page-card h2 { font-size: 21px; line-height: 1.5; margin: 12px 0; }
+.my-page-card p { font-size: 14px; line-height: 1.85; }
+.my-page-avatar { width: 80px; height: 80px; margin: auto; display: grid; place-items: center; border: 3px solid white; border-radius: 50%; background: #f2dfbb; overflow: hidden; }
+.my-page-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.my-page-avatar .app-icon { width: 36px; height: 36px; }
+.my-page-status { color: #276449; font-weight: 700; text-align: center; }
+.my-page-login,.my-page-back { width: 100%; min-height: 52px; padding: 14px 12px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 700; white-space: normal; }
+.my-page-login { background: #fff; color: #493827; border: 1px solid #b59a74; }
+.my-page-login:disabled { opacity: .6; cursor: not-allowed; }
+.my-page-back { color: #fff; background: #a74b0e; border: 1px solid #984108; }
+.my-page-message { background: #fff1d0; border-radius: 12px; padding: 12px; }
+.my-page-records > .app-icon { color: #2182bd; }
+.my-page button:focus-visible { outline: 3px solid #1976c5; outline-offset: 3px; }
+
+.app-shell.account-mode { padding: 0; }

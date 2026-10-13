@@ -8,7 +8,8 @@ import { ACTIVE_ADVENTURE_KEY, AdventureSession, type ActiveAdventure } from './
 import { navigateAdventureMap } from './features/googleMaps';
 import { createTreasure, incrementTreasureDiscovery } from './services/treasures';
 import { submitTreasureRating } from './services/treasureRatings';
-import { uploadTreasureImage } from './services/treasureImages';
+import { uploadTreasureImage, deleteTreasureImage } from './services/treasureImages';
+import { saveDiagnostic, TreasureSaveError } from './features/treasureSaveDiagnostics';
 
 vi.mock('./services/treasures', () => ({ createTreasure: vi.fn().mockResolvedValue(undefined),
   incrementTreasureDiscovery: vi.fn().mockResolvedValue(1), getTreasures: vi.fn().mockResolvedValue([]) }));
@@ -58,6 +59,27 @@ beforeEach(() => {
 afterEach(async () => { if (root) await act(async () => root.unmount()); container?.remove(); vi.unstubAllGlobals(); });
 
 describe('walking and treasure registration screens', () => {
+  it.each(['upload', 'db-rejected', 'db-unknown'])('keeps the adventure and diagnoses photographed save failure: %s', async stage => {
+    const original = await seed(); await mount(); await click('宝物を見つけた！');
+    if (stage === 'upload') vi.mocked(uploadTreasureImage).mockRejectedValueOnce(new TreasureSaveError(saveDiagnostic({ status: 413 }, 'image_upload')));
+    if (stage === 'db-rejected') vi.mocked(createTreasure).mockRejectedValueOnce(new TreasureSaveError(saveDiagnostic({ code: '42501', status: 403 }, 'db_insert')));
+    if (stage === 'db-unknown') vi.mocked(createTreasure).mockRejectedValueOnce(new Error('connection lost'));
+    await act(async () => {
+      Simulate.change(container.querySelector('input[placeholder="例：路地裏の小さな喫茶店"]')!, { target: { value: '春日局乃像' } } as never);
+      Simulate.change(container.querySelector('select')!, { target: { value: '📷 写真スポット' } } as never);
+      Simulate.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['photo'], 'private.jpg', { type: 'image/jpeg' })] } } as never);
+    });
+    // Submit after the form changes have rendered.
+    await act(async () => Simulate.submit(container.querySelector('form')!));
+    expect(saved()).toEqual(original);
+    expect(container.textContent).toContain(stage === 'upload' ? 'image_upload' : 'db_insert');
+    if (stage === 'upload') expect(createTreasure).not.toHaveBeenCalled();
+    if (stage === 'db-rejected') expect(deleteTreasureImage).toHaveBeenCalledWith('test.jpg');
+    else expect(deleteTreasureImage).not.toHaveBeenCalled();
+    if (stage === 'db-unknown') expect(container.textContent).toContain('再送する前に図鑑');
+    expect(container.textContent).not.toContain('private.jpg');
+    await click('冒険の続きに戻る'); expect(saved()).toEqual(original);
+  });
   it('restores the walking screen, departure route and mission without requesting GPS', async () => {
     await seed(); geolocation.mockClear(); await mount();
     expect(container.textContent).toContain('ウォーキング中！');
@@ -178,4 +200,15 @@ describe('walking and treasure registration screens', () => {
     expect(localStorage.getItem('machiTakarabakoExp')).toBe('30');
   });
 
+});
+
+it('opens MyPage during an adventure and returns without changing guest records', async () => {
+  const adventure = await seed(); await mount();
+  const before = { ...localStorage };
+  await click('マイページ');
+  expect(container.querySelector('.my-page')).not.toBeNull();
+  expect(container.querySelector<HTMLButtonElement>('.my-page-login')!.disabled).toBe(true);
+  await click('冒険に戻る');
+  expect(container.querySelector('.walking-screen')).not.toBeNull();
+  expect(saved()).toEqual(adventure); expect({ ...localStorage }).toEqual(before);
 });

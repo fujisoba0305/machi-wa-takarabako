@@ -121,3 +121,11 @@ expect(sources.treasures).toEqual([registered]);
 expect(sources.overpassError).toBeInstanceOf(Error);
 });
 });
+
+it('excludes cuisine-unknown treasures only when a specific cuisine is requested', () => {
+  const rows = [treasure({ category: '🍜 グルメ', name: 'ピザの店' })];
+  const origin = {latitude:35,longitude:139}; const range={min:0,max:2};
+  expect(getEligibleRegisteredTreasures(rows,origin,'グルメ',range,'ラーメン')).toEqual([]);
+  expect(getEligibleRegisteredTreasures(rows,origin,'グルメ',range,'おまかせ')).toHaveLength(1);
+  expect(getEligibleRegisteredTreasures(rows,origin,'おまかせ',range,'ラーメン')).toHaveLength(1);
+});

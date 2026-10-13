@@ -2,10 +2,10 @@ import { AppIcon, IconText } from './AppIcon';
 import takaran from '../assets/takaran/takaran-welcome.png';
 import './AdventureCoinScreen.css';
 
-type Props = { distance: string; mood: string; moodIcon: string; onContinue: () => void };
+type Props = { distance: string; mood: string; moodIcon: string; busy?: boolean; message?: string; onContinue: () => void };
 
 // Presentation only. The parent owns the selected conditions and gacha transition.
-export function AdventureCoinScreen({ distance, mood, moodIcon, onContinue }: Props) {
+export function AdventureCoinScreen({ distance, mood, moodIcon, onContinue, busy, message }: Props) {
   return <section className="coin-celebration" aria-labelledby="coin-celebration-title">
     <div className="coin-celebration-ribbon"><AppIcon name="sparkle" />冒険コイン完成！<AppIcon name="sparkle" /></div>
     <header className="coin-celebration-heading">
@@ -28,6 +28,7 @@ export function AdventureCoinScreen({ distance, mood, moodIcon, onContinue }: Pr
       <img className="coin-celebration-takaran" src={takaran} alt="コインの完成を喜ぶたからん" width="150" height="150" />
     </div>
     <p className="coin-celebration-message">このコインが、まだ知らない街の宝物へ<br />きっと導いてくれるよ。</p>
-    <button type="button" className="coin-celebration-next" onClick={onContinue}><AppIcon name="coins" /><span>ガチャを回しに行こう！</span><AppIcon name="next" /></button>
+    {message && <p role="status" className="coin-celebration-message">{message}</p>}
+    <button type="button" className="coin-celebration-next" disabled={busy} onClick={onContinue}><AppIcon name="coins" /><span>ガチャを回しに行こう！</span><AppIcon name="next" /></button>
   </section>;
 }

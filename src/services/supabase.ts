@@ -17,7 +17,11 @@ throw new Error('Supabase configuration is unavailable');
 }
 
 if (!supabaseClient) {
-supabaseClient = createClient(supabaseUrl, supabasePublishableKey);
+supabaseClient = createClient(supabaseUrl, supabasePublishableKey, { auth: {
+// Keep legacy guest operations separate from account sessions.
+storageKey: 'machiGuestTransport.v1', persistSession: false,
+autoRefreshToken: false, detectSessionInUrl: false,
+} });
 }
 
 return supabaseClient;

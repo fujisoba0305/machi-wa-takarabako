@@ -1,0 +1,16 @@
+{
+  "headers": [
+    {
+      "source": "/facilities-local-v1/candidates-8c244d995160.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/facilities-local-v1/coverage-dcd524b5376f.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

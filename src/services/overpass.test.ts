@@ -30,7 +30,7 @@ headers: { 'Content-Type': 'application/json' },
 const payload = JSON.parse(options.body);
 expect(payload.query).toContain('[out:json][timeout:12]');
 expect(payload.query).toContain(
-'node["amenity"="cafe"](around:4000,35.681236,139.767125);'
+'node["amenity"="cafe"][name](around:4000,35.681236,139.767125);'
 );
 expect(payload.query).toContain('out center;');
 expect(payload.query).not.toContain('way[');

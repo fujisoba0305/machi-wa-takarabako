@@ -1,3 +1,6 @@
+import { searchFailureMessages, type SearchFailure } from './features/searchFailure';
+import { MyPage } from './components/MyPage';
+import { isAccountPage } from './services/accountAuth';
 import { AppIcon, IconText, plainIconLabel } from './components/AppIcon';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -14,6 +17,8 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
+import { loadLocalStaticFacilities, StaticFacilityError } from './services/staticFacilities';
+import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './features/treasureSaveDiagnostics';
 import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
@@ -345,9 +350,11 @@ const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
 const [searchFailed, setSearchFailed] = useState(false);
-const [screen, setScreen] = useState<
-'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map'
->(adventureRestoreScreen(restoredAdventure));
+const [searchFailureMessage, setSearchFailureMessage] = useState('');
+const [searchFailureReason, setSearchFailureReason] = useState<SearchFailure | null>(null);
+const [screen, setScreenState] = useState<
+'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map' | 'my-page'
+>(isAccountPage() ? 'my-page' : adventureRestoreScreen(restoredAdventure));
 const arrivalRatingRequestedRef = useRef(false);
 useEffect(() => {
 if (screen === 'result' && arrivalRatingRequestedRef.current) {
@@ -368,6 +375,11 @@ shrineGenre:',',
 ...restoredAdventure?.result.choices,
 });
 
+const locationFetchedAt = useRef(0);
+const locationPending = useRef<Promise<Coordinates> | null>(null);
+const locationGate = useRef(0);
+const [locationBusy, setLocationBusy] = useState(false);
+const [locationMessage, setLocationMessage] = useState('');
 const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(restoredAdventure?.departure ?? null);
 
 const [nearbySpot, setNearbySpot] = useState<Spot | null>(restoredAdventure?.result.spot ?? null);
@@ -416,6 +428,13 @@ const normalArrivalRewardClaimedRef = useRef(restoredAdventure?.rewardClaimed ??
 const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
+function setScreen(next: typeof screen) {
+locationGate.current++;
+// Leaving the search flow invalidates pending results synchronously.
+if (!['gacha', 'searching', 'result'].includes(next)) activeNormalSearchIdRef.current = null;
+setScreenState(next);
+}
+useEffect(() => () => { activeNormalSearchIdRef.current = null; }, []);
 const treasureSaveInFlightRef = useRef(false);
 
 async function openTreasureMap() {
@@ -609,13 +628,18 @@ return;
 setTakaranSpeech("🔍 現在地を探してるよ...");
 
 try {
-const coordinates = await requestCurrentCoordinates();
+if (!locationPending.current) locationPending.current = requestCurrentCoordinates().finally(() => { locationPending.current = null; });
+const coordinates = await locationPending.current;
+locationFetchedAt.current = Date.now();
 setCurrentLocation(coordinates);
 setTakaranSpeech("🎉 よし！冒険に行こう！");
+return true;
 } catch (error) {
-console.error(error);
+locationFetchedAt.current = 0;
+console.warn('[location] acquisition_failed');
 setTakaranSpeech("😢 現在地が見つからなかったよ...");
-alert('現在地を取得できませんでした。ブラウザの位置情報許可を確認してください。');
+setLocationMessage(searchFailureMessages.location);
+return false;
 }
 }
 
@@ -702,11 +726,13 @@ treasureSaveInFlightRef.current = true;
 setIsTreasureSaving(true);
 setTreasureSaveError('');
 
+let saveStage: TreasureSaveStage = registration.image ? 'image_upload' : 'db_insert';
 try {
 const uploadedImage = registration.image
 ? await uploadTreasureImage(registration.image)
 : null;
 
+saveStage = 'db_insert';
 try {
 await createTreasure({
 name: registration.name,
@@ -717,13 +743,13 @@ longitude: registration.longitude,
 image_url: uploadedImage?.publicUrl ?? null,
 });
 } catch (error) {
-if (uploadedImage) {
+if (uploadedImage && saveDiagnostic(error, 'db_insert').outcome === 'rejected') {
 try {
 await deleteTreasureImage(uploadedImage.path);
 } catch (deleteError) {
 console.error(
 '[treasure-registration] Uploaded image cleanup failed',
-deleteError
+saveDiagnostic(deleteError, 'image_cleanup')
 );
 }
 }
@@ -732,11 +758,9 @@ throw error;
 }
 
 setRegisteredTreasure(registration);
-} catch {
-console.error('[treasure-registration] Treasure save failed');
-setTreasureSaveError(
-'宝物を保存できませんでした。入力内容を確認して、もう一度お試しください。'
-);
+} catch (error) {
+console.error('[treasure-registration] Treasure save failed', saveDiagnostic(error, saveStage));
+setTreasureSaveError(saveFailureMessage(error, saveStage, registration.image));
 } finally {
 treasureSaveInFlightRef.current = false;
 setIsTreasureSaving(false);
@@ -752,14 +776,16 @@ async function runGacha() {
 setIsSearching(true);
 setSearchFailed(false);
 
-await findNearbySpot();
+const pendingSearch = findNearbySpot();
+const startedSearchId = activeNormalSearchIdRef.current;
+await pendingSearch;
 
-if (isCancelled) return;
+if (isCancelled || activeNormalSearchIdRef.current !== startedSearchId) return;
 
 const waitTime = choices.mood === 'デート' ? 2200 : 1200;
 
 setTimeout(() => {
-if (!isCancelled) {
+if (!isCancelled && activeNormalSearchIdRef.current === startedSearchId) {
 setIsSearching(false);
 }
 }, waitTime);
@@ -797,24 +823,23 @@ location.lat,
 location.lon
 );
 
-console.log(
-spot.tags?.name,
-distance,
-range.min,
-range.max
-);
+
 
 return distance >= range.min && distance <= range.max;
 });
 }
 
 function getNamedSpots(spots: Spot[]) {
+const seen = new Set<string>();
 return spots.filter((spot) => {
 const name = spot.tags?.name;
 const lat = spot.lat ?? spot.center?.lat;
 const lon = spot.lon ?? spot.center?.lon;
 
-return Boolean(name && lat && lon);
+const key = spot.type + ':' + spot.id;
+if (!name?.trim() || typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180 || seen.has(key)) return false;
+seen.add(key);
+return true;
 });
 }
 
@@ -840,6 +865,7 @@ return !isPaidLike;
 });
 }
 function getDistanceRange(expandLevel: number) {
+if (choices.distance === '？km') return { min: 0, max: getNormalSearchRadius(expandLevel) / 1000 };
 const walkingRange = getWalkingDistanceRange(expandLevel);
 
 return { min: 0, max: walkingRange.max };
@@ -905,6 +931,11 @@ if (!currentLocation) return [];
 const latitude = currentLocation.latitude;
 const longitude = currentLocation.longitude;
 const radius = getNormalSearchRadius(expandLevel);
+
+const staticSpots = await loadLocalStaticFacilities(
+{ latitude, longitude }, { ...choices }, radius
+);
+if (staticSpots !== null) return staticSpots;
 
 if (choices.mood === 'カフェ') {
 return getNearbyCafes(latitude, longitude, radius);
@@ -981,7 +1012,7 @@ return getNearbyRelaxSpots(latitude, longitude, radius);
 return getNearbyViewSpots(latitude, longitude, radius);
 }
 
-async function findDateCourse() {
+async function findDateCourse(isCurrent: () => boolean) {
 if (!currentLocation) return;
 
 const latitude = currentLocation.latitude;
@@ -1005,12 +1036,14 @@ let waypointSpots: Spot[] = [];
 
 if (choices.budget === '0円') {
 waypointSpots = await getNearbyRelaxSpots(latitude, longitude, searchRadius);
+if (!isCurrent()) return;
 waypointSpots = filterFreeSpots(waypointSpots);
 } else {
 waypointSpots =
 choices.dateGenre === '食べ歩き'
 ? await getNearbyFoodWalkSpots(latitude, longitude, searchRadius)
 : await getNearbyCafes(latitude, longitude, searchRadius);
+if (!isCurrent()) return;
 }
 if (choices.dateGenre === '食べ歩き') {
 const foodWalkSpots = await getNearbyFoodWalkSpots(
@@ -1018,6 +1051,7 @@ latitude,
 longitude,
 searchRadius
 );
+if (!isCurrent()) return;
 
 const namedFoodWalkSpots = getNamedSpots(foodWalkSpots);
 
@@ -1069,6 +1103,7 @@ finalSpots = [...waypointSpots];
 
 } else if (choices.dateGenre === '夜景') {
 finalSpots = await getNearbyViewSpots(latitude, longitude, searchRadius);
+if (!isCurrent()) return;
 } else if (choices.dateGenre === 'イベント') {
 finalSpots = await getNearbyEventSpots(
 latitude,
@@ -1076,6 +1111,7 @@ longitude,
 searchRadius,
 'おまかせ'
 );
+if (!isCurrent()) return;
 } else if (choices.dateGenre === '食べ歩き') {
 finalSpots = await getNearbyRestaurants(
 latitude,
@@ -1083,8 +1119,10 @@ longitude,
 searchRadius,
 'おまかせ'
 );
+if (!isCurrent()) return;
 } else {
 finalSpots = await getNearbyParks(latitude, longitude, searchRadius);
+if (!isCurrent()) return;
 }
 
 const namedWaypoints = getNamedSpots(waypointSpots);
@@ -1165,11 +1203,9 @@ setSearchFailed(true);
 }
 
 async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
+if (!currentLocation) { setLocationMessage(searchFailureMessages.location); setIsSearching(false); setSearchFailed(false); setScreen('coin'); return; }
 if (!resetNormalAdventure()) return;
-const searchId =
-choices.mood === 'デート'
-? null
-: `${Date.now().toString(36)}-${++normalSearchSequenceRef.current}`;
+const searchId = `${Date.now().toString(36)}-${++normalSearchSequenceRef.current}`;
 
 if (searchId) {
 activeNormalSearchIdRef.current = searchId;
@@ -1184,23 +1220,10 @@ at: new Date().toISOString(),
 });
 }
 
+const isCurrent = () => activeNormalSearchIdRef.current === searchId;
+setSearchFailureMessage('');
+setSearchFailureReason(null);
 setSelectedGachaTreasure(null);
-
-if (!currentLocation) {
-if (searchId) {
-console.warn('[normal-search] failed', {
-searchId,
-reason: 'current_location_missing',
-});
-}
-alert('先に現在地を取得してください。');
-setNearbySpot(null);
-setDateFinalSpot(null);
-setSpotDistance(null);
-setSearchFailed(true);
-setIsSearching(false);
-return;
-}
 
 setIsSearching(true);
 setSearchFailed(false);
@@ -1214,7 +1237,7 @@ setDateFinalSpot(null);
 setSpotDistance(null);
 
 if (choices.mood === 'デート') {
-await findDateCourse();
+await findDateCourse(isCurrent);
 return;
 }
 
@@ -1222,14 +1245,25 @@ const sources = await loadNormalSearchSources(
 () => getSpotsByMood(normalSearchExpandLevel),
 getTreasures
 );
+if (!isCurrent()) return;
+let lookupFailed = Boolean(sources.overpassError || sources.treasuresError);
+let walkingFailed = false;
+let limitReached = false;
+const reportNoCandidates = () => {
+const reason: SearchFailure = sources.overpassError instanceof StaticFacilityError ? 'static' : sources.overpassError ? 'overpass' : walkingFailed ? 'walking' : sources.treasuresError ? 'treasures' : limitReached ? 'limit' : validSpots.length === 0 && registeredCandidates.length === 0 ? 'empty' : 'distance';
+console.info('[normal-search] stopped', { reason });
+setSearchFailureReason(reason);
+setSearchFailureMessage(searchFailureMessages[reason]);
+setSearchFailed(true);
+};
 const spots = sources.overpass;
 const registeredTreasures = sources.treasures;
 
 if (sources.overpassError) {
-console.error('[normal-search] Overpass source failed', sources.overpassError);
+console.warn('[normal-search] Overpass source failed');
 }
 if (sources.treasuresError) {
-console.error('[normal-search] Supabase treasure source failed', sources.treasuresError);
+console.warn('[normal-search] Supabase treasure source failed');
 }
 
 const validSpots = getNamedSpots(spots);
@@ -1242,12 +1276,13 @@ const registeredCandidates = getEligibleRegisteredTreasures(
 registeredTreasures,
 currentLocation,
 choices.mood,
-registeredDistanceRange
+registeredDistanceRange,
+choices.foodGenre
 );
 
 console.log('取得したspots数:', spots.length);
 console.log('名前ありspots数:', namedSpots.length);
-console.log('namedSpots:', namedSpots);
+
 if (searchId) {
 console.info('[normal-search] overpass_complete', {
 searchId,
@@ -1266,9 +1301,14 @@ registeredCandidates
 );
 
 if (!selectedCandidate) {
-setSearchFailed(true);
+reportNoCandidates();
 return;
 }
+
+console.info('[normal-search] succeeded', {
+searchId, source: selectedCandidate.source,
+overpassEligibleCount: namedSpots.length, registeredEligibleCount: registeredCandidates.length,
+});
 
 if (selectedCandidate.source === 'treasure') {
 setSelectedGachaTreasure(selectedCandidate.treasure);
@@ -1319,6 +1359,7 @@ let secondBatchExecuted = false;
 
 try {
 for (let batchStart = 0; batchStart < closestCandidates.length; batchStart += 8) {
+if (!isCurrent()) return;
 const batchNumber = batchStart / 8 + 1;
 const batchCandidates = closestCandidates.slice(batchStart, batchStart + 8);
 if (batchNumber === 2) secondBatchExecuted = true;
@@ -1345,6 +1386,8 @@ currentLocation,
 walkingDestinations,
 searchId ? { searchId, batchNumber } : undefined
 );
+if (!isCurrent()) return;
+if (walkingResults.some(result => result.status === 'ERROR') || walkingResults.length !== batchCandidates.length) { lookupFailed = true; walkingFailed = true; }
 const walkingStatusCounts = walkingResults.reduce(
 (counts, result) => {
 counts[result.status] += 1;
@@ -1392,7 +1435,9 @@ maxWalkingDistanceMeters,
 if (eligibleCandidates.length > 0) break;
 }
 } catch (error) {
-console.error('[normal-search] Overpass walking-distance source failed', error);
+if (!isCurrent()) return;
+lookupFailed = true; walkingFailed = true;
+console.warn('[normal-search] walking-distance source failed');
 eligibleCandidates = [];
 }
 
@@ -1409,15 +1454,17 @@ registeredCandidates
 );
 
 if (!selectedCandidate) {
+limitReached = namedSpots.length > closestCandidates.length;
 if (searchId) {
 console.warn('[normal-search] failed', {
 searchId,
-reason: 'no_candidates_from_either_source',
+reason: lookupFailed ? 'service_failure' : namedSpots.length > closestCandidates.length ? 'candidate_limit_reached' : 'no_matching_candidates',
+unexaminedCount: Math.max(0, namedSpots.length - closestCandidates.length),
 });
 }
 setNearbySpot(null);
 setSpotDistance(null);
-setSearchFailed(true);
+reportNoCandidates();
 return;
 }
 
@@ -1442,12 +1489,13 @@ setSpotDistance(selectedCandidate.candidate.distanceMeters / 1000);
 }
 
 } catch (error) {
-console.error(error);
+if (!isCurrent()) return;
+setSearchFailureMessage('検索サービスに接続できませんでした。少し待って、もう一度お試しください。');
 if (searchId) {
 console.error('[normal-search] failed', {
 searchId,
 reason: 'search_or_walking_api_error',
-error: error instanceof Error ? error.message : 'Unknown error',
+error: 'search_failed',
 });
 }
 setNearbySpot(null);
@@ -1456,7 +1504,7 @@ setDateFinalSpot(null);
 setSpotDistance(null);
 setSearchFailed(true);
 } finally {
-setIsSearching(false);
+if (isCurrent()) setIsSearching(false);
 }
 }
 
@@ -1900,6 +1948,7 @@ setIsAdventureBusy(false);
 setAdventureMessage('');
 }
 function resetNormalAdventure() {
+activeNormalSearchIdRef.current = null;
 cancelAdventureOperation();
 try { adventureSession.reset(); return true; }
 catch { setAdventureMessage('冒険の保存状態を更新できませんでした。ブラウザの保存設定を確認してください。'); return false; }
@@ -1921,7 +1970,7 @@ setAdventureMessage('出発地点を確認しています…');
 try {
 const adventure = await adventureSession.start(target, {
 spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name,
-}, getDepartureWalkingDistance);
+}, choices.distance === '？km' ? undefined : getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
 setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
 // Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
@@ -2128,9 +2177,11 @@ setIsTreasureRatingSubmitting(false);
 
 
 return (
-<main className={`app-shell ${!hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
+<main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
 
-{!hasStarted ? (
+{screen === 'my-page' ? (
+<MyPage adventureInProgress={isWalkingAdventure(adventureSession.current)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+) : !hasStarted ? (
 <div
 className="title-screen full-screen"
 style={{
@@ -2727,7 +2778,19 @@ setScreen('coin');
   distance={choices.distance}
   mood={choices.mood}
   moodIcon={getOptionIcon(choices.mood)}
-  onContinue={() => {
+  busy={locationBusy}
+  message={locationMessage}
+  onContinue={async () => {
+if (locationBusy) return;
+const gate = locationGate.current;
+if (!currentLocation || Date.now() - locationFetchedAt.current > 5 * 60_000 || !locationFetchedAt.current) {
+setLocationBusy(true); setLocationMessage('現在地を確認しています…');
+const ready = await getCurrentLocation();
+setLocationBusy(false);
+if (gate !== locationGate.current) return;
+if (!ready) { setLocationMessage(searchFailureMessages.location); return; }
+}
+setLocationMessage('');
 if (!resetNormalAdventure()) return;
 setSearchFailed(false);
 setNearbySpot(null);
@@ -2768,11 +2831,11 @@ className="searching-takaran"
 {searchFailed ? (
 <div className="search-failed-card" role="alert">
 <h2 className="searching-title">
-スポットが見つかりませんでした
+{searchFailureMessage && !['empty', 'distance', 'limit'].includes(searchFailureReason ?? '') ? '検索を完了できませんでした' : 'スポットが見つかりませんでした'}
 </h2>
 
 <p className="searching-message">
-条件を変えるか、少し時間をおいてもう一度探してみてね。
+{searchFailureMessage || '条件に合う候補がありませんでした。条件を変えてもう一度探してみてね。'}
 </p>
 
 <button
@@ -2811,6 +2874,7 @@ setScreen('condition');
 <section className={`result-screen ${choices.mood !== 'デート' ? 'normal-result-screen' : ''}`}>
 <header className={choices.mood !== 'デート' ? 'destination-select-banner' : undefined}>
 <p className="result-kicker">今日の宝物が見つかりました</p>
+{nearbySpot && !selectedGachaTreasure && <small><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></small>}
 {choices.mood !== 'デート' && <p className="destination-selection-heading">さあ、この場所へ冒険しよう</p>}
 <h2>{destination.title}</h2>
 </header>
@@ -3263,7 +3327,7 @@ setScreen('condition');
 <small>宝箱</small>
 </button>
 
-<button type="button">
+<button type="button" aria-current={screen === 'my-page' ? 'page' : undefined} onClick={() => setScreen('my-page')}>
 <span><IconText text="👤" /></span>
 <small>マイページ</small>
 </button>
