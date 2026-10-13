@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { ACTIVE_ADVENTURE_KEY, AdventureSession, type ActiveAdventure } from './features/activeAdventure';
+import { DATE_ADVENTURE_KEY, DateAdventureSession } from './features/dateAdventure';
 import { navigateAdventureMap } from './features/googleMaps';
 import { createTreasure, incrementTreasureDiscovery } from './services/treasures';
 import { submitTreasureRating } from './services/treasureRatings';
@@ -59,6 +60,28 @@ beforeEach(() => {
 afterEach(async () => { if (root) await act(async () => root.unmount()); container?.remove(); vi.unstubAllGlobals(); });
 
 describe('walking and treasure registration screens', () => {
+  it.each([false, true])('preserves verified date progress while registering and returning (waypoint=%s)', async verified => {
+    const date = new DateAdventureSession(localStorage);
+    await date.start({ waypoint: { type: 'node', id: 1, lat: 35, lon: 139, tags: { name: 'パン屋', shop: 'bakery' } },
+      final: { type: 'node', id: 2, lat: 35.005, lon: 139, tags: { name: 'カフェ', amenity: 'cafe' } },
+      choices: { mood: 'デート', distance: '？km', dateGenre: '食べ歩き' }, playerName: '冒険者', distanceKm: 1 });
+    if (verified) await date.arrive('waypoint', date.current?.id);
+    const original = localStorage.getItem(DATE_ADVENTURE_KEY);
+    await mount(); await click('ホーム'); await click('宝物を発見！');
+    await act(async () => {
+      Simulate.change(container.querySelector('input[placeholder="例：路地裏の小さな喫茶店"]')!, { target: { value: '道中の宝物' } } as never);
+      Simulate.change(container.querySelector('select')!, { target: { value: '📷 写真スポット' } } as never);
+    });
+    await act(async () => Simulate.submit(container.querySelector('form')!));
+    expect(container.textContent).toContain('宝物を登録しました');
+    await click('冒険の続きに戻る');
+    expect(container.querySelector('.result-screen')).not.toBeNull();
+    expect(localStorage.getItem(DATE_ADVENTURE_KEY)).toBe(original);
+    expect(container.textContent).toContain(verified ? '経由地のGPS到着を確認しました' : '経由地に到着した');
+    await reload(); expect(localStorage.getItem(DATE_ADVENTURE_KEY)).toBe(original);
+    expect(container.querySelector('.result-screen')).not.toBeNull();
+    expect(localStorage.getItem('machiTakarabakoExp')).toBe('0');
+  });
   it.each(['upload', 'db-rejected', 'db-unknown'])('keeps the adventure and diagnoses photographed save failure: %s', async stage => {
     const original = await seed(); await mount(); await click('宝物を見つけた！');
     if (stage === 'upload') vi.mocked(uploadTreasureImage).mockRejectedValueOnce(new TreasureSaveError(saveDiagnostic({ status: 413 }, 'image_upload')));

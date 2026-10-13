@@ -233,8 +233,10 @@ longitude: number,
 radius: number
 ) {
 const queryBody = `
-${nodeOnly('["amenity"="cafe"]', latitude, longitude, radius)}
 ${nodeOnly('["shop"="bakery"]', latitude, longitude, radius)}
+${nodeOnly('["shop"="pastry"]', latitude, longitude, radius)}
+${nodeOnly('["shop"="confectionery"]', latitude, longitude, radius)}
+${nodeOnly('["shop"="chocolate"]', latitude, longitude, radius)}
 ${nodeOnly('["amenity"="ice_cream"]', latitude, longitude, radius)}
 `;
 

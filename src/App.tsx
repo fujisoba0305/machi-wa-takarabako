@@ -17,12 +17,16 @@ getNearbyFreeRelaxSpots,
 getNearbyShrinesAndTemples,
 } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
-import { loadLocalStaticFacilities, StaticFacilityError } from './services/staticFacilities';
+import { loadLocalStaticFacilities, loadStaticDateSpots, staticFacilityLoadStage, StaticFacilityError, type DateSpotKind } from './services/staticFacilities';
+import { withDateDeadline, DateSearchTimeout } from './features/dateSearchDeadline';
+import { chooseDateCourse } from './features/dateCourse';
+import { chooseFoodWalk, isFoodShop, isFoodCafe } from './features/foodWalk';
 import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './features/treasureSaveDiagnostics';
 import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
 import { AdventureSession, type AdventureTarget } from './features/activeAdventure';
+import { DateAdventureSession } from './features/dateAdventure';
 import { buildGoogleMapsDirectionsUrl, navigateAdventureMap } from './features/googleMaps';
 import { HomeExplore, DestinationPhoto } from './components/HomeExplore';
 import { ArrivalScreen } from './components/ArrivalScreen';
@@ -340,12 +344,14 @@ maximumAge: 0,
 
 export default function App() {
 const [adventureSession] = useState(() => new AdventureSession(localStorage));
+const [dateSession] = useState(() => new DateAdventureSession(localStorage));
+const [restoredDate] = useState(() => dateSession.current);
 const [restoredAdventure] = useState(() => adventureSession.current);
 const [adventureMessage, setAdventureMessage] = useState('');
 const [isAdventureBusy, setIsAdventureBusy] = useState(false);
 const adventureOperationRef = useRef(0);
-const [name, setName] = useState(restoredAdventure?.result.playerName ?? '');
-const [hasStarted, setHasStarted] = useState(Boolean(restoredAdventure));
+const [name, setName] = useState(restoredDate?.result.playerName ?? restoredAdventure?.result.playerName ?? '');
+const [hasStarted, setHasStarted] = useState(Boolean(restoredAdventure || restoredDate));
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
@@ -354,7 +360,7 @@ const [searchFailureMessage, setSearchFailureMessage] = useState('');
 const [searchFailureReason, setSearchFailureReason] = useState<SearchFailure | null>(null);
 const [screen, setScreenState] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map' | 'my-page'
->(isAccountPage() ? 'my-page' : adventureRestoreScreen(restoredAdventure));
+>(isAccountPage() ? 'my-page' : (restoredDate ? 'result' : adventureRestoreScreen(restoredAdventure)));
 const arrivalRatingRequestedRef = useRef(false);
 useEffect(() => {
 if (screen === 'result' && arrivalRatingRequestedRef.current) {
@@ -373,6 +379,7 @@ dateGenre: '',
 eventGenre: '',
 shrineGenre:',',
 ...restoredAdventure?.result.choices,
+...restoredDate?.result.choices,
 });
 
 const locationFetchedAt = useRef(0);
@@ -380,15 +387,18 @@ const locationPending = useRef<Promise<Coordinates> | null>(null);
 const locationGate = useRef(0);
 const [locationBusy, setLocationBusy] = useState(false);
 const [locationMessage, setLocationMessage] = useState('');
-const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(restoredAdventure?.departure ?? null);
+const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(restoredDate?.departure ?? restoredAdventure?.departure ?? null);
 
-const [nearbySpot, setNearbySpot] = useState<Spot | null>(restoredAdventure?.result.spot ?? null);
+const [nearbySpot, setNearbySpot] = useState<Spot | null>(restoredDate?.result.waypoint ?? restoredAdventure?.result.spot ?? null);
 const [selectedGachaTreasure, setSelectedGachaTreasure] = useState<Treasure | null>(restoredAdventure?.result.treasure ?? null);
-const [dateFinalSpot, setDateFinalSpot] = useState<Spot | null>(null);
-const [spotDistance, setSpotDistance] = useState<number | null>(restoredAdventure?.result.distanceKm ?? null);
+const [dateFinalSpot, setDateFinalSpot] = useState<Spot | null>(restoredDate?.result.final ?? null);
+const [spotDistance, setSpotDistance] = useState<number | null>(restoredDate?.result.distanceKm ?? restoredAdventure?.result.distanceKm ?? null);
 const [searchExpandLevel, setSearchExpandLevel] = useState(0);
 const [isSearching, setIsSearching] = useState(false);
-const [courseStep, setCourseStep] = useState(1);
+const [courseStep, setCourseStep] = useState(restoredDate ? (restoredDate.rewardClaimed ?
+(restoredDate.rewardTotals && Number(localStorage.getItem('machiTakarabakoExp')) >= restoredDate.rewardTotals.exp &&
+Number(localStorage.getItem('machiTakarabakoAdventureCount')) >= restoredDate.rewardTotals.count ? 5 : 4) :
+restoredDate.waypointArrival ? 3 : 2) : 1);
 const [hasArrivedAtNormalSpot, setHasArrivedAtNormalSpot] = useState(restoredAdventure?.rewardClaimed ?? false);
 const [treasureRatingSummary, setTreasureRatingSummary] =
 useState<TreasureRatingSummary | null>(null);
@@ -430,6 +440,8 @@ const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
 function setScreen(next: typeof screen) {
 locationGate.current++;
+dateSession.cancelPending();
+adventureOperationRef.current++;
 // Leaving the search flow invalidates pending results synchronously.
 if (!['gacha', 'searching', 'result'].includes(next)) activeNormalSearchIdRef.current = null;
 setScreenState(next);
@@ -678,6 +690,13 @@ setIsTreasureLocationLoading(false);
 }
 
 function resumeWalkingAdventure() {
+const date = dateSession.current;
+if (date && !date.rewardClaimed) {
+setNearbySpot(date.result.waypoint); setDateFinalSpot(date.result.final);
+setSelectedGachaTreasure(null); setChoices(current => ({ ...current, ...date.result.choices }));
+setSpotDistance(date.result.distanceKm); setCourseStep(date.waypointArrival ? 3 : 2);
+setScreen('result'); return;
+}
 const adventure = adventureSession.current;
 if (!isWalkingAdventure(adventure)) { setScreen('home'); return; }
 setNearbySpot(adventure.result.spot);
@@ -1013,6 +1032,26 @@ return getNearbyViewSpots(latitude, longitude, radius);
 }
 
 async function findDateCourse(isCurrent: () => boolean) {
+const started = Date.now();
+console.info('[date-search] started', { mode: choices.dateGenre, distance: choices.distance, expandLevel: searchExpandLevel });
+try {
+await withDateDeadline(current => buildDateCourse(current), isCurrent);
+} catch (error) {
+if (!isCurrent()) return;
+const reason = error instanceof DateSearchTimeout ? 'timeout' : error instanceof StaticFacilityError ? 'static' : 'overpass';
+console.info('[date-search] stopped', { reason, elapsedMs: Date.now() - started, staticLoad: staticFacilityLoadStage() });
+setNearbySpot(null); setDateFinalSpot(null); setSpotDistance(null);
+setSearchFailureReason(reason === 'static' ? 'static' : 'overpass');
+setSearchFailureMessage(reason === 'timeout' ? 'デートコースの検索に時間がかかっています。条件はそのままで、少し待ってからもう一度お試しください。' : searchFailureMessages[reason === 'static' ? 'static' : 'overpass']);
+if (reason === 'timeout') {
+const load = staticFacilityLoadStage();
+const labels: Record<string,string> = { idle: '未取得', requesting: '応答待ち', 'body-and-parse': '読込・解析中', loaded: '読込済', indexing: '索引準備中', ready: '準備済', failed: '失敗' };
+setSearchFailureMessage(`デートコースの検索に時間がかかっています。少し待って、もう一度お試しください。確認用情報：施設データ=${labels[load.dataset] || '確認不可'}、地域=${labels[load.coverage] || '確認不可'}、約${Math.round((Date.now()-started)/1000)}秒`);
+}
+setSearchFailed(true);
+}
+}
+async function buildDateCourse(isCurrent: () => boolean) {
 if (!currentLocation) return;
 
 const latitude = currentLocation.latitude;
@@ -1033,67 +1072,46 @@ choices.distance === '1km'
 : targetDistanceKm + 1.5;
 
 let waypointSpots: Spot[] = [];
+async function lookup(kind: DateSpotKind) {
+if (!isCurrent()) return [];
+const point = { latitude, longitude };
+const rows = await loadStaticDateSpots(point, kind, searchRadius);
+if (!isCurrent()) return [];
+const result = rows ?? await ({ cafe: getNearbyCafes, relax: getNearbyRelaxSpots, food: getNearbyFoodWalkSpots, view: getNearbyViewSpots, event: (lat: number, lon: number, radius: number) => getNearbyEventSpots(lat, lon, radius, 'おまかせ'), park: getNearbyParks }[kind])(latitude, longitude, searchRadius);
+if (!isCurrent()) return [];
+console.info('[date-search] candidates', { backend: rows === null ? 'overpass' : 'static', kind, count: result.length });
+return result;
+}
 
+if (choices.dateGenre !== '食べ歩き') {
 if (choices.budget === '0円') {
-waypointSpots = await getNearbyRelaxSpots(latitude, longitude, searchRadius);
+waypointSpots = await lookup('relax');
 if (!isCurrent()) return;
 waypointSpots = filterFreeSpots(waypointSpots);
 } else {
-waypointSpots =
-choices.dateGenre === '食べ歩き'
-? await getNearbyFoodWalkSpots(latitude, longitude, searchRadius)
-: await getNearbyCafes(latitude, longitude, searchRadius);
+waypointSpots = await lookup('cafe');
 if (!isCurrent()) return;
+}
 }
 if (choices.dateGenre === '食べ歩き') {
-const foodWalkSpots = await getNearbyFoodWalkSpots(
-latitude,
-longitude,
-searchRadius
-);
+const shops = getNamedSpots(await lookup('food')).filter(isFoodShop);
 if (!isCurrent()) return;
-
-const namedFoodWalkSpots = getNamedSpots(foodWalkSpots);
-
-if (namedFoodWalkSpots.length >= 2) {
-const shuffledSpots = [...namedFoodWalkSpots].sort(() => Math.random() - 0.5);
-
-const waypoint = shuffledSpots[0];
-const finalSpot = shuffledSpots[1];
-
-const waypointLocation = getSpotLocation(waypoint);
-const finalLocation = getSpotLocation(finalSpot);
-
-if (waypointLocation && finalLocation) {
-const distanceToWaypoint = calculateDistance(
-latitude,
-longitude,
-waypointLocation.lat,
-waypointLocation.lon
-);
-
-const distanceWaypointToFinal = calculateDistance(
-waypointLocation.lat,
-waypointLocation.lon,
-finalLocation.lat,
-finalLocation.lon
-);
-
-setNearbySpot(waypoint);
-setDateFinalSpot(finalSpot);
-setSpotDistance(distanceToWaypoint + distanceWaypointToFinal);
-
-
+const cafes = getNamedSpots(await lookup('cafe')).filter(isFoodCafe);
+if (!isCurrent()) return;
+const course = await chooseFoodWalk({ latitude, longitude }, shops, cafes, isCurrent);
+if (!isCurrent()) return;
+if (course) {
+setNearbySpot(course.waypoint); setDateFinalSpot(course.finalSpot); setSpotDistance(course.totalDistance);
+console.info('[date-search] succeeded', { mode: '食べ歩き', shopCount: shops.length, cafeCount: cafes.length });
+} else {
+setNearbySpot(null); setDateFinalSpot(null); setSpotDistance(null);
+setSearchFailureReason('empty');
+setSearchFailureMessage(shops.length === 0 ? 'パン・ケーキ・お菓子などの買い物スポットが、この検索範囲に見つかりませんでした。' : cafes.length === 0 ? '2軒目に立ち寄れるカフェ・喫茶店が、この検索範囲に見つかりませんでした。' : '買い物スポットの近くに、組み合わせられるカフェが見つかりませんでした。');
+setSearchFailed(true);
+console.info('[date-search] stopped', { reason: 'food-shop-cafe-shortage', shopCount: shops.length, cafeCount: cafes.length });
+}
 return;
 }
-}
-
-setNearbySpot(null);
-setDateFinalSpot(null);
-setSpotDistance(null);
-return;
-}
-
 let finalSpots: Spot[] = [];
 
 if (choices.dateGenre === 'まったり') {
@@ -1102,103 +1120,39 @@ if (choices.dateGenre === 'まったり') {
 finalSpots = [...waypointSpots];
 
 } else if (choices.dateGenre === '夜景') {
-finalSpots = await getNearbyViewSpots(latitude, longitude, searchRadius);
+finalSpots = await lookup('view');
 if (!isCurrent()) return;
 } else if (choices.dateGenre === 'イベント') {
-finalSpots = await getNearbyEventSpots(
-latitude,
-longitude,
-searchRadius,
-'おまかせ'
-);
+finalSpots = await lookup('event');
 if (!isCurrent()) return;
 } else if (choices.dateGenre === '食べ歩き') {
-finalSpots = await getNearbyRestaurants(
-latitude,
-longitude,
-searchRadius,
-'おまかせ'
-);
+finalSpots = await lookup('food');
 if (!isCurrent()) return;
 } else {
-finalSpots = await getNearbyParks(latitude, longitude, searchRadius);
+finalSpots = await lookup('park');
 if (!isCurrent()) return;
 }
 
 const namedWaypoints = getNamedSpots(waypointSpots);
 const namedFinalSpots = getNamedSpots(finalSpots);
 
-const allCourses = namedWaypoints
-.flatMap((waypoint) => {
-const waypointLocation = getSpotLocation(waypoint);
-if (!waypointLocation) return [];
-
-return namedFinalSpots
-.map((finalSpot) => {
-const finalLocation = getSpotLocation(finalSpot);
-if (!finalLocation) return null;
-
-const waypointName = waypoint.tags?.name;
-const finalName = finalSpot.tags?.name;
-
-if (!waypointName || !finalName) return null;
-if (waypointName === finalName) return null;
-
-const distanceToWaypoint = calculateDistance(
-latitude,
-longitude,
-waypointLocation.lat,
-waypointLocation.lon
-);
-
-const distanceWaypointToFinal = calculateDistance(
-waypointLocation.lat,
-waypointLocation.lon,
-finalLocation.lat,
-finalLocation.lon
-);
-
-return {
-waypoint,
-finalSpot,
-totalDistance: distanceToWaypoint + distanceWaypointToFinal,
-};
-})
-.filter(
-(
-course
-): course is {
-waypoint: Spot;
-finalSpot: Spot;
-totalDistance: number;
-} => course !== null
-);
-})
-.sort(
-(a, b) =>
-Math.abs(a.totalDistance - targetDistanceKm) -
-Math.abs(b.totalDistance - targetDistanceKm)
-);
-
-const courseCandidates = allCourses.filter(
-(course) => course.totalDistance <= maxCourseDistanceKm
-);
-
-const selectedCourse =
-courseCandidates.length > 0 ? randomItem(courseCandidates.slice(0, 5)) : allCourses[0];
+const selectedCourse = await chooseDateCourse({ latitude, longitude }, namedWaypoints, namedFinalSpots, targetDistanceKm, maxCourseDistanceKm, isCurrent);
+if (!isCurrent()) return;
 
 if (selectedCourse) {
 setNearbySpot(selectedCourse.waypoint);
 setDateFinalSpot(selectedCourse.finalSpot);
 setSpotDistance(selectedCourse.totalDistance);
-
-
+console.info('[date-search] succeeded', { mode: choices.dateGenre, waypointCount: namedWaypoints.length, finalCount: namedFinalSpots.length });
 } else {
 setNearbySpot(null);
 setDateFinalSpot(null);
 setSpotDistance(null);
 
 setSearchFailed(true);
+setSearchFailureReason('empty');
+setSearchFailureMessage('この条件でデートコースに組み合わせられる異なるスポットが見つかりませんでした。');
+console.info('[date-search] stopped', { reason: 'pair-shortage', waypointCount: namedWaypoints.length, finalCount: namedFinalSpots.length });
 }
 }
 
@@ -1944,21 +1898,30 @@ latitude: location.lat, longitude: location.lon } : null;
 function cancelAdventureOperation() {
 adventureOperationRef.current++;
 adventureSession.cancelPending();
+dateSession.cancelPending();
 setIsAdventureBusy(false);
 setAdventureMessage('');
 }
 function resetNormalAdventure() {
 activeNormalSearchIdRef.current = null;
 cancelAdventureOperation();
-try { adventureSession.reset(); return true; }
+try {
+const hadDateReward = dateSession.current?.rewardClaimed;
+dateSession.reset();
+if (hadDateReward) {
+setExp(Number(localStorage.getItem('machiTakarabakoExp')));
+setAdventureCount(Number(localStorage.getItem('machiTakarabakoAdventureCount')));
+}
+adventureSession.reset(); setCourseStep(1); return true;
+}
 catch { setAdventureMessage('冒険の保存状態を更新できませんでした。ブラウザの保存設定を確認してください。'); return false; }
 }
 const normalTarget = getNormalAdventureTarget();
 const normalTargetKey = normalTarget ? JSON.stringify(normalTarget) : '';
 useEffect(() => {
 cancelAdventureOperation();
-return () => { adventureOperationRef.current++; adventureSession.cancelPending(); };
-}, [screen, normalTargetKey]);
+return () => { adventureOperationRef.current++; adventureSession.cancelPending(); dateSession.cancelPending(); };
+}, [screen, normalTargetKey, nearbySpot, dateFinalSpot]);
 
 async function startNormalAdventure() {
 if (isAdventureBusy) return;
@@ -2085,30 +2048,45 @@ window.open(
 );
 }
 
-function openWaypointMap() {
-if (!nearbySpot) return;
-
-const location = getSpotLocation(nearbySpot);
-
-if (!location) return;
-
-window.open(
-`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lon}`,
-'_blank'
-);
+async function openWaypointMap() {
+if (isAdventureBusy || !nearbySpot || !dateFinalSpot) return;
+const operation = ++adventureOperationRef.current;
+setIsAdventureBusy(true); setAdventureMessage('出発地点を確認しています…');
+try {
+const date = await dateSession.start({ waypoint: nearbySpot, final: dateFinalSpot, choices, distanceKm: spotDistance, playerName: name });
+if (!date || operation !== adventureOperationRef.current) return;
+setCourseStep(date.rewardClaimed ? 5 : date.waypointArrival ? 3 : 2);
+setAdventureMessage('冒険を開始しました。現地でGPS到着確認をしてください。');
+navigateAdventureMap(date.departure, date.waypoint);
+} catch (error) {
+if (operation === adventureOperationRef.current) setAdventureMessage(error instanceof Error ? error.message : '冒険を保存できませんでした。もう一度試してください。');
+} finally { if (operation === adventureOperationRef.current) setIsAdventureBusy(false); }
 }
-
 function openFinalMap() {
-if (!dateFinalSpot) return;
-
-const location = getSpotLocation(dateFinalSpot);
-
-if (!location) return;
-
-window.open(
-`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lon}`,
-'_blank'
-);
+const date = dateSession.current;
+if (!date?.waypointArrival || date.rewardClaimed || isAdventureBusy) return;
+setCourseStep(4);
+navigateAdventureMap(date.waypointArrival, date.final);
+}
+async function confirmDateArrival(stage: 'waypoint' | 'final') {
+if (isAdventureBusy) return;
+const operation = ++adventureOperationRef.current;
+setIsAdventureBusy(true); setAdventureMessage('現在地を確認しています…');
+const previousExp = exp, previousCount = adventureCount;
+const message = await dateSession.arrive(stage, dateSession.current?.id);
+if (operation !== adventureOperationRef.current) return;
+const date = dateSession.current;
+if (date?.rewardClaimed && date.rewardTotals &&
+Number(localStorage.getItem('machiTakarabakoExp')) >= date.rewardTotals.exp &&
+Number(localStorage.getItem('machiTakarabakoAdventureCount')) >= date.rewardTotals.count) {
+const nextExp = Number(localStorage.getItem('machiTakarabakoExp'));
+const nextCount = Number(localStorage.getItem('machiTakarabakoAdventureCount'));
+setExp(nextExp); setAdventureCount(nextCount);
+if (getWalkRank(previousExp) !== getWalkRank(nextExp)) setLevelUpMessage('✨ LEVEL UP!! ' + getWalkRank(nextExp) + ' になりました！');
+if (nextCount > previousCount) setAchievementMessage(getNewAchievement(nextCount) || '');
+setCourseStep(5);
+} else if (stage === 'waypoint' && date?.waypointArrival) setCourseStep(3);
+setAdventureMessage(message); setIsAdventureBusy(false);
 }
 
 function openGoogleMap() {
@@ -2180,7 +2158,7 @@ return (
 <main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
 
 {screen === 'my-page' ? (
-<MyPage adventureInProgress={isWalkingAdventure(adventureSession.current)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+<MyPage adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
 ) : !hasStarted ? (
 <div
 className="title-screen full-screen"
@@ -2512,7 +2490,7 @@ className="gacha-button treasure-register-primary"
 type="button"
 onClick={closeTreasureRegistration}
 >
-<IconText text={isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'ホームへ戻る'} />
+<IconText text={(isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)) ? '🚶 冒険の続きに戻る' : 'ホームへ戻る'} />
 </button>
 </div>
 ) : (
@@ -2605,7 +2583,7 @@ type="button"
 onClick={closeTreasureRegistration}
 disabled={isTreasureSaving}
 >
-<IconText text={isWalkingAdventure(adventureSession.current) ? '🚶 冒険の続きに戻る' : 'キャンセル'} />
+<IconText text={(isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)) ? '🚶 冒険の続きに戻る' : 'キャンセル'} />
 </button>
 <button
 className="gacha-button treasure-register-primary"
@@ -2886,7 +2864,7 @@ setScreen('condition');
 
 <div className="spot-card-list">
 <div className="spot-card">
-<p className="spot-card-label"><IconText text="☕ 経由地" /></p>
+<p className="spot-card-label"><IconText text={choices.dateGenre === '食べ歩き' ? '🛍️ 1軒目：買い物・スイーツ' : '☕ 経由地'} /></p>
 <h3>{nearbySpot?.tags?.name || '経由地が見つかりませんでした'}</h3>
 <p>まずはここへ向かいましょう。</p>
 </div>
@@ -2894,7 +2872,7 @@ setScreen('condition');
 <div className="route-arrow">↓</div>
 
 <div className="spot-card main-spot">
-<p className="spot-card-label"><IconText text="💎 最終目的地" /></p>
+<p className="spot-card-label"><IconText text={choices.dateGenre === '食べ歩き' ? '☕ 2軒目：カフェ・喫茶店' : '💎 最終目的地'} /></p>
 <h3>{dateFinalSpot?.tags?.name || '目的地が見つかりませんでした'}</h3>
 <p>今日の宝物が眠っている場所です。</p>
 </div>
@@ -2911,76 +2889,22 @@ setScreen('condition');
 </div>
 )}
 
+{adventureMessage && <p role="status" aria-live="polite"><IconText text={adventureMessage} /></p>}
 {courseStep === 1 && (
-<button
-className="gacha-button"
-type="button"
-onClick={() => {
-openWaypointMap();
-setCourseStep(2);
-}}
-><IconText text=" 🚶 経由地まで地図を開く " /></button>
+<button className="gacha-button" type="button" disabled={isAdventureBusy} onClick={openWaypointMap}><IconText text="🚶 経由地まで地図を開く" /></button>
 )}
-
-{courseStep === 2 && (
-<button
-className="gacha-button"
-type="button"
-onClick={() => setCourseStep(3)}
-><IconText text=" ☕ 経由地に到着した " /></button>
-)}
-
-{courseStep === 3 && (
-<>
-<div className="arrival-card">
-<p><IconText text="☕ 経由地に到着しました！" /></p>
-<p>次は最終目的地へ向かいましょう。</p>
-</div>
-
-<button
-className="gacha-button"
-type="button"
-onClick={() => {
-openFinalMap();
-setCourseStep(4);
-}}
-><IconText text=" 💎 最終目的地まで地図を開く " /></button>
-</>
-)}
-
-{courseStep === 4 && (
-<button
-className="gacha-button"
-type="button"
-onClick={() => {
-setExp((currentExp) => {
-const beforeRank = getWalkRank(currentExp);
-const nextExp = currentExp + 50;
-const afterRank = getWalkRank(nextExp);
-
-if (beforeRank !== afterRank) {
-setLevelUpMessage(`✨ LEVEL UP!! ${afterRank} になりました！`);
-}
-
-return nextExp;
-});
-
-setAdventureCount((count) => {
-const nextCount = count + 1;
-const newAchievement = getNewAchievement(nextCount);
-
-if (newAchievement) {
-setAchievementMessage(`実績解除！ ${newAchievement}`);
-}
-
-return nextCount;
-});
-
-setCourseStep(5);
-}}
-><IconText text=" 🎉 ゴールした " /></button>
-)}
-
+{courseStep === 2 && (<>
+<button className="gacha-button" type="button" disabled={isAdventureBusy} onClick={() => confirmDateArrival('waypoint')}><IconText text="☕ 経由地に到着した" /></button>
+<button className="reset-button" type="button" disabled={isAdventureBusy} onClick={openWaypointMap}>経由地へのナビを再開する</button>
+</>)}
+{courseStep === 3 && (<>
+<div className="arrival-card"><p>経由地のGPS到着を確認しました！</p><p>次は最終目的地へ向かいましょう。</p></div>
+<button className="gacha-button" type="button" disabled={isAdventureBusy} onClick={openFinalMap}><IconText text="💎 最終目的地まで地図を開く" /></button>
+</>)}
+{courseStep === 4 && (<>
+<button className="gacha-button" type="button" disabled={isAdventureBusy} onClick={() => confirmDateArrival('final')}><IconText text="🎉 ゴールした" /></button>
+<button className="reset-button" type="button" disabled={isAdventureBusy} onClick={openFinalMap}>最終目的地へのナビを再開する</button>
+</>)}
 {courseStep === 5 && (
 <div className="clear-card">
 <h3><IconText text="🎉 冒険達成！" /></h3>
@@ -3163,7 +3087,11 @@ onClick={handleTreasureRatingSubmit}
 <div>
 {choices.mood === 'デート' || choices.distance === '？km' || selectedGachaTreasure ? (
 <>
-<p>現在地から直線距離 約{spotDistance.toFixed(1)}km</p>
+<p>{choices.dateGenre === '食べ歩き' ? '現在地→1軒目→2軒目の直線距離合計' : '現在地から直線距離'} 約{spotDistance.toFixed(1)}km</p>
+{choices.dateGenre === '食べ歩き' && nearbySpot && dateFinalSpot && (() => {
+const a = getSpotLocation(nearbySpot), b = getSpotLocation(dateFinalSpot);
+return a && b ? <p>2店間の直線距離 約{Math.round(calculateDistance(a.lat,a.lon,b.lat,b.lon)*1000)}m。徒歩時間はGoogle Mapsで確認してください。</p> : null;
+})()}
 <p>実際の徒歩距離・時間は地図で確認してください。</p>
 </>
 ) : (
@@ -3293,7 +3221,7 @@ aria-label="メッセージを閉じる"
 </div>
 )}
 
-{hasStarted && isWalkingAdventure(adventureSession.current) && screen !== 'walking' && screen !== 'treasure-register' && (
+{hasStarted && (isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)) && screen !== 'walking' && screen !== 'treasure-register' && (
 <button className="resume-adventure-button" type="button" onClick={resumeWalkingAdventure}><IconText text="🚶 冒険の続きに戻る" /></button>
 )}
 {hasStarted && (

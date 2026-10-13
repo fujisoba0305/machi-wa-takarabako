@@ -11,6 +11,8 @@ type Dataset = { version: string; records: Row[] };
 type Index = Map<string, Row[]>;
 let regionTask: Promise<Region> | null = null;
 let datasetTask: Promise<Index> | null = null;
+const loadingStage = { coverage: 'idle', dataset: 'idle' };
+export function staticFacilityLoadStage() { return { ...loadingStage }; }
 export class StaticFacilityError extends Error {
   constructor() { super('静的施設データを読み込めませんでした。条件を保ったまま、もう一度お試しください。'); this.name = 'StaticFacilityError'; }
 }
@@ -36,9 +38,16 @@ export function isInsideStaticRegion(point: Point, region: Region) {
   return region.features.some(f => f.geometry.coordinates.some(p => insideRing(point, p[0]) && !p.slice(1).some(h => insideRing(point, h))));
 }
 async function verifiedJSON(asset: { url: string; sha256: string }) {
+  const label = asset.url === manifest.dataset.url ? 'dataset' : 'coverage';
+  const started = performance.now(); loadingStage[label] = 'requesting';
+  try {
   const response = await fetch(asset.url, { integrity: 'sha256-' + btoa(asset.sha256.match(/../g)!.map(h => String.fromCharCode(parseInt(h, 16))).join('')) });
   if (!response.ok) throw new StaticFacilityError();
-  return response.json();
+  const headersAt = performance.now(); loadingStage[label] = 'body-and-parse';
+  const data = await response.json(); loadingStage[label] = 'loaded';
+  console.info('[facility-data]', { asset: label, phase: 'loaded', headerMs: Math.round(headersAt-started), bodyAndParseMs: Math.round(performance.now()-headersAt) });
+  return data;
+  } catch (error) { loadingStage[label] = 'failed'; throw error; }
 }
 async function region() {
   if (!regionTask) regionTask = verifiedJSON(manifest.region).then(data => {
@@ -50,6 +59,7 @@ async function region() {
 function cell(lat: number, lon: number) { return `${Math.floor(lat * 100)}:${Math.floor(lon * 100)}`; }
 async function index() {
   if (!datasetTask) datasetTask = verifiedJSON(manifest.dataset).then((data: Dataset) => {
+    const started = performance.now(); loadingStage.dataset = 'indexing';
     if (data?.version !== manifest.version || !Array.isArray(data.records) || data.records.length !== manifest.count) throw new StaticFacilityError();
     const cells: Index = new Map(), ids = new Set<string>();
     for (const row of data.records) {
@@ -60,8 +70,10 @@ async function index() {
       const key = cell(row.lat, row.lon);
       const bucket = cells.get(key) || []; bucket.push(row); cells.set(key, bucket);
     }
+    loadingStage.dataset = 'ready';
+    console.info('[facility-data]', { asset: 'dataset', phase: 'indexed', count: data.records.length, elapsedMs: Math.round(performance.now()-started) });
     return cells;
-  }).catch(() => { datasetTask = null; throw new StaticFacilityError(); });
+  }).catch(() => { loadingStage.dataset = 'failed'; datasetTask = null; throw new StaticFacilityError(); });
   return datasetTask;
 }
 const anyMoods = ['カフェ', '自然', 'グルメ', 'イベント', '写真', 'ストレス解消'];
@@ -82,12 +94,26 @@ export async function loadLocalStaticFacilities(point: Point, choices: Choices, 
   if (!needsLocalStaticLookup(point, choices)) return null;
   if (!isInsideStaticRegion(point, await region())) return null;
   if (!Number.isFinite(radius) || radius < 0) throw new StaticFacilityError();
-  const resolved = resolveStaticCondition({ ...choices }, random), cells = await index();
+  return queryStaticIndex(point, radius, resolveStaticCondition({ ...choices }, random).clauses);
+}
+export type DateSpotKind = 'cafe' | 'relax' | 'food' | 'view' | 'event' | 'park';
+export async function loadStaticDateSpots(point: Point, kind: DateSpotKind, radius: number): Promise<Spot[] | null> {
+  if (!localStaticSearchEnabled() || !manifest.boxes.some(([w,s,e,n]) => point.longitude >= w && point.longitude <= e && point.latitude >= s && point.latitude <= n)) return null;
+  if (!isInsideStaticRegion(point, await region())) return null;
+  const clauses = kind === 'food'
+    ? [['shop','bakery'],['shop','pastry'],['shop','confectionery'],['shop','chocolate'],['amenity','ice_cream']].map(([key,value]) => ({ type: 'node', predicates: [{ key, op: '=', value }] }))
+    : kind === 'park' ? ['node','way'].map(type => ({ type, predicates: [{ key: 'leisure', op: '=', value: 'park' }] }))
+    : resolveStaticCondition({ mood: { cafe: 'カフェ', relax: 'ストレス解消', view: '写真', event: 'イベント' }[kind], distance: '？km', eventGenre: 'おまかせ' }).clauses;
+  return queryStaticIndex(point, radius, clauses);
+}
+async function queryStaticIndex(point: Point, radius: number, clauses: ReturnType<typeof resolveStaticCondition>['clauses']): Promise<Spot[]> {
+  if (!Number.isFinite(radius) || radius < 0) throw new StaticFacilityError();
+  const cells = await index();
   const dy = radius / 110000, dx = radius / (110000 * Math.cos(point.latitude * Math.PI / 180));
   const rows: Spot[] = [], seen = new Set<string>();
   for (let y = Math.floor((point.latitude - dy) * 100); y <= Math.floor((point.latitude + dy) * 100); y++) for (let x = Math.floor((point.longitude - dx) * 100); x <= Math.floor((point.longitude + dx) * 100); x++) {
     for (const row of cells.get(`${y}:${x}`) || []) {
-      if (seen.has(row.canonical) || !matchesStaticCondition(row, resolved.clauses) || calculateDistance(point.latitude, point.longitude, row.lat, row.lon) * 1000 > radius) continue;
+      if (seen.has(row.canonical) || !matchesStaticCondition(row, clauses) || calculateDistance(point.latitude, point.longitude, row.lat, row.lon) * 1000 > radius) continue;
       seen.add(row.canonical); rows.push(row);
     }
   }
@@ -95,4 +121,4 @@ export async function loadLocalStaticFacilities(point: Point, choices: Choices, 
   return rows;
 }
 // Only clears this provider's memory. Never touches player/Auth/localStorage data.
-export function resetStaticFacilityCache() { regionTask = null; datasetTask = null; }
+export function resetStaticFacilityCache() { regionTask = null; datasetTask = null; loadingStage.coverage = 'idle'; loadingStage.dataset = 'idle'; }
