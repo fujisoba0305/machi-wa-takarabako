@@ -14,9 +14,12 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
   const actionPending = useRef(false);
   const identity = useRef<string | null | undefined>(undefined);
   const accountChanged = useRef(onAccountChanged); accountChanged.current = onAccountChanged;
+  const [savedName, setSavedName] = useState('');
   const [draftName, setDraftName] = useState('');
   function applyUser(next: User | null) {
-    setDraftName(readAdventurerProfile(localStorage, next?.id ?? null)?.name ?? '');
+    const profileName = readAdventurerProfile(localStorage, next?.id ?? null)?.name ?? '';
+    setDraftName(profileName);
+    setSavedName(profileName);
     setUser(next);
   }
   useEffect(() => {
@@ -58,13 +61,13 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
     } finally { actionPending.current = false; setBusy(false); }
   }
   const avatar = googleAvatar(user?.user_metadata?.avatar_url);
-  const displayName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : 'Googleアカウント';
+  const displayName = loading ? '確認中…' : user ? savedName || '冒険者名は未登録です' : 'ようこそ、冒険者さん';
   return <section className="my-page" aria-labelledby="my-page-title">
     <header className="my-page-hero"><span>街は宝箱</span><h1 id="my-page-title">マイページ</h1><p>次の冒険も、あなたらしく。</p></header>
     <div className="my-page-card">
       <div className="my-page-avatar">{avatar && brokenImage !== avatar ? <img src={avatar} alt="Googleのプロフィール画像" referrerPolicy="no-referrer" onError={() => setBrokenImage(avatar)} /> : <AppIcon name="user" />}</div>
       <p className="my-page-status">{loading ? 'ログイン状態を確認中…' : user ? 'Googleでログイン中' : 'ゲストで利用中'}</p>
-      <h2>{user ? displayName : 'ようこそ、冒険者さん'}</h2>
+      <h2>{displayName}</h2>
       <p>現在地を使う冒険の前にGoogleログインをしてください。端末に保存済みの記録は削除しません。</p>
       {message && <p className="my-page-message" role="status">{message}</p>}
       <button className="my-page-login" disabled={loading || busy || adventureInProgress} onClick={() => void perform(Boolean(user))}>
@@ -73,7 +76,7 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
       {adventureInProgress && <p className="my-page-message">冒険の記録を守るため、ログイン・ログアウトは冒険が終わってから行えます。</p>}
       {onNameChange && <form className="profile-name-editor" onSubmit={event => {
         event.preventDefault(); if (loading || busy || adventureInProgress) return;
-        try { const profile = readAdventurerProfile(localStorage, user?.id ?? null); saveAdventurerProfile(localStorage, user?.id ?? null, { name: draftName, started: profile?.started ?? false }); onNameChange(draftName.trim()); setMessage('冒険者名をこの端末に保存しました。次回の起動にも使います。'); }
+        try { const profile = readAdventurerProfile(localStorage, user?.id ?? null); saveAdventurerProfile(localStorage, user?.id ?? null, { name: draftName, started: profile?.started ?? false }); setSavedName(draftName.trim()); onNameChange(draftName.trim()); setMessage('冒険者名をこの端末に保存しました。次回の起動にも使います。'); }
         catch { setMessage('冒険者名を保存できませんでした。1〜40文字とブラウザの保存設定を確認してください。'); }
       }}><label htmlFor="adventurer-name-edit">冒険者名（この端末・アカウント別）</label><input id="adventurer-name-edit" value={draftName} maxLength={40} disabled={loading || busy || adventureInProgress} onChange={event => setDraftName(event.target.value)} /><button disabled={loading || busy || adventureInProgress} type="submit">冒険者名を保存</button></form>}
     </div>
