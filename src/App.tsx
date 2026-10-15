@@ -4,7 +4,11 @@ import { withWalkingTrialDeadline, searchWalkingTrial, matchesTrialScope, cancel
 import './components/WalkingTrial.css';
 import { searchFailureMessages, type SearchFailure } from './features/searchFailure';
 import { MyPage } from './components/MyPage';
-import { isAccountPage } from './services/accountAuth';
+import { getAccountClient, isAccountPage } from './services/accountAuth';
+import { requestAccountPosition } from './services/accountPosition';
+import { StartupRegistration, isOnboardingReturn } from './components/StartupRegistration';
+import { readAdventurerProfile, saveAdventurerProfile, validAdventurerName } from './features/adventurerProfile';
+import { requestFreshSearchPosition, locationFailureMessage } from './services/startupLocation';
 import { AppIcon, IconText, plainIconLabel } from './components/AppIcon';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -323,27 +327,7 @@ const treasureCategories: TreasureCategory[] = [
 ];
 
 function requestCurrentCoordinates(): Promise<Coordinates> {
-return new Promise((resolve, reject) => {
-if (!navigator.geolocation) {
-reject(new Error('Geolocation is not supported'));
-return;
-}
-
-navigator.geolocation.getCurrentPosition(
-(position) => {
-resolve({
-latitude: position.coords.latitude,
-longitude: position.coords.longitude,
-});
-},
-reject,
-{
-enableHighAccuracy: true,
-timeout: 10000,
-maximumAge: 0,
-}
-);
-});
+return requestAccountPosition(requestFreshSearchPosition).then(({ latitude, longitude }) => ({ latitude, longitude }));
 }
 
 export default function App() {
@@ -354,15 +338,19 @@ const [trialReport,setTrialReport]=useState('');
 const trialAbortRef=useRef<AbortController|null>(null);
 function changeTrialEnabled(value:boolean){setWalkingTrialEnabled(value);if(!value){trialAbortRef.current?.abort();cancelWalkingTrial();}}
 useEffect(()=>()=>{trialAbortRef.current?.abort();cancelWalkingTrial();},[]);
-const [adventureSession] = useState(() => new AdventureSession(localStorage));
-const [dateSession] = useState(() => new DateAdventureSession(localStorage));
+const [adventureSession] = useState(() => new AdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
+const [dateSession] = useState(() => new DateAdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
 const [restoredDate] = useState(() => dateSession.current);
 const [restoredAdventure] = useState(() => adventureSession.current);
 const [adventureMessage, setAdventureMessage] = useState('');
 const [isAdventureBusy, setIsAdventureBusy] = useState(false);
 const adventureOperationRef = useRef(0);
-const [name, setName] = useState(restoredDate?.result.playerName ?? restoredAdventure?.result.playerName ?? '');
-const [hasStarted, setHasStarted] = useState(Boolean(restoredAdventure || restoredDate));
+const recoveredName = restoredDate?.result.playerName ?? restoredAdventure?.result.playerName ?? '';
+const [name, setName] = useState('');
+const [showTitleBackdrop, setShowTitleBackdrop] = useState(false);
+const profileIdentity = useRef<string | null | undefined>(undefined);
+useEffect(() => { if (validAdventurerName(recoveredName) && !readAdventurerProfile(localStorage, null)) { try { saveAdventurerProfile(localStorage, null, { name: recoveredName, started: true }); } catch { /* Existing adventure remains usable when storage is unavailable. */ } } }, []);
+const [hasStarted, setHasStarted] = useState(false);
 const [takaranSpeech, setTakaranSpeech] = useState(
 "😊 まずは僕を押してね！"
 );
@@ -371,7 +359,7 @@ const [searchFailureMessage, setSearchFailureMessage] = useState('');
 const [searchFailureReason, setSearchFailureReason] = useState<SearchFailure | null>(null);
 const [screen, setScreenState] = useState<
 'home' | 'condition' | 'coin' | 'gacha' | 'searching' | 'result' | 'arrival' | 'walking' | 'treasure-register' | 'treasure-map' | 'my-page'
->(isAccountPage() ? 'my-page' : (restoredDate ? 'result' : adventureRestoreScreen(restoredAdventure)));
+>(isAccountPage() && !isOnboardingReturn() ? 'my-page' : (restoredDate ? 'result' : adventureRestoreScreen(restoredAdventure)));
 const arrivalRatingRequestedRef = useRef(false);
 useEffect(() => {
 if (screen === 'result' && arrivalRatingRequestedRef.current) {
@@ -398,7 +386,20 @@ const locationPending = useRef<Promise<Coordinates> | null>(null);
 const locationGate = useRef(0);
 const [locationBusy, setLocationBusy] = useState(false);
 const [locationMessage, setLocationMessage] = useState('');
-const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(restoredDate?.departure ?? restoredAdventure?.departure ?? null);
+const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
+useEffect(() => {
+let previous: string | null | undefined;
+try { const { data } = getAccountClient().auth.onAuthStateChange((_event, session) => {
+const next = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user.id : null;
+if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
+profileIdentity.current = undefined;
+locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
+adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
+setName(''); setHasStarted(false);
+}
+previous = next;
+}); return () => data.subscription.unsubscribe(); } catch { /* Startup registration shows the retryable login error. */ }
+}, []);
 
 const [nearbySpot, setNearbySpot] = useState<Spot | null>(restoredDate?.result.waypoint ?? restoredAdventure?.result.spot ?? null);
 const [selectedGachaTreasure, setSelectedGachaTreasure] = useState<Treasure | null>(restoredAdventure?.result.treasure ?? null);
@@ -623,17 +624,6 @@ Boolean(choices.mood) &&
 (choices.mood !== 'デート' || Boolean(choices.dateGenre)) &&
 (choices.mood !== 'イベント' || Boolean(choices.eventGenre));
 
-function handleSubmit(event: FormEvent<HTMLFormElement>) {
-event.preventDefault();
-
-if (!trimmedName) return;
-
-getCurrentLocation();
-
-setHasStarted(true);
-setScreen('home');
-}
-
 function selectChoice(key: ChoiceKey, option: string) {
 setChoices((currentChoices) => ({
 ...currentChoices,
@@ -642,26 +632,25 @@ setChoices((currentChoices) => ({
 }
 
 async function getCurrentLocation() {
-if (!navigator.geolocation) {
-setTakaranSpeech("😢 この端末では現在地が使えないみたい...");
-alert('このブラウザでは現在地取得が使えません。');
-return;
-}
-
+const locationGeneration = locationGate.current;
 setTakaranSpeech("🔍 現在地を探してるよ...");
 
 try {
 if (!locationPending.current) locationPending.current = requestCurrentCoordinates().finally(() => { locationPending.current = null; });
 const coordinates = await locationPending.current;
+if (locationGeneration !== locationGate.current) return false;
 locationFetchedAt.current = Date.now();
 setCurrentLocation(coordinates);
+setLocationMessage('');
 setTakaranSpeech("🎉 よし！冒険に行こう！");
 return true;
 } catch (error) {
+if (locationGeneration !== locationGate.current) return false;
 locationFetchedAt.current = 0;
+setCurrentLocation(null);
 console.warn('[location] acquisition_failed');
 setTakaranSpeech("😢 現在地が見つからなかったよ...");
-setLocationMessage(searchFailureMessages.location);
+setLocationMessage(locationFailureMessage(error));
 return false;
 }
 }
@@ -1168,7 +1157,7 @@ console.info('[date-search] stopped', { reason: 'pair-shortage', waypointCount: 
 }
 
 async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
-if (!currentLocation) { setLocationMessage(searchFailureMessages.location); setIsSearching(false); setSearchFailed(false); setScreen('coin'); return; }
+if (!currentLocation || !locationFetchedAt.current || Date.now() - locationFetchedAt.current > 30_000) { setLocationMessage('検索前に新しい現在地を確認してください。以前の位置では検索しません。'); setIsSearching(false); setSearchFailed(false); setScreen('coin'); return; }
 if (!resetNormalAdventure()) return;
 const searchId = `${Date.now().toString(36)}-${++normalSearchSequenceRef.current}`;
 
@@ -1211,7 +1200,7 @@ return;
 if(walkingTrialEnabled && matchesTrialScope(choices)) {
 const controller=new AbortController();trialAbortRef.current=controller;
 try {
-setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAdventurePosition();const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;
+setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAccountPosition(requestFreshSearchPosition);const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;
 setTrialProgress('登録宝物の読み込みを確認しています…');
 const treasureRows=await withWalkingTrialDeadline(getTreasures(),controller.signal);
 if(!isCurrent()||controller.signal.aborted)return;
@@ -2193,13 +2182,13 @@ return (
 {screen === 'my-page' ? (
 <>
 <WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />
-<MyPage adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+<MyPage adventurerName={name} onNameChange={setName} onAccountChanged={() => { changeTrialEnabled(false); locationFetchedAt.current = 0; setCurrentLocation(null); if (!isWalkingAdventure(adventureSession.current) && !(dateSession.current && !dateSession.current.rewardClaimed)) { setName(''); setHasStarted(false); } }} adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
 </>
 ) : !hasStarted ? (
 <div
 className="title-screen full-screen"
 style={{
-backgroundImage: `url(${titleBackground})`,
+backgroundImage: showTitleBackdrop ? `url(${titleBackground})` : undefined,
 backgroundSize: 'cover',
 backgroundPosition: 'center',
 backgroundRepeat: 'no-repeat',
@@ -2234,32 +2223,12 @@ className="title-main-takaran"
 </p>
 </section>
 
-<form className="name-form" onSubmit={handleSubmit}>
-<label htmlFor="player-name" className="name-label"><IconText text=" 君の名前を教えてね😊 " /></label>
-<div className="name-input-wrap">
-<span className="name-input-icon"><IconText text="🌿" /></span>
-
-<input
-id="player-name"
-name="player-name"
-type="text"
-value={name}
-onChange={(event) => setName(event.target.value)}
-placeholder="たから"
-autoComplete="name"
-/>
-</div>
-<button
-type="submit"
-className="start-location-button"
-disabled={!trimmedName}
->
-<AppIcon name="compass" />
-現在地を取得して始める
-<span className="button-sparkles"><IconText text="✨" /></span>
-</button>
-
-</form>
+<StartupRegistration recoveredName={recoveredName} onIdentity={uid => { profileIdentity.current = uid; }} onRegistrationNeeded={() => setShowTitleBackdrop(true)} onStart={(playerName, fix) => {
+setName(playerName); setHasStarted(true);
+if (fix) { setCurrentLocation({ latitude: fix.latitude, longitude: fix.longitude }); locationFetchedAt.current = fix.timestamp; }
+if (dateSession.current) setScreen('result');
+else setScreen(adventureSession.current ? adventureRestoreScreen(adventureSession.current) : 'home');
+}} />
 </div>
 ) : screen === 'arrival' && adventureSession.current?.rewardClaimed ? (
 <ArrivalScreen
@@ -2797,12 +2766,12 @@ setScreen('coin');
   onContinue={async () => {
 if (locationBusy) return;
 const gate = locationGate.current;
-if (!currentLocation || Date.now() - locationFetchedAt.current > 5 * 60_000 || !locationFetchedAt.current) {
+if (!currentLocation || Date.now() - locationFetchedAt.current > 30_000 || !locationFetchedAt.current) {
 setLocationBusy(true); setLocationMessage('現在地を確認しています…');
 const ready = await getCurrentLocation();
 setLocationBusy(false);
 if (gate !== locationGate.current) return;
-if (!ready) { setLocationMessage(searchFailureMessages.location); return; }
+if (!ready) return;
 }
 setLocationMessage('');
 if (!resetNormalAdventure()) return;

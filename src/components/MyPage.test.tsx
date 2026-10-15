@@ -10,11 +10,19 @@ vi.mock('../services/accountAuth', () => ({
   getAccountClient: () => ({ auth: { getSession: auth.session, onAuthStateChange: (cb: typeof auth.change) => { auth.change=cb; return { data: { subscription: { unsubscribe: auth.unsubscribe } } }; } } }),
 }));
 import { MyPage } from './MyPage';
+import { readAdventurerProfile, saveAdventurerProfile } from '../features/adventurerProfile';
 let root: Root; let container: HTMLDivElement;
 beforeEach(() => { vi.clearAllMocks(); auth.init.mockResolvedValue(undefined); auth.session.mockResolvedValue({data:{session:null},error:null}); auth.login.mockResolvedValue(undefined); auth.logout.mockResolvedValue(undefined); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true); container=document.createElement('div'); document.body.append(container); root=createRoot(container); });
 afterEach(() => { act(()=>root.unmount()); container.remove(); vi.unstubAllGlobals(); });
 async function render(inProgress=false) { await act(async()=>root.render(<MyPage adventureInProgress={inProgress} onBack={vi.fn()} />)); }
 describe('MyPage', () => {
+  it('edits the account adventurer name without changing another account or guest EXP', async () => {
+    localStorage.clear(); localStorage.setItem('machiTakarabakoExp','120');saveAdventurerProfile(localStorage,'a',{name:'旧名',started:true});saveAdventurerProfile(localStorage,'b',{name:'別の人',started:true});auth.session.mockResolvedValue({data:{session:{user:{id:'a',user_metadata:{}}}},error:null});const changed=vi.fn();
+    await act(async()=>root.render(<MyPage adventureInProgress={false} onBack={vi.fn()} onNameChange={changed}/>));
+    const input=container.querySelector<HTMLInputElement>('#adventurer-name-edit')!;
+    const {Simulate}=await import('react-dom/test-utils');await act(async()=>Simulate.change(input,{target:{value:'新しい名前'}} as never));await act(async()=>Simulate.submit(container.querySelector('form')!));
+    expect(changed).toHaveBeenCalledWith('新しい名前');expect(readAdventurerProfile(localStorage,'a')).toEqual({name:'新しい名前',started:true});expect(readAdventurerProfile(localStorage,'b')?.name).toBe('別の人');expect(localStorage.getItem('machiTakarabakoExp')).toBe('120');
+  });
   it('shows optional guest login and explicitly no cloud records; leaves guest storage intact', async () => {
     localStorage.setItem('machiTakarabakoExp','120'); const before={...localStorage}; await render();
     expect(container.textContent).toContain('ゲストで利用中'); expect(container.textContent).toContain('まだ利用できません'); expect({...localStorage}).toEqual(before);
@@ -39,3 +47,5 @@ describe('MyPage', () => {
   });
   it('shows callback failure without blocking guest return', async () => { auth.init.mockRejectedValue(new Error('expired')); await render(); expect(container.textContent).toContain('同じブラウザ'); expect(container.querySelector<HTMLButtonElement>('.my-page-back')!.disabled).toBe(false); });
 });
+
+it('switches the name editor to the matching account without copying a prior name',async()=>{localStorage.clear();saveAdventurerProfile(localStorage,'a',{name:'名前A',started:true});saveAdventurerProfile(localStorage,'b',{name:'名前B',started:true});auth.session.mockResolvedValue({data:{session:{user:{id:'a',user_metadata:{}}}},error:null});await act(async()=>root.render(<MyPage adventureInProgress={false} onBack={vi.fn()} onNameChange={vi.fn()}/>));expect(container.querySelector<HTMLInputElement>('#adventurer-name-edit')?.value).toBe('名前A');await act(async()=>auth.change?.('SIGNED_IN',{user:{id:'b',user_metadata:{}}}));expect(container.querySelector<HTMLInputElement>('#adventurer-name-edit')?.value).toBe('名前B');await act(async()=>auth.change?.('SIGNED_IN',{user:{id:'c',user_metadata:{}}}));expect(container.querySelector<HTMLInputElement>('#adventurer-name-edit')?.value).toBe('');});

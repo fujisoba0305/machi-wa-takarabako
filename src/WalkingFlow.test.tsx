@@ -37,7 +37,7 @@ function button(text: string) {
   return match;
 }
 async function click(text: string) { await act(async () => { button(text).click(); }); }
-async function mount() { container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); await act(async () => { root.render(<App />); }); }
+async function mount() { if (localStorage.getItem(ACTIVE_ADVENTURE_KEY) || localStorage.getItem(DATE_ADVENTURE_KEY)) { const {saveAdventurerProfile}=await import('./features/adventurerProfile');saveAdventurerProfile(localStorage,'regression-account',{name:'冒険者',started:true}); } container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); await act(async () => { root.render(<App />); }); }
 async function reload() { await act(async () => root.unmount()); container.remove(); await mount(); }
 function saved() { return JSON.parse(localStorage.getItem(ACTIVE_ADVENTURE_KEY)!) as ActiveAdventure; }
 async function seed(treasure = false) {
@@ -235,3 +235,9 @@ it('opens MyPage during an adventure and returns without changing guest records'
   expect(container.querySelector('.walking-screen')).not.toBeNull();
   expect(saved()).toEqual(adventure); expect({ ...localStorage }).toEqual(before);
 });
+
+// These regressions run after a restored Google session; no live auth or GPS service is contacted.
+vi.mock('./services/accountAuth', () => ({
+ isAccountPage: () => false, initializeAccount: async () => {}, loginWithGoogle: vi.fn(), logoutAccount: vi.fn(), googleAvatar: () => undefined,
+ getAccountClient: () => ({auth: {getSession: async () => ({data: {session: {user: {id: 'regression-account', user_metadata: {}}, expires_at: Date.now()/1000+3600}}, error: null}), onAuthStateChange: () => ({data: {subscription: {unsubscribe: vi.fn()}}})}}),
+}));

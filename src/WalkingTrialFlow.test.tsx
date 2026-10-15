@@ -101,3 +101,9 @@ it('試験版の通信失敗は理由を表示し、既存検索に自動移行�
 for(const distance of ['3km','5km','10km'])it('初期試験ONでも'+distance+'は従来経路',async()=>{await enterGacha(distance);await click('ガチャのハンドルを回す');await advance(4000);await advance(1500);expect(searchWalkingTrial).not.toHaveBeenCalled();expect(getNearbyParks).toHaveBeenCalled();});
 it('試験OFFなら1kmも従来経路',async()=>{await enterGacha('1km','公園・自然','',false);await click('ガチャのハンドルを回す');await advance(4000);await advance(1500);expect(searchWalkingTrial).not.toHaveBeenCalled();expect(getNearbyParks).toHaveBeenCalled();});
 it('検索中に中止しても報酬を付与せず条件画面へ戻る',async()=>{vi.mocked(searchWalkingTrial).mockImplementation(()=>new Promise(()=>{}));await enterGacha();await click('ガチャのハンドルを回す');await advance(4000);await click('検索を中止して条件画面へ');expect(container.textContent).toContain('冒険コインを作る');expect(localStorage.getItem('machiTakarabakoExp')).toBe('0');});
+
+// These regressions run after a restored Google session; no live auth or GPS service is contacted.
+vi.mock('./services/accountAuth', () => ({
+ isAccountPage: () => false, initializeAccount: async () => {}, loginWithGoogle: vi.fn(), logoutAccount: vi.fn(), googleAvatar: () => undefined,
+ getAccountClient: () => ({auth: {getSession: async () => ({data: {session: {user: {id: 'regression-account', user_metadata: {}}, expires_at: Date.now()/1000+3600}}, error: null}), onAuthStateChange: () => ({data: {subscription: {unsubscribe: vi.fn()}}})}}),
+}));

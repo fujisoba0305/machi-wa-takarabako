@@ -164,9 +164,10 @@ it('reports route service failures separately from valid out-of-range routes', a
 });
 
 it('keeps the coin and conditions when GPS fails, then retries GPS before searching', async()=>{
+ await enterGacha('3km'); await click('ホーム'); await advance(31000); await click('公園・自然'); await act(async()=>container.querySelector<HTMLButtonElement>('.adventure-coin-button')!.click());
  Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(_s:PositionCallback,f:PositionErrorCallback){f({code:1} as GeolocationPositionError);}}});
- await enterGacha('3km');expect(getNearbyParks).not.toHaveBeenCalled();expect(container.querySelector('.coin-celebration')).not.toBeNull();expect(container.textContent).toContain('位置情報の許可');expect(container.textContent).toContain('3km');
- Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(s:PositionCallback){s({coords:{latitude:35,longitude:139}} as GeolocationPosition);}}});
+ vi.mocked(getNearbyParks).mockClear(); await click('ガチャを回しに行こう！');expect(getNearbyParks).not.toHaveBeenCalled();expect(container.querySelector('.coin-celebration')).not.toBeNull();expect(container.textContent).toContain('位置情報が許可');expect(container.textContent).toContain('3km');
+ Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(s:PositionCallback){s({coords:{latitude:35,longitude:139,accuracy:10},timestamp:Date.now()} as GeolocationPosition);}}});
  await click('ガチャを回しに行こう！');expect(getNearbyParks).toHaveBeenCalledWith(35,139,4000);
 });
 it('reacquires old GPS and does not navigate after leaving the coin while waiting',async()=>{
@@ -190,8 +191,8 @@ it('reports a distance mismatch without changing selected conditions',async()=>{
 });
 it('waits for initial pending GPS before allowing gacha search',async()=>{
  let resolve!: PositionCallback;Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(s:PositionCallback){resolve=s;}}});
- await enterGacha();expect(getNearbyParks).not.toHaveBeenCalled();expect(container.textContent).toContain('現在地を確認しています');
- await act(async()=>resolve({coords:{latitude:35,longitude:139}} as GeolocationPosition));expect(getNearbyParks).toHaveBeenCalledOnce();
+ await act(async()=>root.render(<App/>));await act(async()=>Simulate.change(container.querySelector('input')!,{target:{value:'冒険者'}} as never));await act(async()=>Simulate.submit(container.querySelector('form')!));expect(getNearbyParks).not.toHaveBeenCalled();expect(container.textContent).toContain('現在地を確認しています');expect(container.querySelector('.home-screen')).toBeNull();
+ await act(async()=>resolve({coords:{latitude:35,longitude:139,accuracy:10},timestamp:Date.now()} as GeolocationPosition));expect(container.querySelector('.home-screen')).not.toBeNull();expect(getNearbyParks).not.toHaveBeenCalled();
 });
 
 it('diagnoses random-distance selection without names or coordinates and does not call Routes',async()=>{
@@ -201,3 +202,9 @@ it('diagnoses random-distance selection without names or coordinates and does no
  const selected=info.mock.calls.find(c=>c[0]==='[normal-search] succeeded');expect(selected?.[1]).toMatchObject({source:'overpass',overpassEligibleCount:1,registeredEligibleCount:0});
  expect(JSON.stringify(selected)).not.toContain('テストの公園');expect(JSON.stringify(selected)).not.toContain('35.007');info.mockRestore();
 });
+
+// These regressions run after a restored Google session; no live auth or GPS service is contacted.
+vi.mock('./services/accountAuth', () => ({
+ isAccountPage: () => false, initializeAccount: async () => {}, loginWithGoogle: vi.fn(), logoutAccount: vi.fn(), googleAvatar: () => undefined,
+ getAccountClient: () => ({auth: {getSession: async () => ({data: {session: {user: {id: 'regression-account', user_metadata: {}}, expires_at: Date.now()/1000+3600}}, error: null}), onAuthStateChange: () => ({data: {subscription: {unsubscribe: vi.fn()}}})}}),
+}));

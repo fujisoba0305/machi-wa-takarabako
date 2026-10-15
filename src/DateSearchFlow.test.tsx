@@ -99,3 +99,9 @@ expect(box.textContent).not.toContain('経由地に到着した');
 Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(success:PositionCallback){success({coords:{latitude:35.68,longitude:139.76,accuracy:10},timestamp:Date.now()} as GeolocationPosition);}}});
 await click('経由地まで地図を開く');expect(localStorage.getItem(DATE_ADVENTURE_KEY)).not.toBeNull();expect(navigateAdventureMap).toHaveBeenCalledOnce();
 });
+
+// These regressions run after a restored Google session; no live auth or GPS service is contacted.
+vi.mock('./services/accountAuth', () => ({
+ isAccountPage: () => false, initializeAccount: async () => {}, loginWithGoogle: vi.fn(), logoutAccount: vi.fn(), googleAvatar: () => undefined,
+ getAccountClient: () => ({auth: {getSession: async () => ({data: {session: {user: {id: 'regression-account', user_metadata: {}}, expires_at: Date.now()/1000+3600}}, error: null}), onAuthStateChange: () => ({data: {subscription: {unsubscribe: vi.fn()}}})}}),
+}));
