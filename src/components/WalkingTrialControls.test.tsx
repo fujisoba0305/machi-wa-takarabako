@@ -1,0 +1,12 @@
+// @vitest-environment jsdom
+import React from 'react';import {act} from 'react-dom/test-utils';import {createRoot,type Root} from 'react-dom/client';import {it,expect,vi,beforeEach,afterEach} from 'vitest';
+const auth=vi.hoisted(()=>({allow:vi.fn(),dispose:vi.fn(),change:null as null|((e:string)=>void)}));
+vi.mock('../services/walkingTrial',()=>({authorizeWalkingTrial:auth.allow,disposeWalkingTrial:auth.dispose}));
+vi.mock('../services/accountAuth',()=>({getAccountClient:()=>({auth:{onAuthStateChange:(fn:(e:string)=>void)=>{auth.change=fn;return {data:{subscription:{unsubscribe:vi.fn()}}};}}})}));
+import {WalkingTrialControls} from './WalkingTrialControls';
+let root:Root,box:HTMLDivElement;beforeEach(()=>{vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.clearAllMocks();box=document.createElement('div');document.body.append(box);root=createRoot(box);});afterEach(()=>{act(()=>root.unmount());box.remove();vi.unstubAllGlobals();});
+it('権限がないゲストには試験版を有効化する操作を表示しない',async()=>{auth.allow.mockResolvedValue(false);const change=vi.fn();await act(async()=>root.render(<WalkingTrialControls enabled={false} locked={false} onChange={change}/>));expect(box.querySelector('section')).toBeNull();expect(box.querySelector('input')).toBeNull();expect(change).toHaveBeenCalledWith(false);});
+it('許可された本人だけ切替可能、ログアウト時は解除',async()=>{auth.allow.mockResolvedValue(true);const change=vi.fn();await act(async()=>root.render(<WalkingTrialControls enabled={false} locked={false} onChange={change}/>));expect(box.querySelector('input')).not.toBeNull();act(()=>box.querySelector('input')!.click());expect(change).toHaveBeenCalledWith(true);auth.allow.mockResolvedValue(false);await act(async()=>auth.change?.('SIGNED_OUT'));expect(auth.dispose).toHaveBeenCalled();expect(change).toHaveBeenCalledWith(false);expect(box.querySelector('input')).toBeNull();});
+it('処理中は切替をロックし、認証通信失敗は許可しない',async()=>{auth.allow.mockResolvedValue(true);await act(async()=>root.render(<WalkingTrialControls enabled={false} locked onChange={vi.fn()}/>));expect(box.querySelector('input')!.disabled).toBe(true);auth.allow.mockRejectedValue(Error('offline'));await act(async()=>auth.change?.('SIGNED_IN'));expect(box.querySelector('input')).toBeNull();});
+
+it('検索中でもONの本人はOFFにできる',async()=>{auth.allow.mockResolvedValue(true);const change=vi.fn();await act(async()=>root.render(<WalkingTrialControls enabled locked onChange={change}/>));expect(box.querySelector('input')!.disabled).toBe(false);act(()=>box.querySelector('input')!.click());expect(change).toHaveBeenCalledWith(false);});

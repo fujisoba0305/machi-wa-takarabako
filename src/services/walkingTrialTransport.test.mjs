@@ -1,0 +1,4 @@
+import {it as test} from 'vitest';import assert from 'node:assert/strict';import {gzipSync} from 'node:zlib';import {readTrialAsset} from '../../public/walking-trial/read-trial-asset.mjs';
+const raw=new TextEncoder().encode('{"version":1,"payload":"offline-test"}');
+for(const mode of ['gzip-body','host-decoded','gzip-first-byte-split','decoded-first-byte-split'])test(mode,async()=>{const input=mode.startsWith('gzip')?gzipSync(raw):raw;const response=mode.endsWith('split')?new Response(new ReadableStream({start(c){c.enqueue(input.subarray(0,1));c.enqueue(input.subarray(1));c.close();}})):new Response(input,{headers:mode==='host-decoded'?{'Content-Encoding':'gzip'}:{}});assert.deepEqual(new Uint8Array(await readTrialAsset(response,true)),raw);});
+test('通信切断は空成功にせずエラー',async()=>{await assert.rejects(readTrialAsset(new Response(new ReadableStream({start(c){c.error(Error('offline'));}})),true),/offline/);});

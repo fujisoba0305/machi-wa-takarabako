@@ -29,7 +29,7 @@ export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate }: Props
       <div><dt>目的地</dt><dd>{destination.name}</dd></div>
       <div><dt>獲得EXP</dt><dd>+{reward} EXP</dd></div>
       <div><dt>到着日時</dt><dd><time dateTime={new Date(adventure.completedAt).toISOString()}>{new Date(adventure.completedAt).toLocaleString('ja-JP')}</time></dd></div>
-      <div><dt>出発時の徒歩ルート距離</dt><dd>{destination.distanceLabel}</dd></div>
+      <div><dt>{adventure.result.walkingTrial ? '検索時の推定徒歩距離' : '出発時の徒歩ルート距離'}</dt><dd>{destination.distanceLabel}</dd></div>
       <div><dt>冒険開始からの経過時間</dt><dd>{elapsedMinutes < 1 ? '1分未満' : `${elapsedMinutes}分`}</dd></div>
     </dl><p>ルート距離は出発時の案内です。実際に歩いた距離ではありません。</p></details>
     <div className="arrival-actions">

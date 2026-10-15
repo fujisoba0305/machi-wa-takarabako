@@ -1,0 +1,9 @@
+import { useEffect, useState } from 'react';
+import { getAccountClient } from '../services/accountAuth';
+import { authorizeWalkingTrial, disposeWalkingTrial } from '../services/walkingTrial';
+export function WalkingTrialControls({ enabled, onChange, locked }: {enabled:boolean;onChange:(value:boolean)=>void;locked:boolean}) {
+ const [allowed,setAllowed]=useState(false),[message,setMessage]=useState('ログイン・試験版の権限を確認しています…');
+ useEffect(()=>{let alive=true,generation=0;const controller=new AbortController();const check=async()=>{const n=++generation;try{const ok=await authorizeWalkingTrial(controller.signal);if(alive&&n===generation){setAllowed(ok);if(!ok){onChange(false);disposeWalkingTrial();}setMessage(ok?'本人限定。現在の道路データ範囲だけで使えます。':'試験版は許可されたログインユーザーのみ利用できます。通常検索は従来どおりです。');}}catch{if(alive&&n===generation){setAllowed(false);onChange(false);disposeWalkingTrial();setMessage('試験版の権限を確認できません。通常検索をご利用ください。');}}};void check();let stop=()=>{};try{const {data}=getAccountClient().auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'||event==='SIGNED_IN'){setAllowed(false);onChange(false);disposeWalkingTrial();}void check();});stop=()=>data.subscription.unsubscribe();}catch{}return()=>{alive=false;controller.abort();stop();};},[]);
+ if(!allowed)return null;
+ return <section className="walking-trial-controls" aria-label="徒歩検索・試験版"><h2>徒歩検索・試験版</h2><p>{message}</p>{allowed&&<label><input type="checkbox" checked={enabled} disabled={locked && !enabled} onChange={e=>onChange(e.target.checked)}/>1kmガチャで試験版を使う</label>}<p>初期試験は1kmのみ。3kmは未有効、5・10kmは従来検索です。「？km」とデートは変わりません。街区までの距離は推定で、施設への到達確認ではありません。チェックを外すと既存検索に戻ります。</p><p>© OpenStreetMap contributors · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">ODbL</a> · <a href="/walking-v30/LICENSE.md" target="_blank" rel="noreferrer">データと利用条件</a></p></section>;
+}

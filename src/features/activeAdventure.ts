@@ -11,6 +11,7 @@ type Coordinates = { latitude: number; longitude: number };
 export type PositionFix = Coordinates & { accuracy: number; timestamp: number };
 export type AdventureTarget = Coordinates & { id: string; kind: 'normal' | 'treasure' };
 export type AdventureResult = {
+  walkingTrial?: { roadMeters: number; estimated: true; origin: string; quality: string };
   spot: Spot | null;
   treasure: Treasure | null;
   choices: Record<string, string>;
@@ -49,6 +50,7 @@ export function loadActiveAdventure(storage: StorageLike): ActiveAdventure | nul
       (a.target.kind === 'normal' ? a.result.treasure !== null : a.result.spot !== null) ||
       (a.rewardClaimed && (!Number.isFinite(a.completedAt) || !validFix(a.arrival))) ||
       (a.result.distanceKm !== null && !Number.isFinite(a.result.distanceKm))) return null;
+    if(a.result.walkingTrial && (!Number.isFinite(a.result.walkingTrial.roadMeters) || a.result.walkingTrial.roadMeters<0 || a.result.walkingTrial.estimated!==true || typeof a.result.walkingTrial.origin!=='string' || typeof a.result.walkingTrial.quality!=='string'))return null;
     const place = a.target.kind === 'treasure' ? a.result.treasure : a.result.spot;
     if (!place || (a.target.kind === 'treasure'
       ? String(place.id) !== a.target.id || place.latitude !== a.target.latitude || place.longitude !== a.target.longitude

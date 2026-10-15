@@ -11,6 +11,7 @@
   "include": [
     "vite.config.ts",
     "dev/**/*.ts",
-    "api/overpass.ts"
+    "api/overpass.ts",
+    "api/walking-trial-access.ts"
   ]
 }

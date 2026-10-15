@@ -1,0 +1,9 @@
+{
+  "version": 30,
+  "dataset": "698ca3c34e0db514",
+  "poiCount": 56701,
+  "base": "/walking-v30/698ca3c34e0db514/",
+  "roadRawSha256": "8e7ee2488e0a658ecb3be2b6799f8151282f98e985119f6514afb0365f18debd",
+  "roadIndexSha256": "5ae5e920c2a78d676988b4847f6e4edc80aa104c06be45e351b1e1a0032ee013",
+  "profileIndexSha256": "83af80a8ae3b3659ee0adf9b19188e56deb14345bd9616270035fd888f9d26d7"
+}

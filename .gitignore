@@ -4,3 +4,10 @@ dist
 .vercel
 .env*
 .local-https/
+
+# Generated only from verified, versioned OSM bundles
+public/walking-v30/698ca3c34e0db514/
+
+# Obsolete local trial data is preserved, but not part of the phase 30 release
+public/walking-trial/data/
+public/walking-trial/regions.json

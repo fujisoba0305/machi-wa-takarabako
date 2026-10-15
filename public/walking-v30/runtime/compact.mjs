@@ -1,0 +1,13 @@
+// Same road graph and Float64 lengths; no per-node/edge JavaScript Maps.
+export {decode}from './codec.mjs';
+function unique(a){a.sort();let n=0;for(let i=0;i<a.length;i++)if(!i||a[i]!==a[i-1])a[n++]=a[i];return a.slice(0,n);}
+function find(a,v){let lo=0,hi=a.length;while(lo<hi){const m=(lo+hi)>>>1;if(a[m]<v)lo=m+1;else hi=m;}return a[lo]===v?lo:-1;}
+export function assemble(parts){let nc=0,ec=0;for(const t of parts){nc+=t.n;ec+=t.e;}let nodeIds=new Float64Array(nc),edgeIds=new Float64Array(ec),np=0,ep=0;
+ for(const t of parts){for(let i=0,p=8;i<t.n;i++,p+=16)nodeIds[np++]=t.v.getFloat64(p,true);for(let i=0,p=8+t.n*16;i<t.e;i++,p+=40)edgeIds[ep++]=t.v.getFloat64(p,true);}
+ nodeIds=unique(nodeIds);edgeIds=unique(edgeIds);nc=nodeIds.length;ec=edgeIds.length;
+ const edgeOrder=new Uint32Array(ec);let created=0;const lat=new Int32Array(nc),lon=new Int32Array(nc),nodeSeen=new Uint8Array(nc),edgeSeen=new Uint8Array(ec),from=new Uint32Array(ec),to=new Uint32Array(ec),length=new Float64Array(ec),flags=new Uint8Array(ec),layer=new Int32Array(ec);
+ for(const t of parts)for(let i=0,p=8;i<t.n;i++,p+=16){const id=find(nodeIds,t.v.getFloat64(p,true)),a=t.v.getInt32(p+8,true),b=t.v.getInt32(p+12,true);if(id<0)throw Error('Missing node');if(nodeSeen[id]&&(lat[id]!==a||lon[id]!==b))throw Error('Node seam mismatch');lat[id]=a;lon[id]=b;nodeSeen[id]=1;}
+ for(let tile=0;tile<parts.length;tile++){const t=parts[tile];for(let i=0,p=8+t.n*16;i<t.e;i++,p+=40){const sortedId=find(edgeIds,t.v.getFloat64(p,true)),a=find(nodeIds,t.v.getFloat64(p+8,true)),b=find(nodeIds,t.v.getFloat64(p+16,true)),d=t.v.getFloat64(p+24,true),f=t.v.getInt32(p+32,true),l=t.v.getInt32(p+36,true);if(sortedId<0||a<0||b<0||!Number.isFinite(d)||d<=0)throw Error('Invalid edge');const id=edgeSeen[sortedId]?edgeOrder[sortedId]:created++;edgeOrder[sortedId]=id;if(edgeSeen[sortedId]&&(from[id]!==a||to[id]!==b||length[id]!==d||flags[id]!==f||layer[id]!==l))throw Error('Edge seam mismatch');from[id]=a;to[id]=b;length[id]=d;flags[id]=f;layer[id]=l;edgeSeen[sortedId]=1;}parts[tile]=null;}
+ const offsets=new Uint32Array(nc+1);for(let i=0;i<ec;i++){offsets[from[i]+1]++;if(flags[i]&1)offsets[to[i]+1]++;}for(let i=1;i<offsets.length;i++)offsets[i]+=offsets[i-1];const targets=new Uint32Array(offsets[nc]),weights=new Float64Array(targets.length),cursor=offsets.slice();for(let i=0;i<ec;i++){let p=cursor[from[i]]++;targets[p]=to[i];weights[p]=length[i];if(flags[i]&1){p=cursor[to[i]]++;targets[p]=from[i];weights[p]=length[i];}}
+ return {ids:nodeIds,lat,lon,from,to,length,flags,layer,offsets,targets,weights,nodeCount:nc,edgeCount:ec};
+}

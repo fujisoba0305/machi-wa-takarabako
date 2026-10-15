@@ -1,3 +1,7 @@
+import { WalkingTrialControls } from './components/WalkingTrialControls';
+import { WalkingTrialReport } from './components/WalkingTrialReport';
+import { withWalkingTrialDeadline, searchWalkingTrial, matchesTrialScope, cancelWalkingTrial, type TrialDistance } from './services/walkingTrial';
+import './components/WalkingTrial.css';
 import { searchFailureMessages, type SearchFailure } from './features/searchFailure';
 import { MyPage } from './components/MyPage';
 import { isAccountPage } from './services/accountAuth';
@@ -25,7 +29,7 @@ import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './fe
 import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
-import { AdventureSession, type AdventureTarget } from './features/activeAdventure';
+import { requestAdventurePosition, AdventureSession, type AdventureTarget } from './features/activeAdventure';
 import { DateAdventureSession } from './features/dateAdventure';
 import { buildGoogleMapsDirectionsUrl, navigateAdventureMap } from './features/googleMaps';
 import { HomeExplore, DestinationPhoto } from './components/HomeExplore';
@@ -343,6 +347,13 @@ maximumAge: 0,
 }
 
 export default function App() {
+const [walkingTrialEnabled,setWalkingTrialEnabled]=useState(false);
+const [trialProgress,setTrialProgress]=useState('');
+const [trialSelection,setTrialSelection]=useState<TrialDistance|null>(null);
+const [trialReport,setTrialReport]=useState('');
+const trialAbortRef=useRef<AbortController|null>(null);
+function changeTrialEnabled(value:boolean){setWalkingTrialEnabled(value);if(!value){trialAbortRef.current?.abort();cancelWalkingTrial();}}
+useEffect(()=>()=>{trialAbortRef.current?.abort();cancelWalkingTrial();},[]);
 const [adventureSession] = useState(() => new AdventureSession(localStorage));
 const [dateSession] = useState(() => new DateAdventureSession(localStorage));
 const [restoredDate] = useState(() => dateSession.current);
@@ -443,7 +454,7 @@ locationGate.current++;
 dateSession.cancelPending();
 adventureOperationRef.current++;
 // Leaving the search flow invalidates pending results synchronously.
-if (!['gacha', 'searching', 'result'].includes(next)) activeNormalSearchIdRef.current = null;
+if (!['gacha', 'searching', 'result'].includes(next)) {activeNormalSearchIdRef.current = null;trialAbortRef.current?.abort();cancelWalkingTrial();}
 setScreenState(next);
 }
 useEffect(() => () => { activeNormalSearchIdRef.current = null; }, []);
@@ -1177,6 +1188,8 @@ at: new Date().toISOString(),
 const isCurrent = () => activeNormalSearchIdRef.current === searchId;
 setSearchFailureMessage('');
 setSearchFailureReason(null);
+setTrialSelection(null);setTrialReport('');
+trialAbortRef.current?.abort();
 setSelectedGachaTreasure(null);
 
 setIsSearching(true);
@@ -1192,6 +1205,23 @@ setSpotDistance(null);
 
 if (choices.mood === 'デート') {
 await findDateCourse(isCurrent);
+return;
+}
+
+if(walkingTrialEnabled && matchesTrialScope(choices)) {
+const controller=new AbortController();trialAbortRef.current=controller;
+try {
+setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAdventurePosition();const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;
+setTrialProgress('登録宝物の読み込みを確認しています…');
+const treasureRows=await withWalkingTrialDeadline(getTreasures(),controller.signal);
+if(!isCurrent()||controller.signal.aborted)return;
+if(treasureRows===null)throw Error('登録宝物を読み込めませんでした。条件を保って再試行してください。');
+setTrialProgress('徒歩検索の権限とデータを確認しています…');
+const result=await searchWalkingTrial(freshOrigin,{...choices},treasureRows,controller.signal,message=>{if(isCurrent()&&!controller.signal.aborted)setTrialProgress(message);});
+if(!isCurrent()||controller.signal.aborted)return;
+if(!result){setSearchFailureReason('empty');setSearchFailureMessage('この徒歩距離・カテゴリ条件に合う候補がありませんでした。条件は変更していません。');setSearchFailed(true);return;}
+setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distance.roadMeters/1000);setTrialSelection(result.distance);setTrialReport('GPS取得：'+gpsMs.toFixed(1)+'ms\nGPS精度：'+freshOrigin.accuracy.toFixed(1)+'m\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms（描画完了は未測定）\n'+result.report);
+}catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason(error instanceof Error&&error.name==='WalkingTrialEmpty'?'empty':'walking');if(error instanceof Error&&'report'in error&&typeof error.report==='string')setTrialReport(error.report);setSearchFailureMessage(error instanceof Error?error.message:'徒歩検索試験版を完了できませんでした。再試行してください。');setSearchFailed(true);}
 return;
 }
 
@@ -1932,8 +1962,8 @@ setIsAdventureBusy(true);
 setAdventureMessage('出発地点を確認しています…');
 try {
 const adventure = await adventureSession.start(target, {
-spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name,
-}, choices.distance === '？km' ? undefined : getDepartureWalkingDistance);
+spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}),
+}, choices.distance === '？km' || trialSelection ? undefined : getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
 setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
 // Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
@@ -2156,9 +2186,15 @@ setIsTreasureRatingSubmitting(false);
 
 return (
 <main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
+{screen === 'condition' && <WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />}
+{trialReport && (screen === 'result' || screen === 'searching') && <WalkingTrialReport report={trialReport} />}
+
 
 {screen === 'my-page' ? (
+<>
+<WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />
 <MyPage adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+</>
 ) : !hasStarted ? (
 <div
 className="title-screen full-screen"
@@ -2799,6 +2835,7 @@ setScreen('gacha');
 ) : screen === 'searching' ? (
 
 <section className="searching-screen">
+{walkingTrialEnabled&&matchesTrialScope(choices)&&<div className="walking-trial-progress" role="status"><p>{searchFailed?'徒歩検索を中断しました。試験版OFFで従来検索へ戻せます。':trialProgress||'徒歩検索を準備しています…'}</p><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;trialAbortRef.current?.abort();cancelWalkingTrial();setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>検索を中止して条件画面へ</button><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;changeTrialEnabled(false);setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>試験版をOFFにして戻る</button></div>}
 
 <img
 src={takaranSearch}
@@ -2944,8 +2981,8 @@ setScreen('condition');
 ? selectedGachaTreasure.category
 : `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`} />
 </p>
-<h3>{displayPlace}</h3>
-{spotDistance !== null && <p className="destination-distance"><IconText text="👣 " />{selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
+<h3>{displayPlace}</h3>{trialSelection && <p>徒歩検索・試験版：道路から施設までの到達は未確認です。到着は登録座標へのGPS判定で確認します。</p>}
+{spotDistance !== null && <p className="destination-distance"><IconText text="👣 " />{trialSelection ? '推定徒歩距離（道路網部分）' : selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
 <p>
 {selectedGachaTreasure
 ? selectedGachaTreasure.comment || 'コメントはありません。'
@@ -3017,7 +3054,7 @@ aria-live="polite"
 <dl>
 {spotDistance !== null && (
 <div>
-<dt><IconText text={choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'} /></dt>
+<dt><IconText text={trialSelection ? '👣 推定徒歩距離（道路網部分）' : choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'} /></dt>
 <dd>約{spotDistance.toFixed(1)}km</dd>
 </div>
 )}

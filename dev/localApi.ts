@@ -1,5 +1,6 @@
 import type { Plugin } from 'vite';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import walkingTrialAccess from '../api/walking-trial-access';
 import overpass from '../api/overpass';
 
 // Development only. Never forwards to a deployed API or calls paid Routes.
@@ -9,6 +10,7 @@ export function localApi(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const path = req.url?.split('?')[0];
+        if(path === '/api/walking-trial-access'){const reply={status(code:number){res.statusCode=code;return reply;},json(data:unknown){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));return reply;},setHeader(name:string,value:string){res.setHeader(name,value);return reply;}};await walkingTrialAccess({method:req.method,headers:req.headers} as VercelRequest,reply as unknown as VercelResponse);return;}
         if (path !== '/api/overpass' && path !== '/api/walking-distance' && path !== '/api/diagnostics') return next();
         res.setHeader('X-Machi-API-Environment', 'local');
         res.setHeader('Cache-Control', 'no-store');

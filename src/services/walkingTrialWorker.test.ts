@@ -1,0 +1,4 @@
+import {it,expect}from 'vitest';import fs from 'node:fs';
+it('第30工程の版固定manifestは全域56701施設とSHAを持つ',()=>{const m=JSON.parse(fs.readFileSync('public/walking-v30/manifest.json','utf8'));expect(m.version).toBe(30);expect(m.poiCount).toBe(56701);expect(m.base).toMatch(/^\/walking-v30\/[a-f0-9]{16}\/$/);expect(m.roadRawSha256).toMatch(/^[a-f0-9]{64}$/);});
+it('道路データはGit用の分割アーカイブから無料・オフラインで再現する',()=>{const m=JSON.parse(fs.readFileSync('assets/walking-v30/manifest.json','utf8'));expect(m.files).toBe(15043);expect(m.parts.every((p:{bytes:number})=>p.bytes<40000000)).toBe(true);});
+it('旧一括・地域試作データを上書きしない版URLを使う',()=>{const s=fs.readFileSync('src/services/walkingTrial.ts','utf8');expect(s).toContain('/walking-v30/runtime/worker.mjs');expect(s).not.toContain("new Worker('/walking-trial/route-worker.mjs'");});
