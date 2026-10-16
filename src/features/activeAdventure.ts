@@ -66,14 +66,17 @@ export function loadActiveAdventure(storage: StorageLike): ActiveAdventure | nul
 export function requestAdventurePosition(): Promise<PositionFix> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) { reject(new Error('この端末では現在地を取得できません。')); return; }
-    navigator.geolocation.getCurrentPosition(position => {
-      const fix = { latitude: position.coords.latitude, longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy, timestamp: position.timestamp };
+    let settled = false;
+    const fail = (message: string) => { if (settled) return; settled = true; clearTimeout(timer); reject(new Error(message)); };
+    const timer = setTimeout(() => fail('現在地を取得できませんでした（GPS無応答）。冒険は保存されています。もう一度試してください。'), 12000);
+    try { navigator.geolocation.getCurrentPosition(position => {
+      if (settled) return;
+      const fix = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy, timestamp: position.timestamp };
       if (!validFix(fix) || Date.now() - fix.timestamp > 30000 || fix.timestamp > Date.now() + 5000) {
-        reject(new Error('新しい現在地を確認できませんでした。もう一度試してください。'));
-      } else resolve(fix);
-    }, () => reject(new Error('現在地を取得できませんでした。位置情報の許可を確認し、少し待ってもう一度試してください。')),
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+        fail('新しい現在地を確認できませんでした。取得日時または位置データを確認できないため使っていません。もう一度試してください。');
+      } else { settled = true; clearTimeout(timer); resolve(fix); }
+    }, error => fail(error.code === 1 ? '現在地を取得できませんでした（位置情報の許可なし）。Safariの位置情報設定を確認して再試行してください。' : error.code === 3 ? '現在地を取得できませんでした（GPS取得タイムアウト）。少し待ってもう一度試してください。' : '現在地を取得できませんでした（GPS位置取得不能）。通信状態を確認し、少し待ってもう一度試してください。'),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }); } catch { fail('現在地の取得を開始できませんでした。位置情報設定を確認し、もう一度試してください。'); }
   });
 }
 export function arrivalDistanceMeters(fix: Coordinates, target: Coordinates) {

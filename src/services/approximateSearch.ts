@@ -12,7 +12,7 @@ function waitForStatic<T>(task:Promise<T>,signal:AbortSignal):Promise<T> {
  signal.addEventListener('abort',abort,{once:true});task.then(v=>finish(v),()=>finish(undefined,Error('静的施設データを読み込めませんでした。条件を保って再試行してください。')));if(signal.aborted)abort();
  });
 }
-export const approximateRanges: Record<string,{min:number;max:number}> = {'1km':{min:0,max:2},'3km':{min:2,max:4},'5km':{min:4,max:6},'10km':{min:9,max:11}};
+export const approximateRanges: Record<string,{min:number;max:number}> = {'1km':{min:0.5,max:1.5},'3km':{min:2,max:3},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}};
 export function matchesApproximateScope(c:{distance:string;mood:string}) { return Object.prototype.hasOwnProperty.call(approximateRanges,c.distance)&&c.mood!=='デート'; }
 export async function searchApproximate(point:{latitude:number;longitude:number}, choices:{distance:string;mood:string;foodGenre?:string;eventGenre?:string;shrineGenre?:string},treasures:Treasure[]|(()=>Promise<Treasure[]|null>),signal:AbortSignal,random=Math.random) {
  const started=performance.now();

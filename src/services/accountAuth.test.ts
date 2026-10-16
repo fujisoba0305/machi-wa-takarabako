@@ -12,7 +12,7 @@ describe('isolated account auth', () => {
   it('separates persistent PKCE account storage from guest transport', async () => {
     const account = await import('./accountAuth'); const guest = await import('./supabase');
     account.getAccountClient(); guest.getSupabaseClient();
-    expect(mock.create.mock.calls[0][2].auth).toMatchObject({ storageKey: 'machiAccountAuth.v1', flowType: 'pkce', detectSessionInUrl: false });
+    expect(mock.create.mock.calls[0][2].auth).toMatchObject({ persistSession: true, autoRefreshToken: true, storageKey: 'machiAccountAuth.v1', flowType: 'pkce', detectSessionInUrl: false });
     expect(mock.create.mock.calls[1][2].auth).toMatchObject({ persistSession: false, autoRefreshToken: false, detectSessionInUrl: false });
     expect(mock.create.mock.calls[0][2].auth.storageKey).not.toBe(mock.create.mock.calls[1][2].auth.storageKey);
   });

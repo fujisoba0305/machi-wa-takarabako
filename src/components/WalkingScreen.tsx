@@ -27,7 +27,7 @@ export function WalkingScreen({ adventure, busy, registering, message, onDiscove
       <div className="walking-destination-body">
         <p className="walking-label">今回の目的地</p>
         <h2>{destination.name}</h2>
-        <p className="walking-route"><span>{adventure.result.walkingTrial ? '徒歩検索・試験版' : '出発時の徒歩ルート'}</span><strong>{destination.distanceLabel}</strong></p>
+        <p className="walking-route"><span>{adventure.result.distanceKind === 'straight-line' ? '直線距離の目安（検索時）' : adventure.result.walkingTrial ? '徒歩検索・試験版' : '出発時の徒歩ルート'}</span><strong>{destination.distanceLabel}</strong></p>
       </div>
     </article>
     <section className="walking-mission walking-glass" aria-label="ウォーキングミッション">

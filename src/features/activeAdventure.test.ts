@@ -230,3 +230,5 @@ describe('GPS adventure lifecycle', () => {
     expect(loadActiveAdventure(storage)).toBeNull();
   });
 });
+
+it('ends a missing GPS callback safely and retries without losing the adventure or duplicating rewards',async()=>{const {session,storage}=await started();const saved=storage.getItem(ACTIVE_ADVENTURE_KEY),reward=vi.fn();vi.useFakeTimers();try{const pending=session.arrive(target,reward);const old=requests.at(-1)!;await vi.advanceTimersByTimeAsync(12001);expect(await pending).toContain('GPS無応答');expect(storage.getItem(ACTIVE_ADVENTURE_KEY)).toBe(saved);old.success(position());expect(reward).not.toHaveBeenCalled();const retry=session.arrive(target,reward);respond();expect(await retry).toContain('到着');expect(reward).toHaveBeenCalledOnce();await session.arrive(target,reward);expect(reward).toHaveBeenCalledOnce();}finally{vi.useRealTimers();}});

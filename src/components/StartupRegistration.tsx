@@ -28,7 +28,7 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
       const account = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user : null;
       const identity = account?.id ?? null;
       if (appliedIdentity === identity) return;
-      appliedIdentity = identity;started.current=false;
+      appliedIdentity = identity;started.current=false; setMessage('');
       setProfileDiagnostic(account?inspectAdventurerProfile(localStorage,account.id):'');
       gpsController.current?.abort(); setGpsFailed(false); setGpsDiagnostic(''); setCopyMessage('');
       setUser(account); operation.current++; saving.current = false; setBusy(false);
@@ -45,11 +45,11 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
     try {
       const client = getAccountClient();
       const subscription = client.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT' || event === 'SIGNED_IN') { generation++; apply(session); }
+        if (event === 'SIGNED_OUT' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') { generation++; apply(session); }
       });
       unsubscribe = () => subscription.data.subscription.unsubscribe();
       const current = generation;
-      timer = setTimeout(() => { if (alive && current === generation) { generation++; setChecking(false); neededRef.current?.(); setMessage('ログイン状態の確認に時間がかかっています。再確認またはGoogleログインをしてください。'); } }, 8000);
+      timer = setTimeout(() => { if (alive && current === generation) { setChecking(false); neededRef.current?.(); setMessage('ログイン状態の確認に時間がかかっています。再確認またはGoogleログインをしてください。'); } }, 8000);
       void (async () => {
         try {
           await initializeAccount();

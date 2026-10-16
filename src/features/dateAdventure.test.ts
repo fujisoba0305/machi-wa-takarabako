@@ -58,7 +58,7 @@ it.each(['waypoint', 'final'] as const)('unmoved player cannot complete %s', asy
 it.each([1, 2, 3])('permission/unavailable/timeout error %s remains retryable', async code => {
   const { session } = await start(); const p = session.arrive('waypoint', session.current?.id);
   requests.at(-1)!.failure({ code } as GeolocationPositionError);
-  expect(await p).toContain('位置情報の許可'); expect(session.current?.waypointArrival).toBeUndefined();
+  expect(await p).toContain(({1:'位置情報の許可',2:'GPS位置取得不能',3:'GPS取得タイムアウト'} as Record<number,string>)[code]); expect(session.current?.waypointArrival).toBeUndefined();
   expect(await arrive(session, 'waypoint', 35)).toContain('確認しました');
 });
 it.each(['waypoint', 'final'] as const)('poor precision never expands %s arrival radius', async stage => {
