@@ -1,3 +1,4 @@
+import {requestDeparturePosition} from './services/departurePosition';
 import { ApproximateSearchControls } from './components/ApproximateSearchControls';
 import { matchesApproximateScope, searchApproximate } from './services/approximateSearch';
 import { WalkingTrialTrace } from './features/walkingTrialDiagnostics';
@@ -344,7 +345,8 @@ const [trialReport,setTrialReport]=useState('');
 const trialAbortRef=useRef<AbortController|null>(null);
 function changeTrialEnabled(value:boolean){setWalkingTrialEnabled(value);if(value)setApproximateEnabled(false);if(!value){trialAbortRef.current?.abort();cancelWalkingTrial();}}
 useEffect(()=>()=>{trialAbortRef.current?.abort();cancelWalkingTrial();},[]);
-const [adventureSession] = useState(() => new AdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
+const departureAbort=useRef<AbortController|null>(null);
+const [adventureSession] = useState(() => new AdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition), () => {departureAbort.current?.abort();const controller=new AbortController();departureAbort.current=controller;return requestAccountPosition(()=>requestDeparturePosition({signal:controller.signal}));}));
 const [dateSession] = useState(() => new DateAdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
 const [restoredDate] = useState(() => dateSession.current);
 const [restoredAdventure] = useState(() => adventureSession.current);
@@ -401,7 +403,7 @@ const next = session && (!session.expires_at || session.expires_at * 1000 > Date
 if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
 profileIdentity.current = undefined;
 setLocationDiagnostic('');locationPending.current=null;changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
-adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
+departureAbort.current?.abort();adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
 }
 previous = next;
@@ -1935,7 +1937,7 @@ latitude: location.lat, longitude: location.lon } : null;
 }
 function cancelAdventureOperation() {
 adventureOperationRef.current++;
-adventureSession.cancelPending();
+departureAbort.current?.abort();adventureSession.cancelPending();
 dateSession.cancelPending();
 setIsAdventureBusy(false);
 setAdventureMessage('');
@@ -1958,7 +1960,7 @@ const normalTarget = getNormalAdventureTarget();
 const normalTargetKey = normalTarget ? JSON.stringify(normalTarget) : '';
 useEffect(() => {
 cancelAdventureOperation();
-return () => { adventureOperationRef.current++; adventureSession.cancelPending(); dateSession.cancelPending(); };
+return () => { adventureOperationRef.current++; departureAbort.current?.abort();adventureSession.cancelPending(); dateSession.cancelPending(); };
 }, [screen, normalTargetKey, nearbySpot, dateFinalSpot]);
 
 async function startNormalAdventure() {
@@ -1967,7 +1969,7 @@ const target = getNormalAdventureTarget();
 if (!target) { setAdventureMessage('目的地の位置を確認できませんでした。'); return; }
 const operation = ++adventureOperationRef.current;
 setIsAdventureBusy(true);
-setAdventureMessage('出発地点を確認しています…');
+setAdventureMessage('出発地点を確認しています…GPS精度の改善を待つ場合があります。');
 try {
 const adventure = await adventureSession.start(target, {
 spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}), ...(approximateSelection ? { distanceKind: 'straight-line' as const } : {}),
@@ -1979,7 +1981,7 @@ setScreen(adventure.rewardClaimed ? 'result' : 'walking');
 navigateAdventureMap(adventure.departure, adventure.target);
 } catch (error) {
 if (operation === adventureOperationRef.current)
-setAdventureMessage(error instanceof Error ? error.message : '冒険を開始できませんでした。もう一度試してください。');
+{setAdventureMessage(error instanceof Error ? error.message : '冒険を開始できませんでした。もう一度試してください。');if(error instanceof Error&&'report'in error&&typeof error.report==='string')setTrialReport(error.report);}
 } finally { if (operation === adventureOperationRef.current) setIsAdventureBusy(false); }
 }
 function resumeAdventureNavigation() {

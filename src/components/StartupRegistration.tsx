@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getAccountClient, initializeAccount, loginWithGoogle } from '../services/accountAuth';
-import { readAdventurerProfile, saveAdventurerProfile, validAdventurerName } from '../features/adventurerProfile';
+import { inspectAdventurerProfile, readAdventurerProfile, saveAdventurerProfile, validAdventurerName } from '../features/adventurerProfile';
 import { requestFreshSearchPosition, locationFailureMessage, StartupLocationFailure } from '../services/startupLocation';
 import { requestAccountPosition } from '../services/accountPosition';
 import { AppIcon } from './AppIcon';
@@ -11,6 +11,7 @@ export const ONBOARDING_RETURN = 'machiOnboarding.pending';
 export function isOnboardingReturn() { try { return sessionStorage.getItem(ONBOARDING_RETURN) === '1'; } catch { return false; } }
 type Fix = Awaited<ReturnType<typeof requestFreshSearchPosition>>;
 export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity }: { recoveredName: string; onStart: (name: string, fix?: Fix) => void; onRegistrationNeeded?: () => void; onIdentity?: (uid: string | null) => void }) {
+  const [profileDiagnostic,setProfileDiagnostic]=useState('');
   const [name, setName] = useState(''), [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
   const [gpsDiagnostic, setGpsDiagnostic] = useState(''), [gpsFailed, setGpsFailed] = useState(false), [copyMessage, setCopyMessage] = useState('');
@@ -27,7 +28,8 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
       const account = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user : null;
       const identity = account?.id ?? null;
       if (appliedIdentity === identity) return;
-      appliedIdentity = identity;
+      appliedIdentity = identity;started.current=false;
+      setProfileDiagnostic(account?inspectAdventurerProfile(localStorage,account.id):'');
       gpsController.current?.abort(); setGpsFailed(false); setGpsDiagnostic(''); setCopyMessage('');
       setUser(account); operation.current++; saving.current = false; setBusy(false);
       const profile = readAdventurerProfile(localStorage, account?.id ?? null);
@@ -70,7 +72,7 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
     saving.current = true; setBusy(true); setGpsFailed(false); setGpsDiagnostic(''); setCopyMessage(''); setMessage('現在地を確認しています…'); const id = ++operation.current;
     const controller = new AbortController(); gpsController.current = controller;
     try {
-      saveAdventurerProfile(localStorage, user?.id ?? null, { name, started: false });
+      saveAdventurerProfile(localStorage, user?.id ?? null, { name, started: false });setProfileDiagnostic(inspectAdventurerProfile(localStorage,user.id));
       const fix = await requestAccountPosition(() => requestFreshSearchPosition({ signal: controller.signal }), user.id); if (id !== operation.current) return;
       saveAdventurerProfile(localStorage, user?.id ?? null, { name, started: true });
       try { sessionStorage.removeItem(ONBOARDING_RETURN); } catch {}
@@ -91,6 +93,7 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
   return <div className="startup-registration">
     <p role="status">{checking ? 'ログイン状態と登録済みの名前を確認しています…' : user ? 'Googleでログイン中。冒険者名を登録すると、次回から自動で始められます。' : '初回はGoogleログイン → 冒険者名 → 位置情報の順で準備します。ログイン完了まで位置情報は取得しません。'}</p>
     {!user && <button type="button" disabled={checking || busy} onClick={() => void login()}>Googleでログインして始める</button>}
+    {user && <details className="startup-profile-diagnostic"><summary>冒険者名の保存・復元について</summary><p>{profileDiagnostic}</p><p>冒険者名は、このブラウザ・このサイトにGoogleアカウント別で保存しています。Googleアカウントへの同期はまだありません。ブラウザデータの削除や別の端末・サイトでは復元できない場合があります。</p></details>}
     {user && <form className="name-form" onSubmit={event => void submit(event)}>
       <label htmlFor="player-name" className="name-label">冒険者名を教えてね</label>
       <div className="name-input-wrap"><input id="player-name" name="player-name" value={name} onChange={e => setName(e.target.value)} maxLength={40} autoComplete="nickname" disabled={busy || checking} /></div>

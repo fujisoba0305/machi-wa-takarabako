@@ -88,7 +88,7 @@ export class AdventureSession {
   current: ActiveAdventure | null;
   private generation = 0;
   private busy = false;
-  constructor(private storage: StorageLike, private locate = requestAdventurePosition) {
+  constructor(private storage: StorageLike, private locate = requestAdventurePosition, private locateDeparture = locate) {
     this.current = loadActiveAdventure(storage);
   }
   cancelPending() { this.generation++; this.busy = false; }
@@ -111,7 +111,7 @@ export class AdventureSession {
     const generation = ++this.generation;
     this.busy = true;
     try {
-      const departure = await this.locate();
+      const departure = await this.locateDeparture();
       if (generation !== this.generation) return null;
       if (departure.accuracy > MAX_ACCURACY_METERS) throw new Error(accuracyMessage);
       const startedAt = Date.now();

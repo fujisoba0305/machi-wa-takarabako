@@ -15,3 +15,5 @@ describe('adventurer names remain separate from rewards and identities', () => {
   });
   it('rejects empty, oversized or control-character names', () => { const s=storage();for(const name of [' ','x'.repeat(41),'a\n'])expect(()=>saveAdventurerProfile(s,null,{name,started:true})).toThrow();expect(s.getItem(PROFILE_KEY)).toBeNull(); });
 });
+
+it('distinguishes missing, draft, registered and unreadable storage without names or UID',async()=>{const {inspectAdventurerProfile}=await import('./adventurerProfile');const s=storage();expect(inspectAdventurerProfile(s,'a')).toContain('保存データがありません');saveAdventurerProfile(s,'a',{name:'fujisoba',started:false});expect(inspectAdventurerProfile(s,'a')).toContain('下書き');expect(inspectAdventurerProfile(s,'b')).toContain('対応する保存名がありません');saveAdventurerProfile(s,'a',{name:'fujisoba',started:true});expect(inspectAdventurerProfile(s,'a')).toContain('登録済み');expect(inspectAdventurerProfile(s,'a')).not.toContain('fujisoba');const before=s.getItem(PROFILE_KEY);expect(inspectAdventurerProfile({getItem(){throw Error('blocked');}},'a')).toContain('読み取れません');expect(s.getItem(PROFILE_KEY)).toBe(before);});

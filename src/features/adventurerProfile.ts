@@ -16,3 +16,13 @@ export function saveAdventurerProfile(storage: Store, uid: string | null, profil
   if (!validAdventurerName(profile.name)) throw Error('冒険者名は1〜40文字で入力してください。');
   storage.setItem(PROFILE_KEY, JSON.stringify({ version: 1, profiles: { ...records(storage), [owner(uid)]: { name: profile.name.trim(), started: profile.started === true } } }));
 }
+
+/** Read-only restoration diagnosis. Never returns names, UIDs or stored JSON. */
+export function inspectAdventurerProfile(storage:Pick<Storage,'getItem'>,uid:string|null){
+ try{const raw=storage.getItem(PROFILE_KEY);if(raw===null)return 'このブラウザには冒険者名の保存データがありません。';let value:any;try{value=JSON.parse(raw);}catch{return '保存データの形式を読み取れません。元のデータは変更していません。';}
+ if(value?.version!==1||!value.profiles||typeof value.profiles!=='object'||Array.isArray(value.profiles))return '保存形式を確認できません。元のデータは変更していません。';
+ const profile=value.profiles[owner(uid)];if(!profile)return 'このログインアカウントに対応する保存名がありません。別アカウントの名前は使用しません。';
+ if(!validAdventurerName(profile.name))return 'このアカウントの保存名を検証できません。';
+ return profile.started===true?'このアカウントの登録済み冒険者名が保存されています。':'このアカウントの冒険者名は下書きとして保存されています。入力し直す必要はありません。';
+ }catch{return 'ブラウザの保存領域を読み取れません。再登録の前にブラウザ設定を確認してください。';}
+}
