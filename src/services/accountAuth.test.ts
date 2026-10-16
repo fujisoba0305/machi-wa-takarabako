@@ -5,7 +5,7 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: mock.create }));
 beforeEach(() => {
   vi.resetModules(); vi.clearAllMocks(); localStorage.clear(); window.history.replaceState(null, '', '/');
   vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co'); vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'public-test');
-  mock.exchange.mockResolvedValue({ error: null }); mock.login.mockResolvedValue({ error: null }); mock.logout.mockResolvedValue({ error: null });
+  mock.exchange.mockImplementation(async()=>{const session={access_token:'fixture-access',refresh_token:'fixture-refresh',user:{id:'fixture-account'}};localStorage.setItem('machiAccountAuth.v1',JSON.stringify(session));return{data:{session},error:null};}); mock.login.mockResolvedValue({ error: null }); mock.logout.mockResolvedValue({ error: null });
   mock.create.mockReturnValue({ auth: { exchangeCodeForSession: mock.exchange, signInWithOAuth: mock.login, signOut: mock.logout } });
 });
 describe('isolated account auth', () => {
@@ -54,3 +54,9 @@ describe('isolated account auth', () => {
     for (const url of ['http://lh3.googleusercontent.com/a','https://googleusercontent.com.evil.test/a','javascript:alert(1)',null]) expect(googleAvatar(url)).toBeUndefined();
   });
 });
+
+  it('creates only one account client and supplies the same explicit persistent storage',async()=>{const auth=await import('./accountAuth');expect(auth.getAccountClient()).toBe(auth.getAccountClient());expect(mock.create).toHaveBeenCalledOnce();const storage=mock.create.mock.calls[0][2].auth.storage;expect(storage.getItem).toBeTypeOf('function');expect(storage.setItem).toBeTypeOf('function');expect(storage.removeItem).toBeTypeOf('function');});
+
+it('refuses successful OAuth responses that have no persistent session without modifying names or EXP',async()=>{window.history.replaceState(null,'','/?account=1&auth_callback=1&code=fixture');localStorage.setItem('machiAdventurerProfiles.v1','preserved');localStorage.setItem('machiTakarabakoExp','100');mock.exchange.mockResolvedValue({data:{session:{access_token:'fixture-access',refresh_token:'fixture-refresh',user:{id:'fixture-account'}}},error:null});const auth=await import('./accountAuth');await expect(auth.initializeAccount()).rejects.toThrow('保存を確認できません');expect(localStorage.getItem('machiAdventurerProfiles.v1')).toBe('preserved');expect(localStorage.getItem('machiTakarabakoExp')).toBe('100');});
+
+it('allows session restoration retry after a failed consumed callback without exchanging the code twice',async()=>{window.history.replaceState(null,'','/?account=1&auth_callback=1&code=fixture');mock.exchange.mockResolvedValue({data:{session:null},error:Error('fixture-failure')});const auth=await import('./accountAuth');await expect(auth.initializeAccount()).rejects.toThrow('ログインを確認できません');await expect(auth.initializeAccount()).resolves.toBeUndefined();expect(mock.exchange).toHaveBeenCalledOnce();expect(location.href).not.toContain('fixture');});

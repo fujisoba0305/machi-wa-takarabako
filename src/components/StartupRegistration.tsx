@@ -1,3 +1,4 @@
+import { AccountPersistenceDiagnostic } from './AccountPersistenceDiagnostic';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { getAccountClient, initializeAccount, loginWithGoogle } from '../services/accountAuth';
@@ -144,6 +145,7 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
       <button type="submit" className="start-location-button" disabled={checking || busy || !validAdventurerName(name)}><AppIcon name="compass" />{busy ? '現在地を確認しています…' : '現在地を取得して始める'}</button>
     </form>}
     {message && <p role="alert">{message}</p>}
+    <AccountPersistenceDiagnostic />
     {restoreDiagnostic && !resuming && <details><summary>ログイン復元の診断（個人情報なし）</summary><pre>{restoreDiagnostic}</pre></details>}
     {gpsDiagnostic && <details className="startup-gps-diagnostic" open><summary>現在地取得の診断（座標なし）</summary><pre>{gpsDiagnostic}</pre><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(gpsDiagnostic);setCopyMessage('座標や氏名を含まない診断をコピーしました。');}catch{setCopyMessage('下の欄を長押ししてコピーしてください。');}}}>診断結果をコピー（座標なし）</button><textarea aria-label="現在地取得診断の手動コピー" readOnly value={gpsDiagnostic}/><p role="status">{copyMessage}</p></details>}
     {gpsFailed && user && <><p>冒険者名はこのアカウントの下書きとして保存済みです。入力し直さず再取得できます。ホームへ進む場合も、目的地検索には新しい現在地が必要です。</p><button type="button" disabled={busy||checking} onClick={()=>void continueWithoutLocation()}>名前を保存してホームへ（位置情報は後で）</button></>}

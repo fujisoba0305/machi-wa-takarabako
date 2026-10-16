@@ -1,7 +1,8 @@
+import { ACCOUNT_STORAGE_KEY, createAccountSessionStorage, recordAccountPersistence, assertPersistedAccountSession } from './accountSessionStorage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Account sessions must never be consumed by the legacy guest data client.
-export const ACCOUNT_STORAGE_KEY = 'machiAccountAuth.v1';
+export { ACCOUNT_STORAGE_KEY } from './accountSessionStorage';
 let accountClient: SupabaseClient | undefined;
 let initialization: Promise<void> | undefined;
 export function getAccountClient() {
@@ -10,14 +11,15 @@ export function getAccountClient() {
   if (!url || !key) throw new Error('認証設定を確認できません。時間をおいてお試しください。');
   return accountClient ??= createClient(url, key, { auth: {
     storageKey: ACCOUNT_STORAGE_KEY, flowType: 'pkce', detectSessionInUrl: false,
-    persistSession: true, autoRefreshToken: true,
+    persistSession: true, autoRefreshToken: true, storage: createAccountSessionStorage(),
   } });
 }
 export function isAccountPage() {
   return new URLSearchParams(window.location.search).get('account') === '1';
 }
 export function initializeAccount() {
-  return initialization ??= (async () => {
+  if (initialization) return initialization;
+  const task = (async () => {
     const client = getAccountClient();
     const url = new URL(window.location.href);
     if (url.searchParams.get('auth_callback') !== '1') return;
@@ -29,9 +31,15 @@ export function initializeAccount() {
     url.hash = '';
     window.history.replaceState(null, '', url.pathname + url.search);
     if (failed || !code) throw new Error('ログインが完了しませんでした。もう一度お試しください。');
-    const { error } = await client.auth.exchangeCodeForSession(code);
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error) throw new Error('ログインを確認できませんでした。ログインを始めたブラウザで、もう一度お試しください。');
+    recordAccountPersistence('oauth-return-success');
+    assertPersistedAccountSession(data?.session);
   })();
+  initialization = task;
+  // A consumed callback must not poison every later restoration retry.
+  void task.catch(() => { if (initialization === task) initialization = undefined; });
+  return task;
 }
 export async function loginWithGoogle() {
   const client = getAccountClient();
@@ -45,6 +53,7 @@ export async function loginWithGoogle() {
   if (error) throw new Error('Googleログインを開始できませんでした。通信状態やログイン設定を確認して、もう一度お試しください。');
 }
 export async function logoutAccount() {
+  recordAccountPersistence('logout-requested');
   const { error } = await getAccountClient().auth.signOut({ scope: 'local' });
   if (error) throw new Error('ログアウトできませんでした。通信状態を確認して、もう一度お試しください。');
 }

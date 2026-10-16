@@ -1,5 +1,6 @@
+import { AccountPersistenceDiagnostic } from './AccountPersistenceDiagnostic';
 import { useEffect, useRef, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { getAccountClient, googleAvatar, initializeAccount, loginWithGoogle, logoutAccount } from '../services/accountAuth';
 import { AppIcon } from './AppIcon';
 import './MyPage.css';
@@ -24,13 +25,14 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
   }
   useEffect(() => {
     let alive = true;
-    let changed = false;
+    let ready = false;
+    let pending: {session: Session | null} | undefined;
     let unsubscribe = () => {};
     try {
       const client = getAccountClient();
-      const { data } = client.auth.onAuthStateChange((_event, session) => {
-        if (!alive) return;
-        changed = true;
+      const { data } = client.auth.onAuthStateChange((event, session) => {
+        if (!alive || event === 'INITIAL_SESSION') return;
+        if (!ready) { pending = {session}; return; }
         const nextIdentity = session?.user?.id ?? null;
         if (identity.current !== undefined && identity.current !== nextIdentity) accountChanged.current?.();
         identity.current = nextIdentity;
@@ -42,9 +44,9 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
           await initializeAccount();
           const { data, error } = await client.auth.getSession();
           if (error) throw error;
-          if (alive && !changed) { identity.current = data.session?.user?.id ?? null; applyUser(data.session?.user ?? null); }
+          if (alive) { ready = true; const restored = pending ? pending.session : data.session; identity.current = restored?.user?.id ?? null; applyUser(restored?.user ?? null); }
         } catch {
-          if (alive) setMessage('ログイン状態を確認できませんでした。キャンセル・期限切れの場合は、同じブラウザでもう一度ログインしてください。');
+          if (alive) { applyUser(null); setMessage('ログイン状態を確認できませんでした。保存確認が完了していないため、登録名は変更していません。同じブラウザで認証保存の診断を確認してください。'); }
         } finally { if (alive) setLoading(false); }
       })();
     } catch { setMessage('ログイン設定を確認できません。通信状態を確認して再試行してください。'); setLoading(false); }
@@ -70,6 +72,7 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
       <h2>{displayName}</h2>
       <p>現在地を使う冒険の前にGoogleログインをしてください。端末に保存済みの記録は削除しません。</p>
       {message && <p className="my-page-message" role="status">{message}</p>}
+    <AccountPersistenceDiagnostic />
       <button className="my-page-login" disabled={loading || busy || adventureInProgress} onClick={() => void perform(Boolean(user))}>
         <AppIcon name="user" />{busy ? '処理中…' : user ? 'この端末からログアウト' : 'Googleでログイン'}
       </button>
