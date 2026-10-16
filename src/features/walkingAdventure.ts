@@ -14,7 +14,7 @@ export function walkingDestination(a: ActiveAdventure) {
   return {
     name: a.result.treasure?.name || a.result.spot?.tags?.name || '今日の目的地',
     imageUrl: a.result.treasure?.image_url || null,
-    distanceLabel: a.result.walkingTrial ? '推定徒歩距離（検索時・道路網部分） 約'+(a.result.walkingTrial.roadMeters/1000).toFixed(1)+'km／施設到達未確認' : a.departureWalkingDistanceMeters == null ? '徒歩ルート距離を取得できませんでした' :
+    distanceLabel: a.result.distanceKind === 'straight-line' ? '現在地から直線距離：約'+(a.result.distanceKm == null ? '未確認' : a.result.distanceKm.toFixed(1))+'km（検索時）／実際の徒歩距離・所要時間はGoogleマップで確認' : a.result.walkingTrial ? '推定徒歩距離（検索時・道路網部分） 約'+(a.result.walkingTrial.roadMeters/1000).toFixed(1)+'km／施設到達未確認' : a.departureWalkingDistanceMeters == null ? '徒歩ルート距離を取得できませんでした' :
       a.departureWalkingDistanceMeters < 1000 ? '約' + Math.round(a.departureWalkingDistanceMeters) + 'm' :
       '約' + (a.departureWalkingDistanceMeters / 1000).toFixed(1) + 'km',
   };

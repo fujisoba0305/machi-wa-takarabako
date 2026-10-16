@@ -1,3 +1,5 @@
+import { ApproximateSearchControls } from './components/ApproximateSearchControls';
+import { matchesApproximateScope, searchApproximate } from './services/approximateSearch';
 import { WalkingTrialTrace } from './features/walkingTrialDiagnostics';
 import { WalkingTrialControls } from './components/WalkingTrialControls';
 import { WalkingTrialReport } from './components/WalkingTrialReport';
@@ -332,12 +334,15 @@ return requestAccountPosition(requestFreshSearchPosition).then(({ latitude, long
 }
 
 export default function App() {
+const [approximateEnabled,setApproximateEnabled]=useState(false);
+const [approximateSelection,setApproximateSelection]=useState(false);
+function changeApproximateEnabled(value:boolean){setApproximateEnabled(value);trialAbortRef.current?.abort();cancelWalkingTrial();if(value)setWalkingTrialEnabled(false);}
 const [walkingTrialEnabled,setWalkingTrialEnabled]=useState(false);
 const [trialProgress,setTrialProgress]=useState('');
 const [trialSelection,setTrialSelection]=useState<TrialDistance|null>(null);
 const [trialReport,setTrialReport]=useState('');
 const trialAbortRef=useRef<AbortController|null>(null);
-function changeTrialEnabled(value:boolean){setWalkingTrialEnabled(value);if(!value){trialAbortRef.current?.abort();cancelWalkingTrial();}}
+function changeTrialEnabled(value:boolean){setWalkingTrialEnabled(value);if(value)setApproximateEnabled(false);if(!value){trialAbortRef.current?.abort();cancelWalkingTrial();}}
 useEffect(()=>()=>{trialAbortRef.current?.abort();cancelWalkingTrial();},[]);
 const [adventureSession] = useState(() => new AdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
 const [dateSession] = useState(() => new DateAdventureSession(localStorage, () => requestAccountPosition(requestAdventurePosition)));
@@ -394,7 +399,7 @@ try { const { data } = getAccountClient().auth.onAuthStateChange((_event, sessio
 const next = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user.id : null;
 if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
 profileIdentity.current = undefined;
-locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
+changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
 adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
 }
@@ -703,7 +708,7 @@ if (!isWalkingAdventure(adventure)) { setScreen('home'); return; }
 setNearbySpot(adventure.result.spot);
 setSelectedGachaTreasure(adventure.result.treasure);
 setChoices((current) => ({ ...current, ...adventure.result.choices }));
-setSpotDistance(adventure.result.distanceKm);
+setSpotDistance(adventure.result.distanceKm);setApproximateSelection(adventure.result.distanceKind === 'straight-line');
 setHasArrivedAtNormalSpot(false);
 normalArrivalRewardClaimedRef.current = false;
 setScreen(adventureReturnScreen(adventure));
@@ -1178,7 +1183,7 @@ at: new Date().toISOString(),
 const isCurrent = () => activeNormalSearchIdRef.current === searchId;
 setSearchFailureMessage('');
 setSearchFailureReason(null);
-setTrialSelection(null);setTrialReport('');
+setTrialSelection(null);setApproximateSelection(false);setTrialReport('');
 trialAbortRef.current?.abort();
 setSelectedGachaTreasure(null);
 
@@ -1198,6 +1203,17 @@ await findDateCourse(isCurrent);
 return;
 }
 
+if(approximateEnabled && matchesApproximateScope(choices)) {
+ const controller=new AbortController();trialAbortRef.current=controller;
+ try{
+ setTrialProgress('現在地と静的施設を確認しています…');
+ const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal}));if(!isCurrent()||controller.signal.aborted)return;
+ const treasures=await withWalkingTrialDeadline(getTreasures(),controller.signal);if(treasures===null)throw Error('登録宝物を読み込めませんでした。再試行してください。');
+ const result=await searchApproximate(fresh,{...choices},treasures,controller.signal);if(!isCurrent()||controller.signal.aborted)return;
+ setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report);
+ }catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason('static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setSearchFailed(true);}
+ return;
+}
 if(walkingTrialEnabled && matchesTrialScope(choices)) {
 const controller=new AbortController();trialAbortRef.current=controller;
 const trialTrace = new WalkingTrialTrace();
@@ -1953,8 +1969,8 @@ setIsAdventureBusy(true);
 setAdventureMessage('出発地点を確認しています…');
 try {
 const adventure = await adventureSession.start(target, {
-spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}),
-}, choices.distance === '？km' || trialSelection ? undefined : getDepartureWalkingDistance);
+spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}), ...(approximateSelection ? { distanceKind: 'straight-line' as const } : {}),
+}, choices.distance === '？km' || trialSelection || approximateSelection ? undefined : getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
 setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
 // Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
@@ -2177,14 +2193,14 @@ setIsTreasureRatingSubmitting(false);
 
 return (
 <main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
-{screen === 'condition' && <WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />}
+{screen === 'condition' && <><ApproximateSearchControls enabled={approximateEnabled} onChange={changeApproximateEnabled} locked={isSearching || isAdventureBusy} /><WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} /></>}
 {trialReport && (screen === 'result' || screen === 'searching') && <WalkingTrialReport report={trialReport} failed={searchFailed} />}
 
 
 {screen === 'my-page' ? (
 <>
-<WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />
-<MyPage adventurerName={name} onNameChange={setName} onAccountChanged={() => { changeTrialEnabled(false); locationFetchedAt.current = 0; setCurrentLocation(null); if (!isWalkingAdventure(adventureSession.current) && !(dateSession.current && !dateSession.current.rewardClaimed)) { setName(''); setHasStarted(false); } }} adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+<ApproximateSearchControls enabled={approximateEnabled} onChange={changeApproximateEnabled} locked={isSearching || isAdventureBusy} /><WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />
+<MyPage adventurerName={name} onNameChange={setName} onAccountChanged={() => { changeTrialEnabled(false); changeApproximateEnabled(false); locationFetchedAt.current = 0; setCurrentLocation(null); if (!isWalkingAdventure(adventureSession.current) && !(dateSession.current && !dateSession.current.rewardClaimed)) { setName(''); setHasStarted(false); } }} adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
 </>
 ) : !hasStarted ? (
 <div
@@ -2659,6 +2675,7 @@ key={group.key}
 : group.label} />
 </legend>
 
+{group.key === 'distance' && approximateEnabled && choices.mood !== 'デート' && <p>距離は直線距離の目安です。実際の徒歩距離・所要時間はGoogleマップで確認してください。</p>}
 <div className="choice-buttons">
 {group.options.map((option) => (
 <button
@@ -2806,7 +2823,7 @@ setScreen('gacha');
 ) : screen === 'searching' ? (
 
 <section className="searching-screen">
-{walkingTrialEnabled&&matchesTrialScope(choices)&&<div className="walking-trial-progress" role="status"><p>{searchFailed?'徒歩検索の停止理由を測定結果で確認できます。試験版OFFで従来検索へ戻せます。':trialProgress||'徒歩検索を準備しています…'}</p><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;trialAbortRef.current?.abort();cancelWalkingTrial();setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>検索を中止して条件画面へ</button><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;changeTrialEnabled(false);setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>試験版をOFFにして戻る</button></div>}
+{((walkingTrialEnabled&&matchesTrialScope(choices))||(approximateEnabled&&matchesApproximateScope(choices)))&&<div className="walking-trial-progress" role="status"><p>{searchFailed?'検索できなかった理由を確認し、再試行できます。試験版OFFで従来検索へ戻せます。':trialProgress||'徒歩検索を準備しています…'}</p><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;trialAbortRef.current?.abort();cancelWalkingTrial();setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>検索を中止して条件画面へ</button><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;changeTrialEnabled(false);changeApproximateEnabled(false);setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>試験版をOFFにして戻る</button></div>}
 
 <img
 src={takaranSearch}
@@ -2952,8 +2969,8 @@ setScreen('condition');
 ? selectedGachaTreasure.category
 : `${getOptionIcon(choices.mood) || '💎'} ${choices.mood}`} />
 </p>
-<h3>{displayPlace}</h3>{trialSelection && <p>徒歩検索・試験版：道路から施設までの到達は未確認です。到着は登録座標へのGPS判定で確認します。</p>}
-{spotDistance !== null && <p className="destination-distance"><IconText text="👣 " />{trialSelection ? '推定徒歩距離（道路網部分）' : selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
+<h3>{displayPlace}</h3>{approximateSelection && <p>実際の徒歩距離・所要時間はGoogleマップで確認。経路が見つからない場合や立入禁止の場合は、冒険を完了せず目的地を選び直してください。</p>}{trialSelection && <p>徒歩検索・試験版：道路から施設までの到達は未確認です。到着は登録座標へのGPS判定で確認します。</p>}
+{spotDistance !== null && <p className="destination-distance"><IconText text="👣 " />{approximateSelection ? '現在地から直線距離：' : trialSelection ? '推定徒歩距離（道路網部分）' : selectedGachaTreasure ? '直線距離' : '徒歩ルート'} 約{spotDistance.toFixed(1)}km</p>}
 <p>
 {selectedGachaTreasure
 ? selectedGachaTreasure.comment || 'コメントはありません。'
@@ -3025,7 +3042,7 @@ aria-live="polite"
 <dl>
 {spotDistance !== null && (
 <div>
-<dt><IconText text={trialSelection ? '👣 推定徒歩距離（道路網部分）' : choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'} /></dt>
+<dt><IconText text={approximateSelection ? '🧭 現在地から直線距離：' : trialSelection ? '👣 推定徒歩距離（道路網部分）' : choices.distance === '？km' || selectedGachaTreasure ? '🧭 現在地からの直線距離' : '👣 徒歩ルート距離'} /></dt>
 <dd>約{spotDistance.toFixed(1)}km</dd>
 </div>
 )}
