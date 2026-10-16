@@ -26,3 +26,20 @@ export function inspectAdventurerProfile(storage:Pick<Storage,'getItem'>,uid:str
  return profile.started===true?'このアカウントの登録済み冒険者名が保存されています。':'このアカウントの冒険者名は下書きとして保存されています。入力し直す必要はありません。';
  }catch{return 'ブラウザの保存領域を読み取れません。再登録の前にブラウザ設定を確認してください。';}
 }
+
+/** Startup must distinguish absent data from unreadable data before offering registration. */
+export function readStartupAdventurerProfile(storage: Pick<Storage, 'getItem'>, uid: string): AdventurerProfile | null {
+  let raw: string | null;
+  try { raw = storage.getItem(PROFILE_KEY); }
+  catch { throw new Error('保存済みの冒険者名を読み取れません。再登録せず、ブラウザの保存設定を確認して再確認してください。'); }
+  if (raw === null) return null;
+  let value: any;
+  try { value = JSON.parse(raw); } catch { throw new Error('冒険者名の保存データを確認できません。元のデータは変更していません。再登録せず再確認してください。'); }
+  if (value?.version !== 1 || !value.profiles || typeof value.profiles !== 'object' || Array.isArray(value.profiles))
+    throw new Error('冒険者名の保存形式を確認できません。元のデータは変更していません。再登録せず再確認してください。');
+  const key = owner(uid);
+  if (!Object.prototype.hasOwnProperty.call(value.profiles, key)) return null;
+  const profile = value.profiles[key];
+  if (!profile || !validAdventurerName(profile.name)) throw new Error('このアカウントの保存名を確認できません。元のデータは変更していません。再登録せず再確認してください。');
+  return { name: profile.name.trim(), started: profile.started === true };
+}
