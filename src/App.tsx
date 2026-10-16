@@ -11,7 +11,7 @@ import { getAccountClient, isAccountPage } from './services/accountAuth';
 import { requestAccountPosition } from './services/accountPosition';
 import { StartupRegistration, isOnboardingReturn } from './components/StartupRegistration';
 import { readAdventurerProfile, saveAdventurerProfile, validAdventurerName } from './features/adventurerProfile';
-import { requestFreshSearchPosition, locationFailureMessage } from './services/startupLocation';
+import { requestFreshSearchPosition, locationFailureMessage, StartupLocationFailure } from './services/startupLocation';
 import { AppIcon, IconText, plainIconLabel } from './components/AppIcon';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -329,8 +329,8 @@ const treasureCategories: TreasureCategory[] = [
 '💎 その他',
 ];
 
-function requestCurrentCoordinates(): Promise<Coordinates> {
-return requestAccountPosition(requestFreshSearchPosition).then(({ latitude, longitude }) => ({ latitude, longitude }));
+function requestCurrentCoordinates(): ReturnType<typeof requestFreshSearchPosition> {
+return requestAccountPosition(requestFreshSearchPosition);
 }
 
 export default function App() {
@@ -388,10 +388,11 @@ shrineGenre:',',
 });
 
 const locationFetchedAt = useRef(0);
-const locationPending = useRef<Promise<Coordinates> | null>(null);
+const locationPending = useRef<ReturnType<typeof requestFreshSearchPosition> | null>(null);
 const locationGate = useRef(0);
 const [locationBusy, setLocationBusy] = useState(false);
 const [locationMessage, setLocationMessage] = useState('');
+const [locationDiagnostic,setLocationDiagnostic]=useState('');
 const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
 useEffect(() => {
 let previous: string | null | undefined;
@@ -399,7 +400,7 @@ try { const { data } = getAccountClient().auth.onAuthStateChange((_event, sessio
 const next = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user.id : null;
 if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
 profileIdentity.current = undefined;
-changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
+setLocationDiagnostic('');locationPending.current=null;changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
 adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
 }
@@ -642,12 +643,12 @@ const locationGeneration = locationGate.current;
 setTakaranSpeech("🔍 現在地を探してるよ...");
 
 try {
-if (!locationPending.current) locationPending.current = requestCurrentCoordinates().finally(() => { locationPending.current = null; });
+if (!locationPending.current) { const pending=requestCurrentCoordinates().finally(() => { if(locationPending.current===pending)locationPending.current = null; });locationPending.current=pending; }
 const coordinates = await locationPending.current;
 if (locationGeneration !== locationGate.current) return false;
-locationFetchedAt.current = Date.now();
+locationFetchedAt.current = coordinates.timestamp;
 setCurrentLocation(coordinates);
-setLocationMessage('');
+setLocationMessage('');setLocationDiagnostic('');
 setTakaranSpeech("🎉 よし！冒険に行こう！");
 return true;
 } catch (error) {
@@ -656,7 +657,7 @@ locationFetchedAt.current = 0;
 setCurrentLocation(null);
 console.warn('[location] acquisition_failed');
 setTakaranSpeech("😢 現在地が見つからなかったよ...");
-setLocationMessage(locationFailureMessage(error));
+setLocationMessage(locationFailureMessage(error));setLocationDiagnostic(error instanceof StartupLocationFailure?error.report:'現在地取得の診断（座標・住所・氏名なし）\n停止段階：ログイン状態確認またはGPS開始前\nGPS位置データの検証：未実施');
 return false;
 }
 }
@@ -1206,12 +1207,12 @@ return;
 if(approximateEnabled && matchesApproximateScope(choices)) {
  const controller=new AbortController();trialAbortRef.current=controller;
  try{
- setTrialProgress('現在地と静的施設を確認しています…');
- const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal}));if(!isCurrent()||controller.signal.aborted)return;
- const treasures=await withWalkingTrialDeadline(getTreasures(),controller.signal);if(treasures===null)throw Error('登録宝物を読み込めませんでした。再試行してください。');
- const result=await searchApproximate(fresh,{...choices},treasures,controller.signal);if(!isCurrent()||controller.signal.aborted)return;
- setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report);
- }catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason('static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setSearchFailed(true);}
+ setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();
+ const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal}));const gpsMs=performance.now()-gpsStarted;if(!isCurrent()||controller.signal.aborted)return;
+ setTrialProgress('本人確認・施設・登録宝物を確認しています…');
+ const result=await searchApproximate(fresh,{...choices},()=>withWalkingTrialDeadline(getTreasures(),controller.signal),controller.signal);if(!isCurrent()||controller.signal.aborted)return;
+ setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report+'\nGPS取得・ログイン確認：'+gpsMs.toFixed(1)+'ms\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms');
+ }catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason('static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setTrialReport(error instanceof StartupLocationFailure?error.report:error instanceof Error&&'report'in error&&typeof error.report==='string'?error.report:'直線距離・試験版\n停止段階：ログイン状態確認またはGPS開始前');setSearchFailed(true);}
  return;
 }
 if(walkingTrialEnabled && matchesTrialScope(choices)) {
@@ -2782,6 +2783,8 @@ setScreen('coin');
   moodIcon={getOptionIcon(choices.mood)}
   busy={locationBusy}
   message={locationMessage}
+  diagnostic={locationDiagnostic}
+  onRetryLocation={async()=>{if(locationBusy)return;setLocationBusy(true);try{await getCurrentLocation();}finally{setLocationBusy(false);}}}
   onContinue={async () => {
 if (locationBusy) return;
 const gate = locationGate.current;
