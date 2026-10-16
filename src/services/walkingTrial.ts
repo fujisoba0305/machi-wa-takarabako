@@ -1,3 +1,4 @@
+import { originFailureReport, originReasonLabel, trialStage } from '../features/walkingTrialDiagnostics';
 import staticManifest from '../data/staticFacilityManifest.json';
 import { getAccountClient } from './accountAuth';
 import { resolveStaticCondition, isInsideStaticRegion } from './staticFacilities';
@@ -21,7 +22,7 @@ export async function authorizeWalkingTrial(signal?: AbortSignal) {
 type Point = { latitude: number; longitude: number };
 type Choice = { distance: string; mood: string; foodGenre?: string; eventGenre?: string; shrineGenre?: string };
 type Candidate = { id: string; lat: number; lon: number; name: string; distanceMeters: number; evaluatedDistanceMeters?: number; approachEstimateMeters?: number|null; quality: string };
-type WorkerResult = { extraMs?:number; bodyBytes?:number; generalPicked?:Candidate|null;treasurePicked?:Candidate|null;generalCount?:number;treasureCount?:number;counts?:{osmMapped:number;blockEstimate:number};bytes?:Record<string,number>;timings?:{totalMs:number};status: string; candidates: Candidate[]; connectionCounts?: Record<string,number>; originConnection?: {type: string}; loadMs: number; totalMs: number; searchMs: number; decodedBytes: number; brotliBytes: number; measurement?: {downloads: unknown[]}; treasureInputCount?: number; treasureConnectedCount?: number };
+type WorkerResult = { extraMs?:number; bodyBytes?:number; generalPicked?:Candidate|null;treasurePicked?:Candidate|null;generalCount?:number;treasureCount?:number;counts?:{osmMapped:number;blockEstimate:number};bytes?:Record<string,number>;timings?:{totalMs:number;roadMs?:number;facilityLoadMs?:number;originMs?:number};status: string; candidates: Candidate[]; connectionCounts?: Record<string,number>; originConnection?: {type: string; reason?: string}; loadMs: number; totalMs: number; searchMs: number; decodedBytes: number; brotliBytes: number; measurement?: {downloads: unknown[]}; treasureInputCount?: number; treasureConnectedCount?: number };
 let firstWorkerLoadMs:number|null=null,idle:ReturnType<typeof setTimeout>|undefined,lastCondition='',conditionChanges=0;
 let worker: Worker | null = null, pendingCancel: (() => void) | null = null, sequence = 0, manifest: Promise<{regions: {bounds:number[]}[];coverage:Parameters<typeof isInsideStaticRegion>[1]}> | null = null;
 let operation:AbortController|null=null;
@@ -32,21 +33,24 @@ async function loadManifest(signal?: AbortSignal): Promise<{regions: {bounds:num
   if(!manifest){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000),abort=()=>controller.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)controller.abort();manifest=fetch('/walking-v30/manifest.json', { signal:controller.signal }).then(async response => { if (!response.ok) throw Error(); const data = await response.json(); if(data.version!==30||data.poiCount!==56701)throw Error();const coverageResponse=await fetch(staticManifest.region.url,{signal:controller.signal,integrity:'sha256-'+btoa(staticManifest.region.sha256.match(/../g)!.map(h=>String.fromCharCode(parseInt(h,16))).join(''))});if(!coverageResponse.ok)throw Error();const coverage=await coverageResponse.json();if(!Array.isArray(coverage.features)||!coverage.features.length)throw Error();return {regions:[{bounds:[138,34,141,37]}],coverage}; }).catch(() => {manifest=null;throw Error('徒歩検索データ一覧を読み込めませんでした。再試行してください。');}).finally(()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);});}return manifest;
 }
 export function matchesTrialScope(choices: Choice) { return permittedDistances.includes(Number(choices.distance.replace('km',''))) && choices.mood !== 'デート'; }
-export async function searchWalkingTrial(point: Point, choices: Choice, treasures: Treasure[], signal: AbortSignal, progress: (message:string)=>void = () => {}): Promise<TrialResult | null> {
+export async function searchWalkingTrial(point: Point, choices: Choice, treasures: Treasure[], signal: AbortSignal, progress: (message:string, stage?:string)=>void = () => {}): Promise<TrialResult | null> {
  if(operation)throw Error('検索中です。完了または中止してから再試行してください。');const controller=new AbortController(),abort=()=>controller.abort();operation=controller;signal.addEventListener('abort',abort,{once:true});if(signal.aborted)controller.abort();const timer=setTimeout(()=>controller.abort(),90000);let stop:()=>void=()=>{};const interrupted=new Promise<never>((_,reject)=>{stop=()=>reject(Error('検索を中止しました。待機上限またはSafariの画面切替を含みます。条件を保って再試行できます。'));controller.signal.addEventListener('abort',stop,{once:true});if(controller.signal.aborted)stop();});try{return await Promise.race([executeTrial(point,choices,treasures,controller.signal,progress),interrupted]);}finally{clearTimeout(timer);controller.signal.removeEventListener('abort',stop);signal.removeEventListener('abort',abort);if(operation===controller)operation=null;}
 }
-async function executeTrial(point:Point,choices:Choice,treasures:Treasure[],signal:AbortSignal,progress:(message:string)=>void):Promise<TrialResult|null>{
+async function executeTrial(point:Point,choices:Choice,treasures:Treasure[],signal:AbortSignal,progress:(message:string, stage?:string)=>void):Promise<TrialResult|null>{
   if (!matchesTrialScope(choices)) throw Error('この条件は徒歩検索試験版の対象外です。');
+  progress('徒歩検索・試験版：権限確認中…','authorization');
   if (!await authorizeWalkingTrial(signal)) throw Error('試験版の権限を確認できません。通常検索へ切り替えるか、ログイン状態を確認してください。');
   if(!matchesTrialScope(choices))throw Error('この距離は試験版では無効です。従来検索をお使いください。');
   if (signal.aborted) throw Error('検索を中止しました。');
   if (typeof DecompressionStream === 'undefined' || typeof Worker === 'undefined') throw Error('このSafariでは徒歩データを展開できません。Safariを更新するか通常検索をお使いください。');
+  progress('徒歩検索・試験版：データ版確認中…','manifest');
   const data = await loadManifest(signal), region = data.regions.find(r => point.longitude>=r.bounds[0]&&point.longitude<=r.bounds[2]&&point.latitude>=r.bounds[1]&&point.latitude<=r.bounds[3]);
   if (!region || !isInsideStaticRegion(point,data.coverage)) throw Error('この地域の徒歩道路データは未準備です。通常検索へ切り替えてください。');
   const condition=resolveStaticCondition(choices),km=Number(choices.distance.replace('km',''));
   const registered=getEligibleRegisteredTreasures(treasures,point,choices.mood,{min:0,max:km+1},choices.foodGenre).filter(c=>Number.isSafeInteger(c.treasure.id)&&Number(c.treasure.id)>0);
   if(pendingCancel)throw Error('検索中です。完了または中止してから再試行してください。');
   clearTimeout(idle);const cacheCondition=JSON.stringify([choices.distance,choices.mood,choices.foodGenre,choices.eventGenre,choices.shrineGenre]);if(lastCondition&&lastCondition!==cacheCondition)conditionChanges++;if(conditionChanges>=3){releaseWorker();}lastCondition=cacheCondition;
+  progress('徒歩検索・試験版：Worker起動中…','worker');
   const result=await new Promise<WorkerResult>((resolve,reject)=>{
     const owned=worker??=new Worker('/walking-v30/runtime/worker.mjs',{type:'module'}),id=++sequence;
     let finished=false,timer:ReturnType<typeof setTimeout>,currentStage='worker';const workerStarted=performance.now();
@@ -56,16 +60,23 @@ async function executeTrial(point:Point,choices:Choice,treasures:Treasure[],sign
     const abort=()=>fail('検索を中止しました。');pendingCancel=abort;signal.addEventListener('abort',abort,{once:true});
     const refresh=(stage:string)=>{currentStage=stage;clearTimeout(timer);timer=setTimeout(()=>fail('徒歩データの読込・計算がタイムアウトしました。再試行できます。'),['road','roadTile','roadIndex','blocks','facilities','tile','roadSafety','conditions','index','manifest','evidence'].includes(stage)?90000:30000);};refresh('worker');
     owned.onerror=()=>fail('徒歩検索の計算処理を維持できませんでした。再試行できます。');
-    owned.onmessage=({data})=>{if(finished||data.id!==id)return;if(data.progress){refresh(data.progress.stage);progress('徒歩検索・試験版：'+safeStage(data.progress.stage)+'中…');return;}if(data.error)return fail(data.error==='coverage-incomplete'?'この距離に必要な道路データが不足するため未対応です。条件は変更していません。':data.error==='resource-budget-exceeded'?'必要データが試験用の上限を超えました。試験版をOFFにして従来検索へ戻せます。':'徒歩検索の'+safeStage(data.stage)+'で失敗しました。条件を保って再試行してください。');finished=true;clean();idle=setTimeout(()=>disposeWalkingTrial(),30000);resolve(data.result);};
+    owned.onmessage=({data})=>{if(finished||data.id!==id)return;if(data.progress){refresh(data.progress.stage);progress('徒歩検索・試験版：'+safeStage(data.progress.stage)+'中…',trialStage(data.progress.stage));return;}if(data.error)return fail(data.error==='coverage-incomplete'?'この距離に必要な道路データが不足するため未対応です。条件は変更していません。':data.error==='resource-budget-exceeded'?'必要データが試験用の上限を超えました。試験版をOFFにして従来検索へ戻せます。':'徒歩検索の'+safeStage(data.stage)+'で失敗しました。条件を保って再試行してください。');finished=true;clean();idle=setTimeout(()=>disposeWalkingTrial(),30000);resolve(data.result);};
     try{owned.postMessage({id,choices:{...choices,mood:condition.mood},type:'study',point:{lat:point.latitude,lon:point.longitude},region,km,mood:condition.mood,condition:{selected:condition.mood,clauses:condition.clauses},roadMode:'partitioned',searchMode:'block',treasures:registered.map(c=>({id:'treasure:'+c.treasure.id,name:c.treasure.name,lat:c.treasure.latitude,lon:c.treasure.longitude}))});if(signal.aborted)abort();}catch{fail('徒歩検索を起動できませんでした。再試行してください。');}
   });
   if(signal.aborted)throw Error('検索を中止しました。');
+  progress('徒歩検索・試験版：結果の権限確認中…','authorization');
   if(!await authorizeWalkingTrial(signal)||!matchesTrialScope(choices))throw Error('試験版の権限が変更されました。通常検索へ切り替えてください。');
   result.candidates??=[result.generalPicked,result.treasurePicked].filter((c):c is Candidate=>Boolean(c));
+  if(result.status==='origin-blocked'||result.status==='origin-unconnected') {
+    progress('徒歩検索・試験版：現在地と道路の接続判定で停止しました。','origin');
+    const blocked=result.status==='origin-blocked';
+    throw Object.assign(Error(blocked?'現在地と道路の間に障害物があり、安全な接続を確認できません。理由：'+originReasonLabel(result.originConnection?.reason)+'。地図上の判定であり、実際に通れないと断定するものではありません。':'現在地付近の道路接続を確認できません。条件を保って現在地を再取得できます。'),{name:'WalkingTrialOrigin',report:originFailureReport(result)});
+  }
   if(!['ok','estimated-candidates','no-candidates'].includes(result.status))throw Error(result.status==='origin-unconnected'?'現在地付近の利用可能道路に接続できません。':result.status==='origin-blocked'?'現在地と道路の間に障害物があり、安全な接続を確認できません。': '選択距離に必要な道路データの範囲が不足しています。条件は変更していません。');
   if(firstWorkerLoadMs===null)firstWorkerLoadMs=result.loadMs;
   const general=result.candidates.filter(c=>!c.id.startsWith('treasure:'));
   const eligible=result.candidates.filter(c=>c.id.startsWith('treasure:')).flatMap(c=>{const t=registered.find(t=>'treasure:'+t.treasure.id===c.id);return t?[{...t,distanceKm:c.distanceMeters/1000}]:[];});
+  progress('徒歩検索・試験版：候補抽選中…','selection');
   const selected=selectNormalSearchCandidate(general,eligible);if(!selected)throw Object.assign(Error('この徒歩距離・カテゴリ条件に合う候補がありませんでした。条件は変更していません。'),{name:'WalkingTrialEmpty',report:['徒歩検索・試験版（座標・施設名なし）','結果：候補0件（条件は変更していません）','距離条件：'+choices.distance,'カテゴリ：'+choices.mood,'今回の準備：'+(result.loadMs/1000).toFixed(3)+'秒','Worker合計：'+(result.totalMs/1000).toFixed(3)+'秒','今回の圧縮区画データ量：'+(Object.values(result.bytes||{}).reduce((a,b)=>a+b,0)/1e6).toFixed(3)+'MB（索引・プログラムは別）','起点接続：'+(result.originConnection?.type||'unknown')].join('\n')});
   const picked=selected.source==='treasure'?result.candidates.find(c=>c.id==='treasure:'+selected.treasure.id)!:selected.candidate;
   const evaluated=picked.evaluatedDistanceMeters??picked.distanceMeters;

@@ -1,3 +1,4 @@
+import { WalkingTrialTrace } from './features/walkingTrialDiagnostics';
 import { WalkingTrialControls } from './components/WalkingTrialControls';
 import { WalkingTrialReport } from './components/WalkingTrialReport';
 import { withWalkingTrialDeadline, searchWalkingTrial, matchesTrialScope, cancelWalkingTrial, type TrialDistance } from './services/walkingTrial';
@@ -1199,18 +1200,19 @@ return;
 
 if(walkingTrialEnabled && matchesTrialScope(choices)) {
 const controller=new AbortController();trialAbortRef.current=controller;
+const trialTrace = new WalkingTrialTrace();
 try {
 setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAccountPosition(requestFreshSearchPosition);const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;
-setTrialProgress('登録宝物の読み込みを確認しています…');
+trialTrace.stage('registered');setTrialProgress('登録宝物の読み込みを確認しています…');
 const treasureRows=await withWalkingTrialDeadline(getTreasures(),controller.signal);
 if(!isCurrent()||controller.signal.aborted)return;
 if(treasureRows===null)throw Error('登録宝物を読み込めませんでした。条件を保って再試行してください。');
-setTrialProgress('徒歩検索の権限とデータを確認しています…');
-const result=await searchWalkingTrial(freshOrigin,{...choices},treasureRows,controller.signal,message=>{if(isCurrent()&&!controller.signal.aborted)setTrialProgress(message);});
+trialTrace.stage('authorization');setTrialProgress('徒歩検索の権限とデータを確認しています…');
+const result=await searchWalkingTrial(freshOrigin,{...choices},treasureRows,controller.signal,(message,stage)=>{if(isCurrent()&&!controller.signal.aborted){trialTrace.stage(stage??'search');setTrialProgress(message);}});
 if(!isCurrent()||controller.signal.aborted)return;
 if(!result){setSearchFailureReason('empty');setSearchFailureMessage('この徒歩距離・カテゴリ条件に合う候補がありませんでした。条件は変更していません。');setSearchFailed(true);return;}
 setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distance.roadMeters/1000);setTrialSelection(result.distance);setTrialReport('GPS取得：'+gpsMs.toFixed(1)+'ms\nGPS精度：'+freshOrigin.accuracy.toFixed(1)+'m\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms（描画完了は未測定）\n'+result.report);
-}catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason(error instanceof Error&&error.name==='WalkingTrialEmpty'?'empty':'walking');if(error instanceof Error&&'report'in error&&typeof error.report==='string')setTrialReport(error.report);setSearchFailureMessage(error instanceof Error?error.message:'徒歩検索試験版を完了できませんでした。再試行してください。');setSearchFailed(true);}
+}catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason(error instanceof Error&&error.name==='WalkingTrialEmpty'?'empty':'walking');setTrialReport(trialTrace.failureReport()+(error instanceof Error&&'report'in error&&typeof error.report==='string'?'\n\n'+error.report:''));setSearchFailureMessage(error instanceof Error?error.message:'徒歩検索試験版を完了できませんでした。再試行してください。');setSearchFailed(true);}
 return;
 }
 
@@ -2176,7 +2178,7 @@ setIsTreasureRatingSubmitting(false);
 return (
 <main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
 {screen === 'condition' && <WalkingTrialControls enabled={walkingTrialEnabled} onChange={changeTrialEnabled} locked={isSearching || isAdventureBusy} />}
-{trialReport && (screen === 'result' || screen === 'searching') && <WalkingTrialReport report={trialReport} />}
+{trialReport && (screen === 'result' || screen === 'searching') && <WalkingTrialReport report={trialReport} failed={searchFailed} />}
 
 
 {screen === 'my-page' ? (
@@ -2804,7 +2806,7 @@ setScreen('gacha');
 ) : screen === 'searching' ? (
 
 <section className="searching-screen">
-{walkingTrialEnabled&&matchesTrialScope(choices)&&<div className="walking-trial-progress" role="status"><p>{searchFailed?'徒歩検索を中断しました。試験版OFFで従来検索へ戻せます。':trialProgress||'徒歩検索を準備しています…'}</p><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;trialAbortRef.current?.abort();cancelWalkingTrial();setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>検索を中止して条件画面へ</button><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;changeTrialEnabled(false);setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>試験版をOFFにして戻る</button></div>}
+{walkingTrialEnabled&&matchesTrialScope(choices)&&<div className="walking-trial-progress" role="status"><p>{searchFailed?'徒歩検索の停止理由を測定結果で確認できます。試験版OFFで従来検索へ戻せます。':trialProgress||'徒歩検索を準備しています…'}</p><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;trialAbortRef.current?.abort();cancelWalkingTrial();setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>検索を中止して条件画面へ</button><button type="button" onClick={()=>{activeNormalSearchIdRef.current=null;changeTrialEnabled(false);setIsSearching(false);setSearchFailed(false);setTrialProgress('');setScreen('condition');}}>試験版をOFFにして戻る</button></div>}
 
 <img
 src={takaranSearch}

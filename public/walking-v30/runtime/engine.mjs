@@ -167,15 +167,7 @@ export function facilitySearch({ roadIndex, assetIndex, roadIndexSha256, fetchRo
     const road = await loadRoad(point, km), roadMs = performance.now() - at, key = road.plan.keys.join('|');
     let facilityBytes = 0, evidenceBytes = 0;
     if(retained?.key!==key)retained={key,band:km,records:[],profileKey:null,grid:spatialIndex(road.graph),origin:null,network:null};
-    const profileKey=condition.profileKey||'legacy-all';
-    if(retained.profileKey!==profileKey){retained.records=[];retained.profileKey=null;const records=[];
-      for(const k of facilityKeys(road.plan.keys)){const meta=assetIndex.tiles[k];if(!meta&&road.plan.keys.includes(k)&&!roadIndex.tiles[k].empty)throw Error('facility-coverage-incomplete');
-        const desc=meta?.profiles?meta.profiles[profileKey]:meta?.facilities;
-        if(!desc){if(meta?.poiCount)throw Error('facility-tile-missing');continue;}if(desc.empty){if(desc.count!==0)throw Error('invalid-empty-profile');continue;}
-        const data=await readAsset(desc,fetchAsset);if(data.version!==1||data.policy!==assetIndex.policy||!Array.isArray(data.records)||data.records.length!==(desc.count??meta.poiCount))throw Error('invalid-facility-data');facilityBytes+=desc.bytes;records.push(...packRecords(data.records));
-      }retained.records=records;retained.profileKey=profileKey;
-    }
-    const facilityLoadMs = performance.now() - at - roadMs;
+    let facilityLoadMs = 0;
     const originAt=performance.now();let selection;
     if (retained.origin?.lat === point.lat && retained.origin?.lon === point.lon)
         selection = retained.origin.selection;
@@ -192,6 +184,18 @@ export function facilitySearch({ roadIndex, assetIndex, roadIndexSha256, fetchRo
     const originMs=performance.now()-originAt;
     if (!selection || selection.connection.type === 'blocked')
         return { status: selection ? 'origin-blocked' : 'origin-unconnected', message: selection ? '起点と道路の間に障害物があるため保留します。' : '50m以内の道路接続を確認できません。', originConnection: selection?.connection, candidates: [], bytes: { roads: road.reused ? 0 : road.plan.bytes, facilities: facilityBytes, evidence: evidenceBytes }, timings: { roadMs, facilityLoadMs,originMs, totalMs: performance.now() - started } };
+    // Validate the origin before downloading POI profiles. A blocked origin is
+    // not a candidate shortage; preserve the same safety decision and cached roads.
+    at = performance.now();
+    const profileKey=condition.profileKey||'legacy-all';
+    if(retained.profileKey!==profileKey){retained.records=[];retained.profileKey=null;const records=[];
+      for(const k of facilityKeys(road.plan.keys)){const meta=assetIndex.tiles[k];if(!meta&&road.plan.keys.includes(k)&&!roadIndex.tiles[k].empty)throw Error('facility-coverage-incomplete');
+        const desc=meta?.profiles?meta.profiles[profileKey]:meta?.facilities;
+        if(!desc){if(meta?.poiCount)throw Error('facility-tile-missing');continue;}if(desc.empty){if(desc.count!==0)throw Error('invalid-empty-profile');continue;}
+        const data=await readAsset(desc,fetchAsset);if(data.version!==1||data.policy!==assetIndex.policy||!Array.isArray(data.records)||data.records.length!==(desc.count??meta.poiCount))throw Error('invalid-facility-data');facilityBytes+=desc.bytes;records.push(...packRecords(data.records));
+      }retained.records=records;retained.profileKey=profileKey;
+    }
+    facilityLoadMs = performance.now() - at;
     at = performance.now();
     const networkKey = [point.lat, point.lon, km, selection.snap.edge, selection.snap.offsetMeters].join(':');
     let networkReused = retained.network?.key === networkKey;
