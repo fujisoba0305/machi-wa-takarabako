@@ -1,3 +1,4 @@
+import { captureAccountStorageBaseline, accountStorageContextReport } from './accountStorageContext';
 // Persist tokens only in the existing SDK-owned key; never copy or print them.
 export const ACCOUNT_STORAGE_KEY = 'machiAccountAuth.v1';
 export const ACCOUNT_AUDIT_KEY = 'machiAccountPersistenceAudit.v1';
@@ -6,14 +7,21 @@ type Kind = typeof kinds[number];
 let pageClients = 0;
 let lastOperation: Kind | undefined;
 function store() { return window.localStorage; }
-function events(): Kind[] {
-  try { const value = JSON.parse(store().getItem(ACCOUNT_AUDIT_KEY) || '[]'); return Array.isArray(value) ? value.filter((x: unknown): x is Kind => typeof x === 'string' && kinds.includes(x as Kind)).slice(-12) : []; } catch { return []; }
+function readAudit(): {entries:Kind[];status:'none'|'valid'|'invalid'|'unavailable'} {
+  let raw: string | null;
+  try { raw = store().getItem(ACCOUNT_AUDIT_KEY); } catch { return {entries:[],status:'unavailable'}; }
+  if (raw === null) return {entries:[],status:'none'};
+  try { const value = JSON.parse(raw); return Array.isArray(value) ? {entries:value.filter((x:unknown):x is Kind=>typeof x==='string'&&kinds.includes(x as Kind)).slice(-12),status:'valid'} : {entries:[],status:'invalid'}; }
+  catch { return {entries:[],status:'invalid'}; }
 }
 export function recordAccountPersistence(kind: Kind) {
   lastOperation = kind;
-  try { store().setItem(ACCOUNT_AUDIT_KEY, JSON.stringify([...events(), kind].slice(-12))); } catch { /* Diagnostics must not replace an auth failure. */ }
+  const audit=readAudit();
+  if(audit.status==='invalid'||audit.status==='unavailable')return;
+  try { store().setItem(ACCOUNT_AUDIT_KEY, JSON.stringify([...audit.entries, kind].slice(-12))); } catch { /* Diagnostics must not replace an auth failure. */ }
 }
 export function createAccountSessionStorage() {
+  captureAccountStorageBaseline();
   pageClients++; recordAccountPersistence('client-created');
   return {
     getItem(key: string): string | null {
@@ -40,7 +48,7 @@ export function createAccountSessionStorage() {
 export function accountPersistenceReport() {
   let presence = '読み取り不可';
   try { presence = store().getItem(ACCOUNT_STORAGE_KEY) === null ? 'なし' : 'あり（内容は記録しません）'; } catch {}
-  const history = events();
+  const audit=readAudit(), history=audit.entries;
   const labels: Record<Kind, string> = {
     'client-created': '認証クライアント作成', 'session-write-verified': 'セッション保存・読み戻し一致',
     'session-write-failed': 'セッション保存失敗', 'session-read-failed': 'セッション読込失敗',
@@ -52,11 +60,13 @@ export function accountPersistenceReport() {
   const standalone = (navigator as Navigator & {standalone?: boolean}).standalone === true || Boolean(window.matchMedia?.('(display-mode: standalone)').matches);
   return ['認証保存の診断（トークン・UID・氏名・座標なし）',
     '実行環境：' + (standalone ? 'ホーム画面アプリ' : '通常ブラウザ形式（Safari・アプリ内ブラウザの区別は未判定）'),
-    'サイト：' + (window.location.hostname === 'machi-wa-takarabako.vercel.app' ? '正式URL' : '正式URL以外（保存領域が異なります）'),
+    'サイト：' + (window.location.origin === 'https://machi-wa-takarabako.vercel.app' ? '正式URL' : '正式URL以外（保存領域が異なります）'),
     '認証保存先：localStorage（メモリ保存へ自動切替しません）', '現在の認証保存データ：' + presence,
     'このページの認証クライアント作成回数：' + pageClients,
     'このページの最終保存操作：' + (lastOperation ? labels[lastOperation] : '未記録'),
+    '履歴の読込状態：'+({none:'データなし',valid:'正常',invalid:'形式不明・上書きしていません',unavailable:'読み取り不可・上書きしていません'}[audit.status]),
     '同じ保存領域の直近履歴（古い順）：' + (history.length ? history.map(x=>labels[x]).join(' → ') : 'なし（未計測・領域変更・消去は区別できません）'),
+    accountStorageContextReport(),
     '保存直後の一致は、Safari再起動後の保持を保証しません。通常タブとホーム画面アプリで保存領域が異なる場合があります。'].join('\n');
 }
 

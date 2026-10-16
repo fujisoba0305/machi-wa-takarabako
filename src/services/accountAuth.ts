@@ -1,3 +1,4 @@
+import { recordOAuthStorageContext } from './accountStorageContext';
 import { ACCOUNT_STORAGE_KEY, createAccountSessionStorage, recordAccountPersistence, assertPersistedAccountSession } from './accountSessionStorage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -23,6 +24,7 @@ export function initializeAccount() {
     const client = getAccountClient();
     const url = new URL(window.location.href);
     if (url.searchParams.get('auth_callback') !== '1') return;
+    recordOAuthStorageContext('return');
     const code = url.searchParams.get('code');
     const hash = new URLSearchParams(url.hash.slice(1));
     const failed = url.searchParams.has('error') || hash.has('error');
@@ -42,6 +44,7 @@ export function initializeAccount() {
   return task;
 }
 export async function loginWithGoogle() {
+  recordOAuthStorageContext('start');
   const client = getAccountClient();
   const redirectTo = new URL(window.location.pathname, window.location.origin);
   redirectTo.search = '?account=1&auth_callback=1';
