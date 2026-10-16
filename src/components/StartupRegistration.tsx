@@ -117,7 +117,7 @@ export function StartupRegistration({ onStart, onRegistrationNeeded, onIdentity 
     const controller = new AbortController(); gpsController.current = controller;
     try {
       saveAdventurerProfile(localStorage, user?.id ?? null, { name, started: false });setProfileDiagnostic(inspectAdventurerProfile(localStorage,user.id));
-      const fix = await requestAccountPosition(() => requestFreshSearchPosition({ signal: controller.signal }), user.id); if (id !== operation.current) return;
+      const fix = await requestAccountPosition(() => requestFreshSearchPosition({ signal: controller.signal, onProgress: () => { if (id === operation.current) setMessage('古い位置情報を使わず、新しいGPS測位を待っています…'); } }), user.id); if (id !== operation.current) return;
       saveAdventurerProfile(localStorage, user?.id ?? null, { name, started: true });
       try { sessionStorage.removeItem(ONBOARDING_RETURN); } catch {}
       startRegisteredProfile(user.id, name.trim(), fix);

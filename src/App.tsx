@@ -12,7 +12,7 @@ import { getAccountClient, isAccountPage } from './services/accountAuth';
 import { requestAccountPosition } from './services/accountPosition';
 import { StartupRegistration, isOnboardingReturn } from './components/StartupRegistration';
 import { readAdventurerProfile, saveAdventurerProfile, validAdventurerName } from './features/adventurerProfile';
-import { requestFreshSearchPosition, locationFailureMessage, StartupLocationFailure } from './services/startupLocation';
+import { requestFreshSearchPosition, locationFailureMessage, StartupLocationFailure, freshPositionTiming, freshPositionReport } from './services/startupLocation';
 import { AppIcon, IconText, plainIconLabel } from './components/AppIcon';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 
@@ -1210,10 +1210,10 @@ if(approximateEnabled && matchesApproximateScope(choices)) {
  const controller=new AbortController();trialAbortRef.current=controller;
  try{
  setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();
- const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal}));const gpsMs=performance.now()-gpsStarted;if(!isCurrent()||controller.signal.aborted)return;
+ const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal,onProgress:()=>{if(isCurrent()&&!controller.signal.aborted)setTrialProgress('古い位置情報を使わず、新しいGPS測位を待っています…');}}));const gpsMs=performance.now()-gpsStarted;if(!isCurrent()||controller.signal.aborted)return;
  setTrialProgress('本人確認・施設・登録宝物を確認しています…');
  const result=await searchApproximate(fresh,{...choices},()=>withWalkingTrialDeadline(getTreasures(),controller.signal),controller.signal);if(!isCurrent()||controller.signal.aborted)return;
- setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report+'\nGPS取得・ログイン確認：'+gpsMs.toFixed(1)+'ms\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms');
+ setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report+'\nGPS前のログイン確認：'+Math.max(0,gpsMs-(freshPositionTiming(fresh)?.totalMs??gpsMs)).toFixed(1)+'ms\n'+freshPositionReport(fresh)+'\nGPS取得・ログイン確認：'+gpsMs.toFixed(1)+'ms\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms');
  }catch(error){if(!isCurrent()||controller.signal.aborted)return;setSearchFailureReason('static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setTrialReport(error instanceof StartupLocationFailure?error.report:error instanceof Error&&'report'in error&&typeof error.report==='string'?error.report:'直線距離・試験版\n停止段階：ログイン状態確認またはGPS開始前');setSearchFailed(true);}
  return;
 }
