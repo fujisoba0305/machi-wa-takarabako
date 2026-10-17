@@ -1,3 +1,4 @@
+import {compressTreasurePhoto,type PreparedPhoto} from '../features/photoCompression';
 import { getSupabaseClient } from './supabase';
 import { imageDiagnostic, saveDiagnostic, TreasureSaveError, type TreasureSaveStage } from '../features/treasureSaveDiagnostics';
 
@@ -6,6 +7,8 @@ const TREASURE_IMAGE_BUCKET = 'treasure-images';
 export type UploadedTreasureImage = {
 path: string;
 publicUrl: string;
+photo?: Omit<PreparedPhoto,'file'>;
+preparedFile?:File;
 };
 
 function getFileExtension(file: File) {
@@ -24,14 +27,16 @@ return mimeExtension && /^[a-z0-9]+$/.test(mimeExtension)
 export async function uploadTreasureImage(
 file: File
 ): Promise<UploadedTreasureImage> {
-let stage: TreasureSaveStage = 'image_upload';
+let stage: TreasureSaveStage = 'image_prepare';
 try {
+const prepared=await compressTreasurePhoto(file);
+stage='image_upload';
 const supabase = getSupabaseClient();
-const path = `${crypto.randomUUID()}.${getFileExtension(file)}`;
+const path = `${crypto.randomUUID()}.${getFileExtension(prepared.file)}`;
 const { error } = await supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
-.upload(path, file, {
-contentType: file.type,
+.upload(path, prepared.file, {
+contentType: prepared.file.type,
 upsert: false,
 });
 
@@ -48,6 +53,8 @@ if (typeof data?.publicUrl !== 'string' || !data.publicUrl) throw new TreasureSa
 return {
 path,
 publicUrl: data.publicUrl,
+preparedFile:prepared.file,
+photo:{originalBytes:prepared.originalBytes,compressedBytes:prepared.compressedBytes,width:prepared.width,height:prepared.height,quality:prepared.quality,targetMet:prepared.targetMet},
 };
 } catch (error) {
 const diagnostic = saveDiagnostic(error, stage);

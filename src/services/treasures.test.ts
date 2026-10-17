@@ -26,7 +26,7 @@ select.mockResolvedValue({ data: rows, error: null });
 
 await expect(getTreasures()).resolves.toEqual(rows);
 expect(from).toHaveBeenCalledWith('treasures');
-expect(select).toHaveBeenCalledWith('id, name, comment, category, latitude, longitude, image_url, discovery_count');
+expect(select).toHaveBeenCalledWith('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url');
 });
 
 it('throws when Supabase cannot load the list', async () => {
@@ -58,3 +58,7 @@ await expect(incrementTreasureDiscovery(42)).rejects.toThrow(
 );
 });
 });
+
+it('reads legacy one-image rows when the additional column has not been approved',async()=>{select.mockResolvedValueOnce({data:null,error:{code:'42703'}}).mockResolvedValueOnce({data:[{id:1,image_url:'https://example.com/legacy.jpg'}],error:null});expect(await getTreasures()).toEqual([{id:1,image_url:'https://example.com/legacy.jpg'}]);expect(select).toHaveBeenLastCalledWith('id, name, comment, category, latitude, longitude, image_url, discovery_count');});
+
+it('preflights the additional column without writing data',async()=>{const {requireAdditionalImageSupport}=await import('./treasures');const limit=vi.fn().mockResolvedValue({error:{code:'42703'}});select.mockReturnValue({limit});await expect(requireAdditionalImageSupport()).rejects.toMatchObject({diagnostic:{stage:'image_prepare',code:'PHOTO_SCHEMA'}});expect(limit).toHaveBeenCalledWith(0);});

@@ -8,6 +8,7 @@ category: string;
 latitude: number;
 longitude: number;
 image_url: string | null;
+additional_image_url?: string | null;
 };
 
 export type Treasure = TreasureInsert & {
@@ -22,9 +23,14 @@ const legacyTreasureDisplayFields =
 
 export async function getTreasures(): Promise<Treasure[]> {
 const supabase = getSupabaseClient();
-let { data, error } = await supabase
+const initial = await supabase
 .from('treasures')
-.select(treasureDisplayFields);
+.select('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url');
+let data:unknown[]|null=initial.data;let error=initial.error;
+
+if (error?.code === '42703' || error?.code === 'PGRST204') {
+ const original=await supabase.from('treasures').select(treasureDisplayFields);data=original.data;error=original.error;
+}
 
 if (error?.code === '42703' || error?.code === 'PGRST204') {
 const legacyResult = await supabase
@@ -100,4 +106,10 @@ const diagnostic = saveDiagnostic(error, 'db_insert');
 console.error('[treasure-save] failed', { ...diagnostic, responseReceived: requestComplete });
 throw error instanceof TreasureSaveError ? error : new TreasureSaveError(diagnostic);
 }
+}
+
+/** Read-only schema preflight before any second-image upload. No migration or writes. */
+export async function requireAdditionalImageSupport(){
+ const {error}=await getSupabaseClient().from('treasures').select('additional_image_url').limit(0);
+ if(error)throw new TreasureSaveError(saveDiagnostic(error.code==='42703'||error.code==='PGRST204'?{code:'PHOTO_SCHEMA'}:error,'image_prepare'));
 }

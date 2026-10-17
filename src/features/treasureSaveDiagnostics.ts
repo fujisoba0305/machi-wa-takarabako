@@ -1,6 +1,6 @@
-export type TreasureSaveStage = 'image_upload' | 'image_url' | 'db_insert' | 'image_cleanup';
+export type TreasureSaveStage = 'image_prepare' | 'image_upload' | 'image_url' | 'db_insert' | 'image_cleanup';
 export type SaveDiagnostic = { stage: TreasureSaveStage; httpStatus: number | null; code: string; outcome: 'rejected' | 'unknown' };
-const safeCodes = new Set(['23505', '23502', '23514', '22001', '22P02', '42501', '42703', 'PGRST204', 'PGRST301', 'PGRST302']);
+const safeCodes = new Set(['PHOTO_DECODE','PHOTO_TOO_LARGE','PHOTO_ENCODING','PHOTO_CANCELLED','PHOTO_SCHEMA','23505', '23502', '23514', '22001', '22P02', '42501', '42703', 'PGRST204', 'PGRST301', 'PGRST302']);
 export class TreasureSaveError extends Error {
   constructor(public diagnostic: SaveDiagnostic) { super('Treasure save operation failed'); this.name = 'TreasureSaveError'; }
 }
@@ -20,9 +20,10 @@ export function imageDiagnostic(file: File) {
   return { format: formats[file.type.toLowerCase()] || 'unknown', sizeMiB: Math.ceil(file.size / 1048576) };
 }
 export function saveFailureMessage(error: unknown, stage: TreasureSaveStage, file: File | null) {
-  const d = saveDiagnostic(error, stage), label = { image_upload: '写真のアップロード', image_url: '写真URLの取得', db_insert: '宝物情報の保存', image_cleanup: '今回の写真の後処理' }[d.stage];
+  const d = saveDiagnostic(error, stage), label = { image_prepare:'写真の準備', image_upload: '写真のアップロード', image_url: '写真URLの取得', db_insert: '宝物情報の保存', image_cleanup: '今回の写真の後処理' }[d.stage];
   const tooLarge = d.stage === 'image_upload' && d.httpStatus === 413;
-  const unsure = tooLarge ? '写真のサイズが保存先の上限（現在1枚5MB）を超えています。小さいサイズで書き出した写真に選び直すか、写真なしで登録してください。入力内容はそのまま残っています。' : d.stage === 'db_insert' && d.outcome === 'unknown' ? '保存結果を確認できません。再送する前に図鑑で登録済みか確認してください。' : '通信状態や入力内容を確認してください。';
+  const photoMessages:Record<string,string>={PHOTO_DECODE:'写真を読み込めませんでした。JPEGまたはPNGに書き出して選び直してください。',PHOTO_TOO_LARGE:'写真が大きすぎるか読み取れません。小さい写真を選んでください。',PHOTO_ENCODING:'写真の圧縮に失敗しました。元の写真と入力は残っています。選び直して再試行してください。',PHOTO_CANCELLED:'写真の準備を中止しました。',PHOTO_SCHEMA:'2枚の写真を保存する準備がまだ完了していません。写真を1枚にすると登録できます。入力は残っています。'};
+  const unsure = photoMessages[d.code] ?? (tooLarge ? '写真のサイズが保存先の上限（現在1枚5MB）を超えています。小さいサイズで書き出した写真に選び直すか、写真なしで登録してください。入力内容はそのまま残っています。' : d.stage === 'db_insert' && d.outcome === 'unknown' ? '保存結果を確認できません。再送する前に図鑑で登録済みか確認してください。' : '通信状態や入力内容を確認してください。');
   const image = file ? imageDiagnostic(file) : null;
   return `宝物を保存できませんでした。${label}の段階で停止しました。${unsure} 確認用情報：${d.stage}/${d.httpStatus ?? '不明'}/${d.code}${image ? `/${image.format}/約${image.sizeMiB}MiB` : ''}`;
 }

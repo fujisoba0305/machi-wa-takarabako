@@ -1,3 +1,4 @@
+import {treasurePhotoUrls} from '../features/treasurePhotos';
 import { IconText } from './AppIcon';
 import { useMemo, useState } from 'react';
 import type { Treasure } from '../services/treasures';
@@ -64,7 +65,7 @@ if (detail) {
 return (
 <section className={`collection-detail collection-rank--${detail.rank.key}`}>
 <button className="collection-back" type="button" onClick={() => setDetailSelection(null)}>← 図鑑へ戻る</button>
-{detail.treasure.image_url && <img src={detail.treasure.image_url} alt={detail.treasure.name} />}
+{treasurePhotoUrls(detail.treasure).map((url,index)=><img key={url} src={url} alt={detail.treasure.name+(index===0?' 代表画像':' 追加画像')} />)}
 <p className="collection-rank-label">{props.ratingSummariesAvailable ? detail.rank.label : 'RANK 集計待ち'}</p>
 <h2>{detail.treasure.name}</h2>
 <p className="collection-category"><IconText text={detail.treasure.category} /></p>

@@ -1,3 +1,4 @@
+vi.mock('../features/photoCompression',()=>({compressTreasurePhoto:vi.fn(async(file:File)=>({file,originalBytes:file.size,compressedBytes:file.size,width:100,height:100,quality:.86,targetMet:true}))}));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ upload: vi.fn(), getPublicUrl: vi.fn(), remove: vi.fn(), insert: vi.fn() }));
 vi.mock('./supabase', () => ({ getSupabaseClient: () => ({

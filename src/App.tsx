@@ -34,7 +34,7 @@ import { withDateDeadline, DateSearchTimeout } from './features/dateSearchDeadli
 import { chooseDateCourse } from './features/dateCourse';
 import { chooseFoodWalk, isFoodShop, isFoodCafe } from './features/foodWalk';
 import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './features/treasureSaveDiagnostics';
-import { createTreasure, getTreasures, incrementTreasureDiscovery, type Treasure } from './services/treasures';
+import { createTreasure, getTreasures, requireAdditionalImageSupport, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
 import { calculateDistance } from './features/distance';
 import { requestAdventurePosition, AdventureSession, type AdventureTarget } from './features/activeAdventure';
@@ -318,6 +318,7 @@ category: TreasureCategory;
 latitude: number;
 longitude: number;
 image: File | null;
+additionalImage?: File | null;
 };
 
 const treasureCategories: TreasureCategory[] = [
@@ -437,6 +438,10 @@ const [treasureComment, setTreasureComment] = useState('');
 const [treasureCategory, setTreasureCategory] =
 useState<TreasureCategory | ''>('');
 const [treasureImage, setTreasureImage] = useState<File | null>(null);
+const [additionalTreasureImage,setAdditionalTreasureImage]=useState<File|null>(null);
+const [additionalTreasurePreview,setAdditionalTreasurePreview]=useState<string|null>(null);
+const additionalImageInputRef=useRef<HTMLInputElement>(null);
+const [photoSizeReport,setPhotoSizeReport]=useState('');
 const treasureImageInputRef=useRef<HTMLInputElement>(null);
 const [treasureImagePreview, setTreasureImagePreview] = useState<string | null>(null);
 const [registeredTreasure, setRegisteredTreasure] =
@@ -512,6 +517,7 @@ return () => {
 if (treasureImagePreview) URL.revokeObjectURL(treasureImagePreview);
 };
 }, [treasureImagePreview]);
+useEffect(()=>()=>{if(additionalTreasurePreview)URL.revokeObjectURL(additionalTreasurePreview);},[additionalTreasurePreview]);
 
 useEffect(() => {
 const treasureId = selectedGachaTreasure?.id;
@@ -682,7 +688,7 @@ setTreasureName('');
 setTreasureComment('');
 setTreasureCategory('');
 setTreasureImage(null);
-setTreasureImagePreview(null);
+setTreasureImagePreview(null);setAdditionalTreasureImage(null);setAdditionalTreasurePreview(null);setPhotoSizeReport('');
 setRegisteredTreasure(null);
 setIsTreasureSaving(false);
 setTreasureSaveError('');
@@ -761,47 +767,33 @@ category: treasureCategory,
 latitude: treasureLocation.latitude,
 longitude: treasureLocation.longitude,
 image: treasureImage,
+additionalImage:additionalTreasureImage,
 };
 
 treasureSaveInFlightRef.current = true;
 setIsTreasureSaving(true);
 setTreasureSaveError('');
 
-let saveStage: TreasureSaveStage = registration.image ? 'image_upload' : 'db_insert';
+let saveStage: TreasureSaveStage = 'image_prepare';
+const uploadedImages:Awaited<ReturnType<typeof uploadTreasureImage>>[]=[];
 try {
-const uploadedImage = registration.image
-? await uploadTreasureImage(registration.image)
-: null;
-
-saveStage = 'db_insert';
-try {
-await createTreasure({
-name: registration.name,
-comment: registration.comment,
-category: registration.category,
-latitude: registration.latitude,
-longitude: registration.longitude,
-image_url: uploadedImage?.publicUrl ?? null,
-});
-} catch (error) {
-if (uploadedImage && saveDiagnostic(error, 'db_insert').outcome === 'rejected') {
-try {
-await deleteTreasureImage(uploadedImage.path);
-} catch (deleteError) {
-console.error(
-'[treasure-registration] Uploaded image cleanup failed',
-saveDiagnostic(deleteError, 'image_cleanup')
-);
+if(registration.additionalImage)await requireAdditionalImageSupport();
+const reports:string[]=[];
+for(const [index,file] of [registration.image,registration.additionalImage].entries()){
+ if(!file)continue;saveStage='image_upload';const uploaded=await uploadTreasureImage(file);uploadedImages.push(uploaded);
+ if(uploaded.preparedFile){const preview=URL.createObjectURL(uploaded.preparedFile);if(index===0)setTreasureImagePreview(preview);else setAdditionalTreasurePreview(preview);}
+ if(uploaded.photo)reports.push((index===0?'代表画像':'追加画像')+'：'+(uploaded.photo.originalBytes/1000).toFixed(1)+'KB → '+(uploaded.photo.compressedBytes/1000).toFixed(1)+'KB'+(uploaded.photo.targetMet?'':'（画質優先）'));
+ setPhotoSizeReport(reports.join(' / '));
 }
-}
-
-throw error;
-}
-
+saveStage='db_insert';
+await createTreasure({name:registration.name,comment:registration.comment,category:registration.category,latitude:registration.latitude,longitude:registration.longitude,image_url:uploadedImages[0]?.publicUrl??null,...(registration.additionalImage?{additional_image_url:uploadedImages[1].publicUrl}:{})});
 setRegisteredTreasure(registration);
-} catch (error) {
-console.error('[treasure-registration] Treasure save failed', saveDiagnostic(error, saveStage));
-setTreasureSaveError(saveFailureMessage(error, saveStage, registration.image));
+} catch(error) {
+const diagnostic=saveDiagnostic(error,saveStage);
+// Only this attempt's newly created objects may be rolled back; never historical images.
+if(saveStage!=='db_insert'||diagnostic.outcome==='rejected')for(const uploaded of uploadedImages){try{await deleteTreasureImage(uploaded.path);}catch(cleanupError){console.error('[treasure-registration] cleanup failed',saveDiagnostic(cleanupError,'image_cleanup'));}}
+console.error('[treasure-registration] Treasure save failed',diagnostic);
+setTreasureSaveError(saveFailureMessage(error,saveStage,registration.image));
 } finally {
 treasureSaveInFlightRef.current = false;
 setIsTreasureSaving(false);
@@ -2475,6 +2467,7 @@ adventureHistory={adventureHistory}
 <h3>宝物を登録しました！</h3>
 <p className="treasure-registration-note">
 宝物の情報を保存しました。
+{photoSizeReport&&<span>{photoSizeReport}</span>}
 </p>
 
 {treasureImagePreview && (
@@ -2485,6 +2478,7 @@ className="treasure-photo-preview"
 />
 )}
 
+{additionalTreasurePreview&&<img src={additionalTreasurePreview} alt="保存した追加写真" className="treasure-photo-preview"/>}
 <dl className="treasure-confirmation-list">
 <div>
 <dt>名前</dt>
@@ -2507,7 +2501,7 @@ className="treasure-photo-preview"
 </div>
 <div>
 <dt>写真</dt>
-<dd>{registeredTreasure.image?.name || '（なし）'}</dd>
+<dd>{registeredTreasure.image?'代表画像1枚'+(registeredTreasure.additionalImage?'・追加画像1枚':''):'（なし）'}</dd>
 </div>
 </dl>
 
@@ -2537,17 +2531,18 @@ onClick={closeTreasureRegistration}
 </div>
 
 <label className="treasure-form-field">
-<span>写真</span>
+<span>写真1：代表画像（任意）</span>
 <input
 type="file"
 ref={treasureImageInputRef}
 accept="image/*"
 onChange={handleTreasureImageChange}
+disabled={isTreasureSaving}
 />
-<small>写真は任意・1枚です。保存先の上限は5MBです。大きい写真は小さく書き出して選んでください（自動圧縮はまだ行いません）。</small>
+<small>写真は最大2枚です。送信前に自動圧縮します。30KB前後を目安に、画質が必要な写真は容量を増やします。</small>
 </label>
 
-{treasureImage && <button type="button" disabled={isTreasureSaving} onClick={() => {setTreasureImage(null);setTreasureImagePreview(null);if(treasureImageInputRef.current)treasureImageInputRef.current.value='';}}>写真を外す</button>}
+{treasureImage && <button type="button" disabled={isTreasureSaving} onClick={() => {setTreasureImage(additionalTreasureImage);setTreasureImagePreview(additionalTreasureImage?URL.createObjectURL(additionalTreasureImage):null);setAdditionalTreasureImage(null);setAdditionalTreasurePreview(null);if(treasureImageInputRef.current)treasureImageInputRef.current.value='';if(additionalImageInputRef.current)additionalImageInputRef.current.value='';}}>写真を外す</button>}
 {treasureImagePreview ? (
 <img
 src={treasureImagePreview}
@@ -2558,6 +2553,10 @@ className="treasure-photo-preview"
 <p className="treasure-file-name">選択済み：{treasureImage.name}</p>
 ) : null}
 
+<label className="treasure-form-field"><span>写真2：追加画像（任意）</span><input type="file" accept="image/*" ref={additionalImageInputRef} disabled={!treasureImage||isTreasureSaving} onChange={event=>{const file=event.target.files?.[0]??null;setAdditionalTreasureImage(file);setAdditionalTreasurePreview(file?URL.createObjectURL(file):null);}}/></label>
+{additionalTreasureImage&&<button type="button" disabled={isTreasureSaving} onClick={()=>{setAdditionalTreasureImage(null);setAdditionalTreasurePreview(null);if(additionalImageInputRef.current)additionalImageInputRef.current.value='';}}>追加写真を外す</button>}
+{additionalTreasurePreview&&<img src={additionalTreasurePreview} alt="追加写真のプレビュー" className="treasure-photo-preview"/>}
+{photoSizeReport&&<p role="status">{photoSizeReport}</p>}
 <label className="treasure-form-field">
 <span>宝物の名前</span>
 <input
