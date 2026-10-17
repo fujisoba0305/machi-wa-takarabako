@@ -104,3 +104,13 @@ year: 'numeric', month: 'long', day: 'numeric',
 timeZone: 'Asia/Tokyo',
 }).format(date);
 }
+
+/** Counts only. Never returns raw history, UID, locations or treasure names. Never writes. */
+export function inspectLegacyPreservation(storage: Pick<Storage,'getItem'>){
+ const original=inspectLegacyDiscoveries(storage);
+ const backup=inspectLegacyDiscoveries({getItem:()=>storage.getItem(LEGACY_DISCOVERY_BACKUP_KEY)});
+ const summary=(value:ReturnType<typeof inspectLegacyDiscoveries>)=>({state:value.state,rows:value.rawCount,validUnique:value.rawCount===null?null:value.records.length,invalid:value.invalidCount,duplicates:value.duplicateCount});
+ let sameRaw:boolean|null=null;
+ try{const a=storage.getItem(ADVENTURE_HISTORY_STORAGE_KEY),b=storage.getItem(LEGACY_DISCOVERY_BACKUP_KEY);if(a!==null&&b!==null)sameRaw=a===b;}catch{/* A blocked read is unknown, never absence. */}
+ return {original:summary(original),backup:summary(backup),sameRaw};
+}
