@@ -1,0 +1,10 @@
+import {describe,it,expect} from 'vitest';
+import {collectionCategories,legacyTreasureCategories,registrationCategories,categoryMatchesFilter} from './treasureCategories';
+import {getEligibleRegisteredTreasures,matchesTreasureMood,selectNormalSearchCandidate} from './normalTreasureCandidates';
+describe('collection categories and actual gacha eligibility',()=>{
+ it('keeps all legacy values available without migration',()=>{expect(registrationCategories).toEqual(expect.arrayContaining([...legacyTreasureCategories]));expect(collectionCategories).toHaveLength(10);});
+ it.each(legacyTreasureCategories)('finds unchanged %s through its new display group',c=>{const group=collectionCategories.find(g=>g.value===c||(g.legacy as readonly string[]).includes(c))!;expect(categoryMatchesFilter(c,group.value)).toBe(true);});
+ it.each(collectionCategories)('includes $label in random registered-treasure search',c=>{const rows=getEligibleRegisteredTreasures([{id:1,name:'synthetic',comment:'',category:c.value,latitude:35,longitude:139,image_url:null}],{latitude:35,longitude:139},'おまかせ',{min:0,max:2});expect(rows).toHaveLength(1);expect(selectNormalSearchCandidate(['OSM'],rows,()=>0.1)?.source).toBe('treasure');expect(selectNormalSearchCandidate(['OSM'],rows,()=>0.9)?.source).toBe('overpass');});
+ it('does not infer temples, cafes or ramen from broad new categories',()=>{expect(matchesTreasureMood('🏯 歴史・文化','神社・お寺')).toBe(false);expect(matchesTreasureMood('🍜 グルメ','カフェ')).toBe(false);expect(getEligibleRegisteredTreasures([{name:'ラーメン',comment:'',category:'🍜 グルメ',latitude:35,longitude:139,image_url:null}],{latitude:35,longitude:139},'グルメ',{min:0,max:2},'ラーメン')).toEqual([]);});
+ it('keeps specific legacy search modes and distance limits',()=>{expect(matchesTreasureMood('☕ カフェ','カフェ')).toBe(true);expect(matchesTreasureMood('⛩️ 神社・お寺','神社・お寺')).toBe(true);expect(matchesTreasureMood('🌿 自然・絶景','自然')).toBe(true);expect(matchesTreasureMood('🌿 自然・絶景','写真')).toBe(true);expect(categoryMatchesFilter('未知','🌿 自然・絶景')).toBe(false);});
+});

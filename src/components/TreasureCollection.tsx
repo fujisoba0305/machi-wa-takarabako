@@ -1,190 +1,26 @@
+import {LegacyHistoryNotice} from './LegacyHistoryNotice';
+import {useEffect,useMemo,useState} from 'react';
+import type {Treasure} from '../services/treasures';
+import type {TreasureRatingSummaryMap} from '../features/treasureCollection';
+import {buildTreasureCollection,countTreasureRanks,filterTreasureCollection} from '../features/treasureCollection';
+import {collectionCategories,categoryMatchesFilter,categoryIcon} from '../features/treasureCategories';
 import {treasurePhotoUrls} from '../features/treasurePhotos';
-import { IconText } from './AppIcon';
-import { useMemo, useState } from 'react';
-import type { Treasure } from '../services/treasures';
-import type { TreasureRatingSummaryMap } from '../features/treasureCollection';
-import {
-buildTreasureCollection,
-countTreasureRanks,
-filterTreasureCollection,
-getNextTreasureRankProgress,
-} from '../features/treasureCollection';
-import { getTreasureRatingStars, type TreasureRankKey } from '../features/treasureRank';
-import { buildGoogleMapsDirectionsUrl } from '../features/googleMaps';
-import { TreasureMap } from './TreasureMap';
-import {
-formatAdventureDiscoveryDate,
-joinAdventureHistory,
-type AdventureDiscovery,
-} from '../features/adventureHistory';
-
-type Props = {
-treasures: Treasure[];
-ratingSummaries: TreasureRatingSummaryMap;
-ratingSummariesAvailable: boolean;
-currentLocation: { latitude: number; longitude: number } | null;
-selectedMapTreasure: Treasure | null;
-onSelectMapTreasure: (treasure: Treasure) => void;
-onStartAdventure: () => void;
-onRegisterTreasure: () => void;
-adventureHistory: AdventureDiscovery[];
-};
-
-const filters: Array<{ key: TreasureRankKey | 'all'; label: string }> = [
-{ key: 'all', label: 'すべて' }, { key: 'bronze', label: '🥉' },
-{ key: 'silver', label: '🥈' }, { key: 'gold', label: '🥇' },
-{ key: 'legend', label: '👑' },
-];
-
-export function TreasureCollection(props: Props) {
-const [tab, setTab] = useState<'adventure' | 'community'>('community');
-const [filter, setFilter] = useState<TreasureRankKey | 'all'>('all');
-const [detailSelection, setDetailSelection] = useState<{
-id: number;
-fromAdventure: boolean;
-} | null>(null);
-const [showMap, setShowMap] = useState(false);
-const items = useMemo(
-() => buildTreasureCollection(props.treasures, props.ratingSummaries),
-[props.treasures, props.ratingSummaries]
-);
-const counts = countTreasureRanks(items);
-const visibleItems = props.ratingSummariesAvailable
-? filterTreasureCollection(items, filter)
-: items;
-const detail = items.find((item) => item.treasure.id === detailSelection?.id) ?? null;
-const adventureItems = joinAdventureHistory(props.adventureHistory, items);
-const detailDiscovery = detailSelection?.fromAdventure
-? props.adventureHistory.find((item) => item.treasureId === detailSelection.id)
-: undefined;
-const nextRank = detail
-? getNextTreasureRankProgress(detail.treasure.discovery_count ?? 0, detail.summary)
-: null;
-
-if (detail) {
-return (
-<section className={`collection-detail collection-rank--${detail.rank.key}`}>
-<button className="collection-back" type="button" onClick={() => setDetailSelection(null)}>← 図鑑へ戻る</button>
-{treasurePhotoUrls(detail.treasure).map((url,index)=><img key={url} src={url} alt={detail.treasure.name+(index===0?' 代表画像':' 追加画像')} />)}
-<p className="collection-rank-label">{props.ratingSummariesAvailable ? detail.rank.label : 'RANK 集計待ち'}</p>
-<h2>{detail.treasure.name}</h2>
-<p className="collection-category"><IconText text={detail.treasure.category} /></p>
-<p className="collection-comment">{detail.treasure.comment || 'コメントはありません。'}</p>
-{detailDiscovery && formatAdventureDiscoveryDate(detailDiscovery.firstDiscoveredAt) && (
-<section className="collection-discovery-plaque" aria-label="あなたが発見した日">
-<p>YOUR DISCOVERY</p>
-<strong>✨ {formatAdventureDiscoveryDate(detailDiscovery.firstDiscoveredAt)}に発見</strong>
-<span>この宝物との冒険は、ここから始まりました</span>
-</section>
-)}
-<div className="collection-detail-stats">
-{props.ratingSummariesAvailable ? <>
-<p><span aria-hidden="true">{getTreasureRatingStars(detail.summary)}</span> {detail.summary.ratingCount ? detail.summary.averageRating.toFixed(1) : 'まだ評価はありません'}</p>
-<p>{detail.summary.ratingCount}件の評価</p>
-</> : <p>評価情報を取得できませんでした</p>}
-<p>👣 発見回数 {detail.treasure.discovery_count ?? 0}回</p>
-</div>
-{props.ratingSummariesAvailable && <p className="collection-rank-description">{detail.rank.description}</p>}
-{props.ratingSummariesAvailable && (nextRank ? (
-<section className="collection-next-rank">
-<h3>{nextRank.rank.shortLabel}まで</h3>
-<p>👣 あと{nextRank.discoveriesRemaining}回発見</p>
-<p>⭐ あと{nextRank.ratingsRemaining}件の評価</p>
-<p>平均評価{nextRank.requiredAverage.toFixed(1)}以上</p>
-</section>
-) : (
-<section className="collection-next-rank collection-next-rank--legend">
-<h3>👑 LEGEND TREASURE</h3><p>最高ランクの宝物です</p>
-</section>
-))}
-{props.currentLocation && (
-<button className="collection-map-button" type="button" onClick={() => window.open(
-buildGoogleMapsDirectionsUrl(props.currentLocation!, detail.treasure), '_blank'
-)}>📍 この宝物の場所を見る</button>
-)}
-</section>
-);
-}
-
-return (
-<div className="treasure-collection">
-<header className="collection-header">
-<p><IconText text="📖 TREASURE COLLECTION" /></p><h2>街の宝物図鑑</h2>
-<span>あなたが街で見つけていく宝物たち</span>
-</header>
-<section className="collection-summary" aria-label="みんなの宝物の集計">
-<div><span>この街に登録された宝物</span><strong>{items.length}</strong></div>
-<ul>
-<li>🥉 BRONZE <strong>{props.ratingSummariesAvailable ? counts.bronze : '—'}</strong></li><li>🥈 SILVER <strong>{props.ratingSummariesAvailable ? counts.silver : '—'}</strong></li>
-<li>🥇 GOLD <strong>{props.ratingSummariesAvailable ? counts.gold : '—'}</strong></li><li>👑 LEGEND <strong>{props.ratingSummariesAvailable ? counts.legend : '—'}</strong></li>
-</ul>
-<small>※本人の発見数ではなく、現在公開されている宝物の集計です。</small>
-</section>
-<div className="collection-tabs" role="tablist">
-<button type="button" className={tab === 'adventure' ? 'selected' : ''} onClick={() => setTab('adventure')}><IconText text="🧭 冒険の記録" /></button>
-<button type="button" className={tab === 'community' ? 'selected' : ''} onClick={() => setTab('community')}><IconText text="💎 みんなの宝物" /></button>
-</div>
-{tab === 'adventure' ? (
-<>
-<section className="adventure-collection-summary">
-<p><IconText text="🧭 MY ADVENTURE COLLECTION" /></p><div><span>発見した宝物</span><strong>{adventureItems.length}</strong></div>
-<small>街を歩いて見つけた、あなただけの冒険記録</small>
-</section>
-{adventureItems.length ? (
-<div className="collection-grid">
-{adventureItems.map((item) => (
-<article key={item.treasureId} className={`collection-card adventure-collection-card collection-rank--${item.rank.key} ${item.treasure.image_url ? 'has-image' : ''}`}>
-{item.treasure.image_url && <img src={item.treasure.image_url} alt={item.treasure.name} />}
-<div><p className="collection-discovered-badge"><IconText text="✨ 発見済み" /></p>
-<p className="collection-rank-label">{props.ratingSummariesAvailable ? item.rank.label : 'RANK 集計待ち'}</p>
-<h3>{item.treasure.name}</h3><p className="collection-category"><IconText text={item.treasure.category} /></p>
-<p className="collection-card-stats"><IconText text="⭐ " />{props.ratingSummariesAvailable ? (item.summary.ratingCount ? `${item.summary.averageRating.toFixed(1)}（${item.summary.ratingCount}件）` : '未評価') : '集計待ち'} <span><IconText text="👣 " />{item.treasure.discovery_count ?? 0}回</span></p>
-{formatAdventureDiscoveryDate(item.firstDiscoveredAt) && (
-<div className="collection-discovered-date"><span><IconText text="✨ あなたが発見した日" /></span><strong><IconText text="📅 " />{formatAdventureDiscoveryDate(item.firstDiscoveredAt)}</strong></div>
-)}
-<button type="button" onClick={() => setDetailSelection({ id: item.treasureId, fromAdventure: true })}>詳しく見る <IconText text="→" /></button></div>
-</article>
-))}
-</div>
-) : (
-<section className="collection-empty">
-<span aria-hidden="true"><IconText text="🧭" /></span><h3>まだ冒険の記録がありません</h3>
-<p>ガチャを回して、街に隠れた宝物を探しに行こう！</p>
-<button type="button" onClick={props.onStartAdventure}>宝物を探しに行く</button>
-</section>
-)}</>
-) : (
-<>
-{!props.ratingSummariesAvailable && (
-<p className="collection-data-notice" role="status">評価・ランク集計を準備できませんでした。宝物一覧は引き続き利用できます。</p>
-)}
-<div className="collection-view-actions">
-<div className="collection-filters" aria-label="ランクで絞り込む">
-{filters.map((item) => <button key={item.key} type="button" disabled={!props.ratingSummariesAvailable && item.key !== 'all'} className={filter === item.key ? 'selected' : ''} onClick={() => setFilter(item.key)} aria-label={`${item.label}ランクを表示`}>{item.label}</button>)}
-</div>
-<button className="collection-map-toggle" type="button" onClick={() => setShowMap((value) => !value)}><IconText text={showMap ? 'カードを見る' : '🗺️ 地図で見る'} /></button>
-</div>
-{showMap ? (
-<TreasureMap treasures={props.treasures} selectedTreasure={props.selectedMapTreasure} onSelectTreasure={props.onSelectMapTreasure} currentLocation={props.currentLocation} />
-) : visibleItems.length ? (
-<div className="collection-grid">
-{visibleItems.map((item, index) => (
-<article key={item.treasure.id ?? `${item.treasure.latitude}-${index}`} className={`collection-card collection-rank--${item.rank.key} ${item.treasure.image_url ? 'has-image' : ''}`}>
-{item.treasure.image_url && <img src={item.treasure.image_url} alt={item.treasure.name} />}
-<div><p className="collection-rank-label">{props.ratingSummariesAvailable ? item.rank.shortLabel : 'RANK 集計待ち'}</p><h3>{item.treasure.name}</h3>
-{!item.treasure.image_url && <p className="collection-comment">{item.treasure.comment || 'コメントはありません。'}</p>}
-<p className="collection-card-stats"><IconText text="⭐ " />{props.ratingSummariesAvailable ? (item.summary.ratingCount ? item.summary.averageRating.toFixed(1) : '未評価') : '集計待ち'} <span><IconText text="👣 " />{item.treasure.discovery_count ?? 0}回</span></p>
-<button type="button" onClick={() => item.treasure.id !== undefined && setDetailSelection({ id: item.treasure.id, fromAdventure: false })}>詳しく見る <IconText text="→" /></button></div>
-</article>
-))}
-</div>
-) : props.treasures.length ? (
-<section className="collection-empty"><span><IconText text="🔎" /></span><h3>このランクの宝物はまだありません</h3><p>別のランクを選んでみてください。</p></section>
-) : (
-<section className="collection-empty"><span><IconText text="💎" /></span><h3>まだ宝物がありません</h3><p>この街の最初の宝物を見つけてみませんか？</p><button type="button" onClick={props.onRegisterTreasure}>宝物を登録する</button></section>
-)}
-</>
-)}
-</div>
-);
+import {formatAdventureDiscoveryDate,type AdventureDiscovery} from '../features/adventureHistory';
+import type {PersonalDiscovery} from '../features/personalDiscoveries';
+import {IconText} from './AppIcon';
+import type {TreasureRankKey} from '../features/treasureRank';
+type Props={treasures:Treasure[];ratingSummaries:TreasureRatingSummaryMap;ratingSummariesAvailable:boolean;currentLocation:{latitude:number;longitude:number}|null;selectedMapTreasure:Treasure|null;onSelectMapTreasure:(t:Treasure)=>void;onStartAdventure:()=>void;onRegisterTreasure:()=>void;adventureHistory:AdventureDiscovery[];discoveries?:PersonalDiscovery[];discoveryMessage?:string};
+export function TreasureCollection(props:Props){
+ const [category,setCategory]=useState(''),[query,setQuery]=useState(''),[limit,setLimit]=useState(60),[rank,setRank]=useState<TreasureRankKey|'all'>('all'),[selected,setSelected]=useState<string|null>(null);
+ const records=props.discoveries??[];
+ const items=useMemo(()=>buildTreasureCollection(records.map(r=>r.treasure),props.ratingSummaries).map((item,index)=>({...item,discovery:records[index]})),[records,props.ratingSummaries]);
+ const counts=countTreasureRanks(items);
+ const visible=items.filter(i=>(!props.ratingSummariesAvailable||rank==='all'||i.rank.key===rank)&&categoryMatchesFilter(i.treasure.category,category)&&(!query||[i.treasure.name,i.treasure.comment].some(v=>v.toLocaleLowerCase().includes(query.toLocaleLowerCase()))));
+ useEffect(()=>setLimit(60),[category,query,rank]);
+ const detail=items.find(i=>i.discovery.key===selected);
+ if(detail)return <section className="collection-detail"><button className="collection-back" type="button" onClick={()=>setSelected(null)}>← 図鑑へ戻る</button><p>冒険で発見した宝物</p><h2>{detail.treasure.name}</h2><p>発見日：{formatAdventureDiscoveryDate(detail.discovery.firstDiscoveredAt)}</p>{treasurePhotoUrls(detail.treasure).map((url,i)=><img key={url} src={url} alt={detail.treasure.name+(i?' 追加画像':' 代表画像')}/>)}<p><IconText text={detail.treasure.category}/></p><p>{detail.treasure.comment||'説明はありません。'}</p><p>発見時の場所：緯度 {detail.treasure.latitude} / 経度 {detail.treasure.longitude}</p><p>冒険で発見した時点の情報です。現在の営業・公開状況とは異なる場合があります。</p><a href={'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(detail.treasure.latitude+','+detail.treasure.longitude)} target="_blank" rel="noreferrer">Googleマップで場所を確認する</a></section>;
+ return <div className="treasure-collection"><header className="collection-header"><p>MY DISCOVERIES</p><h2>自分の宝物図鑑</h2><span>冒険で到着を確認した宝物だけが並びます</span></header><section className="collection-summary" aria-label="自分が発見した宝物の集計"><div><span>発見した宝物</span><strong>{items.length}</strong></div><ul><li>🥉 {counts.bronze}</li><li>🥈 {counts.silver}</li><li>🥇 {counts.gold}</li><li>👑 {counts.legend}</li></ul><small>投稿しただけの宝物は追加されません。記録はこの端末・アカウント別です。</small></section>{props.discoveryMessage&&<p role="status">{props.discoveryMessage}</p>}
+ <LegacyHistoryNotice discoveries={records}/><div className="collection-controls"><label>カテゴリーで絞り込む<select value={category} onChange={e=>setCategory(e.target.value)}><option value="">すべてのカテゴリー</option>{collectionCategories.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select></label><label>名前・説明を検索<input type="search" value={query} onChange={e=>setQuery(e.target.value)}/></label></div><div className="collection-filters" aria-label="ランクで絞り込む">{(['all','bronze','silver','gold','legend'] as const).map(r=><button key={r} type="button" disabled={!props.ratingSummariesAvailable&&r!=='all'} onClick={()=>setRank(r)}>{({all:'すべて',bronze:'🥉',silver:'🥈',gold:'🥇',legend:'👑'})[r]}</button>)}</div>
+ {visible.length?<><p>表示対象 {visible.length}件</p><div className="collection-grid">{visible.slice(0,limit).map(item=><article key={item.discovery.key} className="collection-card" onClick={e=>{if((e.target as Element).closest('button'))return;setSelected(item.discovery.key);}}>{item.treasure.image_url?<img loading="lazy" src={item.treasure.image_url} alt={item.treasure.name}/>:<span className="category-placeholder" aria-label={item.treasure.category}>{categoryIcon(item.treasure.category)}</span>}<div><p className="collection-discovered-badge">発見済み</p><h3>{item.treasure.name}</h3><button type="button" onClick={()=>setSelected(item.discovery.key)}>詳しく見る →</button></div></article>)}</div>{visible.length>limit&&<button type="button" onClick={()=>setLimit(n=>n+60)}>さらに60件表示する</button>}</>:<section className="collection-empty"><h3>{items.length?'条件に合う発見済みの宝物はありません':'まだこのアカウントの発見記録がありません'}</h3><p>ガチャで目的地へ歩き、GPS到着判定が成功すると追加されます。</p><button type="button" onClick={props.onStartAdventure}>宝物を探しに行く</button></section>}
+ </div>;
 }

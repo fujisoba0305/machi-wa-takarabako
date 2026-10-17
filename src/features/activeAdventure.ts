@@ -11,6 +11,7 @@ type Coordinates = { latitude: number; longitude: number };
 export type PositionFix = Coordinates & { accuracy: number; timestamp: number };
 export type AdventureTarget = Coordinates & { id: string; kind: 'normal' | 'treasure' };
 export type AdventureResult = {
+  discovererUid?: string;
   distanceKind?: 'straight-line';
   walkingTrial?: { roadMeters: number; estimated: true; origin: string; quality: string };
   spot: Spot | null;

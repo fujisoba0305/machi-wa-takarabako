@@ -1,3 +1,6 @@
+import {saveArrivedDiscovery,type PersonalDiscovery} from './features/personalDiscoveries';
+import {registrationCategories} from './features/treasureCategories';
+import {PhotoThumbnails} from './components/PhotoThumbnails';
 import {requestDeparturePosition} from './services/departurePosition';
 import { ApproximateSearchControls } from './components/ApproximateSearchControls';
 import { matchesApproximateScope, searchApproximate } from './services/approximateSearch';
@@ -302,14 +305,7 @@ latitude: number;
 longitude: number;
 };
 
-type TreasureCategory =
-| '☕ カフェ'
-| '🍜 グルメ'
-| '⛩️ 神社・お寺'
-| '🌳 自然'
-| '📷 写真スポット'
-| '🏪 お店'
-| '💎 その他';
+type TreasureCategory = string;
 
 type TreasureRegistration = {
 name: string;
@@ -321,15 +317,7 @@ image: File | null;
 additionalImage?: File | null;
 };
 
-const treasureCategories: TreasureCategory[] = [
-'☕ カフェ',
-'🍜 グルメ',
-'⛩️ 神社・お寺',
-'🌳 自然',
-'📷 写真スポット',
-'🏪 お店',
-'💎 その他',
-];
+const treasureCategories = registrationCategories;
 
 function requestCurrentCoordinates(): ReturnType<typeof requestFreshSearchPosition> {
 return requestAccountPosition(requestFreshSearchPosition);
@@ -407,6 +395,7 @@ setLocationDiagnostic('');locationPending.current=null;changeApproximateEnabled(
 departureAbort.current?.abort();adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
 }
+restorePersonalBook(next);
 previous = next;
 }); return () => data.subscription.unsubscribe(); } catch { /* Startup registration shows the retryable login error. */ }
 }, []);
@@ -461,6 +450,9 @@ const [areMapTreasureRatingsAvailable, setAreMapTreasureRatingsAvailable] = useS
 const [adventureHistory, setAdventureHistory] = useState<AdventureDiscovery[]>(() =>
 loadAdventureHistory()
 );
+const [personalDiscoveries,setPersonalDiscoveries]=useState<PersonalDiscovery[]>([]);
+const [personalDiscoveryMessage,setPersonalDiscoveryMessage]=useState('');
+function restorePersonalBook(uid:string|null){const state=saveArrivedDiscovery(localStorage,uid,adventureSession.current);setPersonalDiscoveries(state.records);setPersonalDiscoveryMessage(state.message);}
 const normalArrivalRewardClaimedRef = useRef(restoredAdventure?.rewardClaimed ?? false);
 const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
@@ -479,19 +471,12 @@ const treasureSaveInFlightRef = useRef(false);
 async function openTreasureMap() {
 setScreen('treasure-map');
 setSelectedMapTreasure(null);
-setIsTreasureMapLoading(true);
+setIsTreasureMapLoading(false);
 setTreasureMapError('');
 
 try {
-if (!currentLocation) {
-try {
-const generation=locationGate.current;const fix=await requestCurrentCoordinates();if(generation===locationGate.current)rememberCurrentFix(fix);
-} catch (error) {
-console.warn('[treasure-collection] Current location unavailable; list remains available', error);
-}
-}
 const [treasuresResult, ratingsResult] = await Promise.allSettled([
-getTreasures(),
+Promise.resolve([] as Treasure[]),
 getTreasureRatingSummaries(),
 ]);
 if (treasuresResult.status === 'rejected') throw treasuresResult.reason;
@@ -1977,7 +1962,7 @@ setIsAdventureBusy(true);
 setAdventureMessage('出発地点を確認しています…GPS精度の改善を待つ場合があります。');
 try {
 const adventure = await adventureSession.start(target, {
-spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}), ...(approximateSelection ? { distanceKind: 'straight-line' as const } : {}),
+spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(profileIdentity.current?{discovererUid:profileIdentity.current}:{}), ...(trialSelection ? { walkingTrial: trialSelection } : {}), ...(approximateSelection ? { distanceKind: 'straight-line' as const } : {}),
 }, choices.distance === '？km' || trialSelection || approximateSelection ? undefined : getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
 rememberCurrentFix(adventure.departure);
@@ -2002,6 +1987,7 @@ setIsAdventureBusy(true);
 setAdventureMessage('現在地を確認しています…');
 const message = await adventureSession.arrive(getNormalAdventureTarget(), (adventure) => {
 if(adventure.arrival)rememberCurrentFix(adventure.arrival);
+const book=saveArrivedDiscovery(localStorage,profileIdentity.current,adventure);setPersonalDiscoveries(book.records);setPersonalDiscoveryMessage(book.message);
 const arrivedTreasure = adventure.result.treasure;
 const rewardExp = getNormalArrivalRewardExp(adventure.target.kind === 'treasure');
 if (!claimNormalArrivalOnce(normalArrivalRewardClaimedRef)) return;
@@ -2015,7 +2001,7 @@ true
 );
 if (nextHistory !== currentHistory) {
 try {
-saveAdventureHistory(nextHistory);
+return saveAdventureHistory(nextHistory);
 } catch (error) {
 console.error('[adventure-history] Local save failed without blocking arrival', error);
 }
@@ -2251,7 +2237,7 @@ className="title-main-takaran"
 </p>
 </section>
 
-<StartupRegistration recoveredName={recoveredName} onIdentity={uid => { profileIdentity.current = uid; }} onRegistrationNeeded={() => setShowTitleBackdrop(true)} onStart={(playerName, fix) => {
+<StartupRegistration recoveredName={recoveredName} onIdentity={uid => { profileIdentity.current = uid; restorePersonalBook(uid); }} onRegistrationNeeded={() => setShowTitleBackdrop(true)} onStart={(playerName, fix) => {
 setName(playerName); setHasStarted(true);
 if (fix) rememberCurrentFix(fix);
 if (dateSession.current) setScreen('result');
@@ -2450,6 +2436,8 @@ currentLocation={currentLocation}
 onStartAdventure={() => setScreen('condition')}
 onRegisterTreasure={openTreasureRegistration}
 adventureHistory={adventureHistory}
+discoveries={personalDiscoveries}
+discoveryMessage={personalDiscoveryMessage}
 />
 )}
 </section>
@@ -2543,19 +2531,9 @@ disabled={isTreasureSaving}
 </label>
 
 {treasureImage && <button type="button" disabled={isTreasureSaving} onClick={() => {setTreasureImage(additionalTreasureImage);setTreasureImagePreview(additionalTreasureImage?URL.createObjectURL(additionalTreasureImage):null);setAdditionalTreasureImage(null);setAdditionalTreasurePreview(null);if(treasureImageInputRef.current)treasureImageInputRef.current.value='';if(additionalImageInputRef.current)additionalImageInputRef.current.value='';}}>写真を外す</button>}
-{treasureImagePreview ? (
-<img
-src={treasureImagePreview}
-alt="選択した宝物のプレビュー"
-className="treasure-photo-preview"
-/>
-) : treasureImage ? (
-<p className="treasure-file-name">選択済み：{treasureImage.name}</p>
-) : null}
-
 <label className="treasure-form-field"><span>写真2：追加画像（任意）</span><input type="file" accept="image/*" ref={additionalImageInputRef} disabled={!treasureImage||isTreasureSaving} onChange={event=>{const file=event.target.files?.[0]??null;setAdditionalTreasureImage(file);setAdditionalTreasurePreview(file?URL.createObjectURL(file):null);}}/></label>
 {additionalTreasureImage&&<button type="button" disabled={isTreasureSaving} onClick={()=>{setAdditionalTreasureImage(null);setAdditionalTreasurePreview(null);if(additionalImageInputRef.current)additionalImageInputRef.current.value='';}}>追加写真を外す</button>}
-{additionalTreasurePreview&&<img src={additionalTreasurePreview} alt="追加写真のプレビュー" className="treasure-photo-preview"/>}
+<PhotoThumbnails photos={[...(treasureImagePreview?[{url:treasureImagePreview,label:'代表画像'}]:[]),...(additionalTreasurePreview?[{url:additionalTreasurePreview,label:'追加画像'}]:[])]}/>
 {photoSizeReport&&<p role="status">{photoSizeReport}</p>}
 <label className="treasure-form-field">
 <span>宝物の名前</span>

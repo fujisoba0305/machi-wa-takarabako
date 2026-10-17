@@ -1,3 +1,4 @@
+import {newCategoryMatchesMood} from './treasureCategories';
 import type { Treasure } from '../services/treasures';
 import { calculateDistance } from './distance';
 
@@ -45,7 +46,7 @@ treasuresError: treasuresResult.status === 'rejected' ? treasuresResult.reason :
 }
 
 export function matchesTreasureMood(category: string, mood: string) {
-return treasureCategoriesByMood[mood]?.includes(category) ?? false;
+return (treasureCategoriesByMood[mood]?.includes(category) ?? false) || newCategoryMatchesMood(category,mood);
 }
 
 export function getEligibleRegisteredTreasures(

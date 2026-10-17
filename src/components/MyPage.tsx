@@ -1,3 +1,6 @@
+import {LegacyHistoryNotice} from './LegacyHistoryNotice';
+import {readPersonalDiscoveries} from '../features/personalDiscoveries';
+import {MyTreasureManager} from './MyTreasureManager';
 import { AccountPersistenceDiagnostic } from './AccountPersistenceDiagnostic';
 import { useEffect, useRef, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
@@ -84,10 +87,12 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
       }}><label htmlFor="adventurer-name-edit">冒険者名（この端末・アカウント別）</label><input id="adventurer-name-edit" value={draftName} maxLength={40} disabled={loading || busy || adventureInProgress} onChange={event => setDraftName(event.target.value)} /><button disabled={loading || busy || adventureInProgress} type="submit">冒険者名を保存</button></form>}
     </div>
     <div className="my-page-card my-page-records"><AppIcon name="book" /><h2>冒険の記録について</h2>
-      <p>現在のEXP・冒険回数・発見履歴は、このブラウザのゲスト記録です。ログイン中もアカウントの記録とは分けて扱います。</p>
-      <p><strong>アカウントへの引き継ぎ・端末間の同期は、まだ利用できません。</strong>ログインしても、既存の記録や投稿が自動で紐づくことはありません。</p>
+      <p>現在のEXP・冒険回数・旧形式の発見履歴は、このブラウザのゲスト記録です。新しい図鑑の発見記録は、この端末のGoogleアカウント別に保存します。</p>
+      <p><strong>アカウントへの引き継ぎ・端末間の同期は、まだ利用できません。</strong>ログインしても、既存の記録や投稿が自動で紐づくことはありません。図鑑も別端末へは自動同期されません。</p>
       <p>機種変更の前に、元の端末のブラウザデータを消さずに保管してください。</p>
     </div>
+    <LegacyHistoryNotice discoveries={user&&!loading?readPersonalDiscoveries(localStorage,user.id).records:undefined}/>
+    {user&&!loading&&<MyTreasureManager/>}
     <button className="my-page-back" onClick={onBack}><AppIcon name="back" />冒険に戻る</button>
   </section>;
 }

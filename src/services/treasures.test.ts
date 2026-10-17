@@ -26,7 +26,7 @@ select.mockResolvedValue({ data: rows, error: null });
 
 await expect(getTreasures()).resolves.toEqual(rows);
 expect(from).toHaveBeenCalledWith('treasures');
-expect(select).toHaveBeenCalledWith('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url');
+expect(select).toHaveBeenCalledWith('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url, created_at');
 });
 
 it('throws when Supabase cannot load the list', async () => {

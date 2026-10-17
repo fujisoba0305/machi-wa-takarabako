@@ -1,3 +1,4 @@
+import {managementEnabled,createManagedTreasure} from './treasureManagement';
 import { getSupabaseClient } from './supabase';
 import { saveDiagnostic, TreasureSaveError } from '../features/treasureSaveDiagnostics';
 
@@ -13,6 +14,7 @@ additional_image_url?: string | null;
 
 export type Treasure = TreasureInsert & {
 id?: number;
+created_at?: string;
 discovery_count?: number;
 };
 
@@ -25,7 +27,7 @@ export async function getTreasures(): Promise<Treasure[]> {
 const supabase = getSupabaseClient();
 const initial = await supabase
 .from('treasures')
-.select('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url');
+.select('id, name, comment, category, latitude, longitude, image_url, discovery_count, additional_image_url, created_at');
 let data:unknown[]|null=initial.data;let error=initial.error;
 
 if (error?.code === '42703' || error?.code === 'PGRST204') {
@@ -80,6 +82,7 @@ return data;
 }
 
 export async function createTreasure(treasure: TreasureInsert) {
+if(managementEnabled()){await createManagedTreasure(treasure);return;}
 console.info('[treasure-save] INSERT start', {
 namePresent: treasure.name.length > 0,
 categoryPresent: treasure.category.length > 0,

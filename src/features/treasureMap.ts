@@ -1,3 +1,4 @@
+import {collectionCategories} from './treasureCategories';
 import type { Treasure } from '../services/treasures';
 import { calculateDistance } from './distance';
 
@@ -16,7 +17,7 @@ const categoryMarkers: Record<string, { icon: string; theme: string }> = {
 const fallbackCategoryMarker = categoryMarkers['💎 その他'];
 
 export function getTreasureCategoryMarker(category: string) {
-return categoryMarkers[category] ?? fallbackCategoryMarker;
+const newer=collectionCategories.find(c=>c.value===category);return categoryMarkers[category] ?? (newer?{icon:newer.icon,theme:category==='🌿 自然・絶景'?'nature':category==='🛍️ 買い物・発見'?'shop':'other'}:fallbackCategoryMarker);
 }
 
 export function getTreasureCategoryIcon(category: string) {

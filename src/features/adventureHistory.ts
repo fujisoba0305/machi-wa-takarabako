@@ -53,8 +53,20 @@ if (history.some((item) => item.treasureId === treasureId)) return history;
 return [...history, { treasureId, firstDiscoveredAt }];
 }
 
+export const LEGACY_DISCOVERY_BACKUP_KEY='machiLegacyDiscoveryBackup.v1';
+/** Read-only audit: unreadable data is never reported as zero discoveries. */
+export function inspectLegacyDiscoveries(storage: Pick<Storage,'getItem'>){
+ try{const raw=storage.getItem(ADVENTURE_HISTORY_STORAGE_KEY);if(raw===null)return {state:'absent' as const,records:[] as AdventureDiscovery[],rawCount:0,invalidCount:0,duplicateCount:0};let value:unknown;try{value=JSON.parse(raw);}catch{return {state:'invalid' as const,records:[] as AdventureDiscovery[],rawCount:null,invalidCount:null,duplicateCount:0};}if(!Array.isArray(value))return {state:'invalid' as const,records:[] as AdventureDiscovery[],rawCount:null,invalidCount:null,duplicateCount:0};const valid=value.filter(isAdventureDiscovery);const records=parseAdventureHistory(raw);return {state:valid.length===value.length?'readable' as const:'partial' as const,records,rawCount:value.length,invalidCount:value.length-valid.length,duplicateCount:valid.length-records.length};}catch{return {state:'unavailable' as const,records:[] as AdventureDiscovery[],rawCount:null,invalidCount:null,duplicateCount:0};}
+}
+/** Append only: preserve every original row/date, and snapshot before the first change. */
 export function saveAdventureHistory(history: AdventureDiscovery[], storage: StorageLike = localStorage) {
-storage.setItem(ADVENTURE_HISTORY_STORAGE_KEY, JSON.stringify(history));
+ if(!history.every(isAdventureDiscovery))throw Error('旧履歴への保存内容を確認できません。元データを保持しました。');
+ const raw=storage.getItem(ADVENTURE_HISTORY_STORAGE_KEY);let existing:AdventureDiscovery[]=[];
+ if(raw!==null){let parsed:unknown;try{parsed=JSON.parse(raw);}catch{throw Error('旧履歴を読み取れません。元データを保持しました。');}if(!Array.isArray(parsed)||!parsed.every(isAdventureDiscovery))throw Error('旧履歴を検証できません。元データを保持しました。');existing=parsed;}
+ const merged=[...existing],seen=new Set(existing.map(r=>r.treasureId));for(const item of history)if(!seen.has(item.treasureId)){merged.push(item);seen.add(item.treasureId);}
+ if(merged.length===existing.length)return existing;
+ if(raw!==null&&storage.getItem(LEGACY_DISCOVERY_BACKUP_KEY)===null)storage.setItem(LEGACY_DISCOVERY_BACKUP_KEY,raw);
+ storage.setItem(ADVENTURE_HISTORY_STORAGE_KEY,JSON.stringify(merged));return merged;
 }
 
 export function recordArrivedTreasure(

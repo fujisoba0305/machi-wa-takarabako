@@ -1,3 +1,5 @@
+import {managementEnabled} from './treasureManagement';
+import {getAccountClient} from './accountAuth';
 import {compressTreasurePhoto,type PreparedPhoto} from '../features/photoCompression';
 import { getSupabaseClient } from './supabase';
 import { imageDiagnostic, saveDiagnostic, TreasureSaveError, type TreasureSaveStage } from '../features/treasureSaveDiagnostics';
@@ -31,8 +33,8 @@ let stage: TreasureSaveStage = 'image_prepare';
 try {
 const prepared=await compressTreasurePhoto(file);
 stage='image_upload';
-const supabase = getSupabaseClient();
-const path = `${crypto.randomUUID()}.${getFileExtension(prepared.file)}`;
+let supabase=getSupabaseClient();let prefix='';if(managementEnabled()){supabase=getAccountClient();const {data,error}=await supabase.auth.getUser();if(error||!data.user||data.user.is_anonymous)throw Error('Googleログインを確認してください。');prefix=data.user.id+'/';}
+const path = prefix+crypto.randomUUID()+'.'+getFileExtension(prepared.file);
 const { error } = await supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
 .upload(path, prepared.file, {
