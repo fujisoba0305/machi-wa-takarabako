@@ -37,3 +37,9 @@ expect(payload.query).not.toContain('way[');
 expect(payload.query).not.toContain('relation[');
 });
 });
+
+it('filters inactive facilities before reusing a successful response',async()=>{
+ const closed={type:'node',id:701,tags:{name:'店(閉業)',amenity:'cafe'}},open={type:'node',id:702,tags:{name:'営業未確認カフェ',amenity:'cafe'}};
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({elements:[closed,open]})}));
+ expect(await getNearbyCafes(35.12345,139.12345,1234)).toEqual([open]);expect(await getNearbyCafes(35.12345,139.12345,1234)).toEqual([open]);vi.unstubAllGlobals();
+});

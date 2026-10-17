@@ -437,6 +437,7 @@ const [treasureComment, setTreasureComment] = useState('');
 const [treasureCategory, setTreasureCategory] =
 useState<TreasureCategory | ''>('');
 const [treasureImage, setTreasureImage] = useState<File | null>(null);
+const treasureImageInputRef=useRef<HTMLInputElement>(null);
 const [treasureImagePreview, setTreasureImagePreview] = useState<string | null>(null);
 const [registeredTreasure, setRegisteredTreasure] =
 useState<TreasureRegistration | null>(null);
@@ -479,7 +480,7 @@ setTreasureMapError('');
 try {
 if (!currentLocation) {
 try {
-setCurrentLocation(await requestCurrentCoordinates());
+const generation=locationGate.current;const fix=await requestCurrentCoordinates();if(generation===locationGate.current)rememberCurrentFix(fix);
 } catch (error) {
 console.warn('[treasure-collection] Current location unavailable; list remains available', error);
 }
@@ -640,6 +641,19 @@ setChoices((currentChoices) => ({
 }));
 }
 
+function rememberCurrentFix(fix: {latitude:number;longitude:number;timestamp:number}) {
+ const age=Date.now()-fix.timestamp;
+ if (!Number.isFinite(fix.timestamp) || fix.timestamp<=0 || age>30_000 || age< -5000 || !Number.isFinite(fix.latitude) || Math.abs(fix.latitude)>90 || !Number.isFinite(fix.longitude) || Math.abs(fix.longitude)>180) return;
+ locationFetchedAt.current=fix.timestamp;
+ setCurrentLocation({latitude:fix.latitude,longitude:fix.longitude});
+ setLocationMessage('');setLocationDiagnostic('');
+ setTakaranSpeech('🎉 現在地を確認したよ！検索前にも新しい位置を確認するね。');
+}
+function openSearchConditions(mood?: string) {
+ if(mood)selectChoice('mood',mood);
+ setSearchExpandLevel(0);setCourseStep(1);setScreen('condition');
+}
+
 async function getCurrentLocation() {
 const locationGeneration = locationGate.current;
 setTakaranSpeech("🔍 現在地を探してるよ...");
@@ -648,8 +662,7 @@ try {
 if (!locationPending.current) { const pending=requestCurrentCoordinates().finally(() => { if(locationPending.current===pending)locationPending.current = null; });locationPending.current=pending; }
 const coordinates = await locationPending.current;
 if (locationGeneration !== locationGate.current) return false;
-locationFetchedAt.current = coordinates.timestamp;
-setCurrentLocation(coordinates);
+rememberCurrentFix(coordinates);
 setLocationMessage('');setLocationDiagnostic('');
 setTakaranSpeech("🎉 よし！冒険に行こう！");
 return true;
@@ -1210,7 +1223,7 @@ if(approximateEnabled && matchesApproximateScope(choices)) {
  const controller=new AbortController();trialAbortRef.current=controller;
  try{
  setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();
- const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal,onProgress:()=>{if(isCurrent()&&!controller.signal.aborted)setTrialProgress('古い位置情報を使わず、新しいGPS測位を待っています…');}}));const gpsMs=performance.now()-gpsStarted;if(!isCurrent()||controller.signal.aborted)return;
+ const fresh=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal,onProgress:()=>{if(isCurrent()&&!controller.signal.aborted)setTrialProgress('古い位置情報を使わず、新しいGPS測位を待っています…');}}));const gpsMs=performance.now()-gpsStarted;if(!isCurrent()||controller.signal.aborted)return;rememberCurrentFix(fresh);
  setTrialProgress('本人確認・施設・登録宝物を確認しています…');
  const result=await searchApproximate(fresh,{...choices},()=>withWalkingTrialDeadline(getTreasures(),controller.signal),controller.signal);if(!isCurrent()||controller.signal.aborted)return;
  setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report+'\nGPS前のログイン確認：'+Math.max(0,gpsMs-(freshPositionTiming(fresh)?.totalMs??gpsMs)).toFixed(1)+'ms\n'+freshPositionReport(fresh)+'\nGPS取得・ログイン確認：'+gpsMs.toFixed(1)+'ms\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms');
@@ -1975,6 +1988,7 @@ const adventure = await adventureSession.start(target, {
 spot: nearbySpot, treasure: selectedGachaTreasure, choices, distanceKm: spotDistance, playerName: name, ...(trialSelection ? { walkingTrial: trialSelection } : {}), ...(approximateSelection ? { distanceKind: 'straight-line' as const } : {}),
 }, choices.distance === '？km' || trialSelection || approximateSelection ? undefined : getDepartureWalkingDistance);
 if (!adventure || operation !== adventureOperationRef.current) return;
+rememberCurrentFix(adventure.departure);
 setAdventureMessage(adventure.rewardClaimed ? 'この冒険は完了しています。' : '冒険を開始しました！ 現地に着いたら「到着した！」を押してください。');
 // Same-tab navigation avoids popup blocking after asynchronous GPS acquisition.
 setScreen(adventure.rewardClaimed ? 'result' : 'walking');
@@ -1995,6 +2009,7 @@ const operation = ++adventureOperationRef.current;
 setIsAdventureBusy(true);
 setAdventureMessage('現在地を確認しています…');
 const message = await adventureSession.arrive(getNormalAdventureTarget(), (adventure) => {
+if(adventure.arrival)rememberCurrentFix(adventure.arrival);
 const arrivedTreasure = adventure.result.treasure;
 const rewardExp = getNormalArrivalRewardExp(adventure.target.kind === 'treasure');
 if (!claimNormalArrivalOnce(normalArrivalRewardClaimedRef)) return;
@@ -2246,7 +2261,7 @@ className="title-main-takaran"
 
 <StartupRegistration recoveredName={recoveredName} onIdentity={uid => { profileIdentity.current = uid; }} onRegistrationNeeded={() => setShowTitleBackdrop(true)} onStart={(playerName, fix) => {
 setName(playerName); setHasStarted(true);
-if (fix) { setCurrentLocation({ latitude: fix.latitude, longitude: fix.longitude }); locationFetchedAt.current = fix.timestamp; }
+if (fix) rememberCurrentFix(fix);
 if (dateSession.current) setScreen('result');
 else setScreen(adventureSession.current ? adventureRestoreScreen(adventureSession.current) : 'home');
 }} />
@@ -2271,13 +2286,7 @@ onArrive={confirmNormalArrival}
 />
 ) : screen === 'home' ? (
 <section className="home-screen">
-<HomeExplore name={trimmedName} onExplore={(mood) => {
-if (mood) selectChoice('mood', mood);
-if (!currentLocation) getCurrentLocation();
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('condition');
-}} onCollection={openTreasureMap} />
+<HomeExplore name={trimmedName} onExplore={openSearchConditions} onCollection={openTreasureMap} />
 <details className="home-companion">
 <summary><IconText text="🌿 たからんと冒険の記録 " /><span>Lv.{takaran.level}</span></summary>
 <div
@@ -2336,23 +2345,14 @@ className="takaran-main-image"
 <button
 className="takaran-location-button"
 type="button"
-onClick={() => {
-if (!currentLocation) {
-getCurrentLocation();
-return;
-}
-
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('condition');
-}}
+onClick={(event) => { event.stopPropagation(); openSearchConditions(); }}
 >
-<IconText text={currentLocation ? '✨ 宝物を探しに行く' : '📍 たからんを押して現在地を取得'} />
+<IconText text={currentLocation ? '✨ 宝物を探しに行く' : '📍 条件を選んで現在地を確認'} />
 </button>
 <p className="adventure-ready">
 <IconText text={currentLocation
-? '🧭 冒険の準備完了！'
-: '📍 たからんを押して現在地を取得しよう！'} />
+? '🧭 現在地の取得履歴あり。検索前に再確認します'
+: '📍 検索前に現在地を確認します'} />
 </p>
 
 {takaranNextInfo.remainingExp > 0 ? (
@@ -2540,11 +2540,14 @@ onClick={closeTreasureRegistration}
 <span>写真</span>
 <input
 type="file"
+ref={treasureImageInputRef}
 accept="image/*"
 onChange={handleTreasureImageChange}
 />
+<small>写真は任意・1枚です。保存先の上限は5MBです。大きい写真は小さく書き出して選んでください（自動圧縮はまだ行いません）。</small>
 </label>
 
+{treasureImage && <button type="button" disabled={isTreasureSaving} onClick={() => {setTreasureImage(null);setTreasureImagePreview(null);if(treasureImageInputRef.current)treasureImageInputRef.current.value='';}}>写真を外す</button>}
 {treasureImagePreview ? (
 <img
 src={treasureImagePreview}
@@ -2885,6 +2888,7 @@ setScreen('condition');
 {nearbySpot && !selectedGachaTreasure && <small><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a></small>}
 {choices.mood !== 'デート' && <p className="destination-selection-heading">さあ、この場所へ冒険しよう</p>}
 <h2>{destination.title}</h2>
+{nearbySpot && !selectedGachaTreasure && <p>営業状況・公開状況は未確認です。出発前にGoogleマップ等で確認してください。</p>}
 </header>
 
 <div className={`result-card ${choices.mood !== 'デート' ? 'normal-result-card' : ''}`}>
@@ -3269,17 +3273,7 @@ aria-label="メッセージを閉じる"
 <button
 type="button"
 aria-current={['condition', 'coin', 'gacha', 'searching', 'result', 'walking', 'arrival'].includes(screen) ? 'page' : undefined}
-onClick={() => {
-if (!currentLocation) {
-alert('まずはたからんを押して、現在地を取得してね！');
-setScreen('home');
-return;
-}
-
-setSearchExpandLevel(0);
-setCourseStep(1);
-setScreen('condition');
-}}
+onClick={() => openSearchConditions()}
 >
 <span><IconText text="📦" /></span>
 <small>宝箱</small>

@@ -1,3 +1,4 @@
+import { hasInactiveFacilitySignal } from '../features/facilityAvailability';
 export type Spot = {
 type: string;
 id: number;
@@ -87,7 +88,7 @@ const data: OverpassResponse = await response.json();
 if (!data || !Array.isArray(data.elements) || data.remark) {
 throw new Error('Overpass returned an incomplete or invalid result');
 }
-const elements = data.elements;
+const elements = data.elements.filter(spot => !hasInactiveFacilitySignal(spot.tags));
 
 console.info('[overpass-client]', { endpoint: '/api/overpass', status: 'success', count: elements.length, provider: ['vk-maps', 'private-coffee'].includes(response.headers?.get('X-Machi-Overpass-Provider') ?? '') ? response.headers?.get('X-Machi-Overpass-Provider') : 'unknown', environment: response.headers?.get('X-Machi-API-Environment') === 'local' ? 'local' : 'deployed' });
 

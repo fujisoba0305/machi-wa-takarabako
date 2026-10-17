@@ -1,3 +1,5 @@
+import exclusions from '../data/staticFacilityExclusions.json';
+import { hasInactiveFacilitySignal } from '../features/facilityAvailability';
 import manifest from '../data/staticFacilityManifest.json';
 import definitions from '../data/staticFacilityConditions.json';
 import { calculateDistance } from '../features/distance';
@@ -86,8 +88,9 @@ export function resolveStaticCondition(choices: Choices, random = Math.random) {
   if (!definition) throw new StaticFacilityError();
   return { mood, clauses: definition.clauses };
 }
+const inactiveSnapshotIds=new Set(exclusions.sourceSha256===manifest.dataset.sha256?exclusions.ids:[]);
 export function matchesStaticCondition(row: Row, clauses: ReturnType<typeof resolveStaticCondition>['clauses']) {
-  return clauses.some(clause => row.type === clause.type && clause.predicates.every(p => p.op === 'exists' ? row.tags[p.key] !== undefined : p.op === '=' ? row.tags[p.key] === ('value' in p ? p.value : '') : typeof row.tags[p.key] === 'string' && new RegExp(('value' in p ? p.value : '') || '').test(row.tags[p.key])));
+  return !inactiveSnapshotIds.has(row.type+':'+row.id) && !hasInactiveFacilitySignal(row.tags) && clauses.some(clause => row.type === clause.type && clause.predicates.every(p => p.op === 'exists' ? row.tags[p.key] !== undefined : p.op === '=' ? row.tags[p.key] === ('value' in p ? p.value : '') : typeof row.tags[p.key] === 'string' && new RegExp(('value' in p ? p.value : '') || '').test(row.tags[p.key])));
 }
 // null means out of scope: use the original provider. Errors NEVER trigger automatic fallback.
 export async function loadLocalStaticFacilities(point: Point, choices: Choices, radius: number, random = Math.random): Promise<Spot[] | null> {

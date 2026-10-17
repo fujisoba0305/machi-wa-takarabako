@@ -23,3 +23,11 @@ describe('local static facility provider', () => {
   it('normalizes Korean label and preserves exact legacy conditions', () => { expect(resolveStaticCondition({ ...choices, mood: 'グルメ', foodGenre: '韓国料理' }).clauses.some(c => c.predicates.some(p => 'value' in p && p.value === 'barbecue'))).toBe(true); expect(resolveStaticCondition({ ...choices, mood: '神社・お寺', shrineGenre: '歴史散策' }).clauses.some(c => c.predicates.some(p => p.key === 'religion'))).toBe(false); });
   it('resolves all six random moods once with existing order', () => { expect(Array.from({ length: 6 }, (_, i) => resolveStaticCondition({ mood: 'おまかせ', distance: '？km' }, () => (i + .5) / 6).mood)).toEqual(['カフェ', '自然', 'グルメ', 'イベント', '写真', 'ストレス解消']); });
 });
+
+it('excludes the actual closed ramen shop and lost lifecycle tags without widening cuisine',async()=>{
+ const rows=await loadLocalStaticFacilities({latitude:35.70185,longitude:139.39352},{mood:'グルメ',distance:'？km',foodGenre:'ラーメン'},3000);
+ expect(rows!.length).toBeGreaterThan(0);expect(rows!.every(r=>r.tags?.cuisine==='ramen')).toBe(true);
+ expect(rows!.some(r=>r.id===3881599562)).toBe(false);
+ const old=await loadLocalStaticFacilities({latitude:35.7,longitude:139.7},{mood:'グルメ',distance:'？km',foodGenre:'おまかせ'},100000);
+ expect(old!.some(r=>r.type==='node'&&r.id===592940767)).toBe(false);
+});

@@ -25,3 +25,10 @@ describe('private treasure save diagnostics', () => {
     expect(saveFailureMessage({}, 'image_upload', file)).not.toContain('private-name');
   });
 });
+
+it('explains 413 as the image size limit, not a name or database error',()=>{
+ const file={name:'private-location.jpg',size:5100000,type:'image/jpeg'} as File;
+ const message=saveFailureMessage({statusCode:'413'},'image_upload',file);
+ expect(message).toContain('1枚5MB');expect(message).toContain('入力内容はそのまま');expect(message).not.toContain(file.name);
+ expect(saveFailureMessage({status:403},'image_upload',file)).not.toContain('上限');
+});

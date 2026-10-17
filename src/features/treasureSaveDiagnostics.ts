@@ -21,7 +21,8 @@ export function imageDiagnostic(file: File) {
 }
 export function saveFailureMessage(error: unknown, stage: TreasureSaveStage, file: File | null) {
   const d = saveDiagnostic(error, stage), label = { image_upload: '写真のアップロード', image_url: '写真URLの取得', db_insert: '宝物情報の保存', image_cleanup: '今回の写真の後処理' }[d.stage];
-  const unsure = d.stage === 'db_insert' && d.outcome === 'unknown' ? '保存結果を確認できません。再送する前に図鑑で登録済みか確認してください。' : '通信状態や入力内容を確認してください。';
+  const tooLarge = d.stage === 'image_upload' && d.httpStatus === 413;
+  const unsure = tooLarge ? '写真のサイズが保存先の上限（現在1枚5MB）を超えています。小さいサイズで書き出した写真に選び直すか、写真なしで登録してください。入力内容はそのまま残っています。' : d.stage === 'db_insert' && d.outcome === 'unknown' ? '保存結果を確認できません。再送する前に図鑑で登録済みか確認してください。' : '通信状態や入力内容を確認してください。';
   const image = file ? imageDiagnostic(file) : null;
   return `宝物を保存できませんでした。${label}の段階で停止しました。${unsure} 確認用情報：${d.stage}/${d.httpStatus ?? '不明'}/${d.code}${image ? `/${image.format}/約${image.sizeMiB}MiB` : ''}`;
 }

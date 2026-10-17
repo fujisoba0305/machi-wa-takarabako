@@ -241,3 +241,23 @@ vi.mock('./services/accountAuth', () => ({
  isAccountPage: () => false, initializeAccount: async () => {}, loginWithGoogle: vi.fn(), logoutAccount: vi.fn(), googleAvatar: () => undefined,
  getAccountClient: () => ({auth: {getSession: async () => ({data: {session: {user: {id: 'regression-account', user_metadata: {}}, expires_at: Date.now()/1000+3600}}, error: null}), onAuthStateChange: () => ({data: {subscription: {unsubscribe: vi.fn()}}})}}),
 }));
+
+it('uses the verified arrival fix on home and keeps category/menu navigation consistent',async()=>{
+ await seed();await mount();await click('到着した！');await click('ホームに戻る');
+ expect(container.textContent).toContain('現在地の取得履歴あり');expect(container.textContent).not.toContain('たからんを押して現在地を取得');
+ geolocation.mockClear();await click('公園・自然');expect(container.querySelector('.condition-screen')).not.toBeNull();expect(geolocation).not.toHaveBeenCalled();
+ await click('ホーム');await click('距離と気分から宝物を探す');expect(container.querySelector('.condition-screen')).not.toBeNull();
+ await click('ホーム');await act(async()=>container.querySelector<HTMLButtonElement>('.bottom-nav button:nth-child(3)')!.click());expect(container.querySelector('.condition-screen')).not.toBeNull();expect(alert).not.toHaveBeenCalled();expect(localStorage.getItem('machiTakarabakoExp')).toBe('20');
+});
+it('allows condition selection after reload but requires fresh GPS at the coin, keeping rewards on failure',async()=>{
+ const complete=await seed();localStorage.setItem(ACTIVE_ADVENTURE_KEY,JSON.stringify({...complete,rewardClaimed:true,completedAt:Date.now(),arrival:complete.departure}));await mount();await click('ホーム');geolocation.mockClear();
+ await click('カフェ');expect(container.querySelector('.condition-screen')).not.toBeNull();expect(geolocation).not.toHaveBeenCalled();await click('1km');await click('冒険コインを作る');failGPS=true;await click('ガチャを回しに行こう！');
+ expect(geolocation).toHaveBeenCalledOnce();expect(container.querySelector('.gacha-screen')).toBeNull();expect(container.textContent).toContain('位置情報が許可されていません');expect(saved().rewardClaimed).toBe(true);
+});
+
+it('can remove an oversized rejected photo and retry without losing the name or adventure',async()=>{
+ const original=await seed();await mount();await click('宝物を見つけた！');vi.mocked(uploadTreasureImage).mockRejectedValueOnce(new TreasureSaveError(saveDiagnostic({status:413},'image_upload')));
+ await act(async()=>{Simulate.change(container.querySelector('input[placeholder="例：路地裏の小さな喫茶店"]')!,{target:{value:'残す名前'}} as never);Simulate.change(container.querySelector('select')!,{target:{value:'📷 写真スポット'}} as never);Simulate.change(container.querySelector('input[type="file"]')!,{target:{files:[new File(['photo'],'photo.jpg',{type:'image/jpeg'})]}} as never);});
+ await act(async()=>Simulate.submit(container.querySelector('form')!));expect(container.textContent).toContain('1枚5MB');expect(createTreasure).not.toHaveBeenCalled();await click('写真を外す');
+ expect(container.querySelector<HTMLInputElement>('input[placeholder="例：路地裏の小さな喫茶店"]')!.value).toBe('残す名前');await act(async()=>Simulate.submit(container.querySelector('form')!));expect(createTreasure).toHaveBeenCalledWith(expect.objectContaining({name:'残す名前',image_url:null}));expect(uploadTreasureImage).toHaveBeenCalledOnce();expect(saved()).toEqual(original);
+});
