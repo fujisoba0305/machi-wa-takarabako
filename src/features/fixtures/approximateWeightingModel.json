@@ -1,0 +1,1310 @@
+{
+  "scope": "Frozen strict-heldout OSM road/block estimates; not actual facility walking. No GPS or personal data. 2026-10-18 study.",
+  "groups": [
+    {
+      "originLabel": "武蔵小杉",
+      "band": 1,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 1.396140357780943,
+          "modelRoadMeters": 1625.1877559198474
+        },
+        {
+          "distanceKm": 0.5463466158344715,
+          "modelRoadMeters": 711.6824722806779
+        },
+        {
+          "distanceKm": 0.701460861869368,
+          "modelRoadMeters": 797.572449965365
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 1,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 1.4377382586375649,
+          "modelRoadMeters": 1581.2275327222244
+        },
+        {
+          "distanceKm": 1.1516490496767418,
+          "modelRoadMeters": 1339.3570830640522
+        },
+        {
+          "distanceKm": 1.2972953095193742,
+          "modelRoadMeters": 1426.9103807034776
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 1,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 1.2141315799925714,
+          "modelRoadMeters": 1481.7798260968916
+        },
+        {
+          "distanceKm": 1.4899480738949546,
+          "modelRoadMeters": 2282.1240019686124
+        },
+        {
+          "distanceKm": 1.2100192192449657,
+          "modelRoadMeters": 1375.3566906693782
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 1,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 1.2908382816311235,
+          "modelRoadMeters": 1552.6314753501033
+        },
+        {
+          "distanceKm": 1.156751970861138,
+          "modelRoadMeters": 1473.0160691789747
+        },
+        {
+          "distanceKm": 1.048469611713203,
+          "modelRoadMeters": 1321.72902839258
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 1,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 1.032511399202108,
+          "modelRoadMeters": 1360.6932403033557
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 3,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 2.496007017706272,
+          "modelRoadMeters": 3047.104426026911
+        },
+        {
+          "distanceKm": 2.998727430803574,
+          "modelRoadMeters": 3324.981464241951
+        },
+        {
+          "distanceKm": 2.8272459205756273,
+          "modelRoadMeters": 3099.398472744478
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 3,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 2.048554354120445,
+          "modelRoadMeters": 2438.040518038319
+        },
+        {
+          "distanceKm": 2.542788368830819,
+          "modelRoadMeters": 2875.1518689384375
+        },
+        {
+          "distanceKm": 2.9531492039948812,
+          "modelRoadMeters": 3732.4628925703882
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 3,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 2.9566292407443298,
+          "modelRoadMeters": 3347.4798070966867
+        },
+        {
+          "distanceKm": 2.5756219121115533,
+          "modelRoadMeters": 3037.6709130138365
+        },
+        {
+          "distanceKm": 2.087507159186996,
+          "modelRoadMeters": 3479.7021584290924
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 3,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 2.9706356524788498,
+          "modelRoadMeters": 3400.9714698302
+        },
+        {
+          "distanceKm": 2.361522077920443,
+          "modelRoadMeters": 3827.2596571957633
+        },
+        {
+          "distanceKm": 2.7596632785768205,
+          "modelRoadMeters": 3414.4078816145898
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 3,
+      "category": "写真",
+      "candidates": []
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 5,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 3.951580767873057,
+          "modelRoadMeters": 5359.780952422844
+        },
+        {
+          "distanceKm": 3.952632269177668,
+          "modelRoadMeters": 4758.387741621245
+        },
+        {
+          "distanceKm": 3.8771183504244795,
+          "modelRoadMeters": 4631.0606665518335
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 5,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 4.044406460756157,
+          "modelRoadMeters": 4939.2548338759
+        },
+        {
+          "distanceKm": 3.6241905334842097,
+          "modelRoadMeters": 4383.6552566226055
+        },
+        {
+          "distanceKm": 4.364801565334617,
+          "modelRoadMeters": 5021.873637796997
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 5,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 4.320566303904999,
+          "modelRoadMeters": 4813.522456985598
+        },
+        {
+          "distanceKm": 4.032216897438707,
+          "modelRoadMeters": 5640.338537139025
+        },
+        {
+          "distanceKm": 3.8064775486105145,
+          "modelRoadMeters": 4633.072138696919
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 5,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 4.4997836400031,
+          "modelRoadMeters": 4984.034985577399
+        },
+        {
+          "distanceKm": 3.9913536087989567,
+          "modelRoadMeters": 4358.739652089722
+        },
+        {
+          "distanceKm": 3.5370472870295795,
+          "modelRoadMeters": 4428.362059001618
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 5,
+      "category": "写真",
+      "candidates": []
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 10,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 8.28064602027327,
+          "modelRoadMeters": 9369.602652734186
+        },
+        {
+          "distanceKm": 8.923898584083137,
+          "modelRoadMeters": 10109.800200500427
+        },
+        {
+          "distanceKm": 8.915593559710898,
+          "modelRoadMeters": 9968.258609994891
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 10,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 8.594390349500237,
+          "modelRoadMeters": 10014.474014164425
+        },
+        {
+          "distanceKm": 8.04894961910391,
+          "modelRoadMeters": 9491.471469251035
+        },
+        {
+          "distanceKm": 8.994201961441528,
+          "modelRoadMeters": 10380.905826410491
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 10,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 8.157138063088185,
+          "modelRoadMeters": 10001.75138639426
+        },
+        {
+          "distanceKm": 8.523604271906166,
+          "modelRoadMeters": 9903.329628301808
+        },
+        {
+          "distanceKm": 8.728719322560517,
+          "modelRoadMeters": 10203.801580536478
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 10,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 8.977230372881547,
+          "modelRoadMeters": 9889.17247168481
+        },
+        {
+          "distanceKm": 8.202160049116637,
+          "modelRoadMeters": 9604.296471487714
+        },
+        {
+          "distanceKm": 8.113446168193436,
+          "modelRoadMeters": 9599.264329925812
+        }
+      ]
+    },
+    {
+      "originLabel": "武蔵小杉",
+      "band": 10,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 8.907961135055723,
+          "modelRoadMeters": 10561.566456908758
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 1,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 1.3868686922994369,
+          "modelRoadMeters": 1912.2984906061722
+        },
+        {
+          "distanceKm": 1.3425868184913494,
+          "modelRoadMeters": 1605.073690585525
+        },
+        {
+          "distanceKm": 1.4051298310959677,
+          "modelRoadMeters": 1720.8007831109485
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 1,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 1.168626004588214,
+          "modelRoadMeters": 1386.2248668194998
+        },
+        {
+          "distanceKm": 0.5268893520243906,
+          "modelRoadMeters": 616.3398390355354
+        },
+        {
+          "distanceKm": 1.4984898067980634,
+          "modelRoadMeters": 1798.8989508271818
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 1,
+      "category": "神社・お寺",
+      "candidates": []
+    },
+    {
+      "originLabel": "港南台",
+      "band": 1,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 1.0926867313259085,
+          "modelRoadMeters": 1274.8615445459677
+        },
+        {
+          "distanceKm": 1.105409210970043,
+          "modelRoadMeters": 1488.4341977058616
+        },
+        {
+          "distanceKm": 0.5325941949249503,
+          "modelRoadMeters": 704.6733949951033
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 1,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 1.4250361509702527,
+          "modelRoadMeters": 2132.1156182209484
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 3,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 2.2926875933897435,
+          "modelRoadMeters": 2784.708880861266
+        },
+        {
+          "distanceKm": 2.8990912429631073,
+          "modelRoadMeters": 3391.378788776269
+        },
+        {
+          "distanceKm": 2.6549233822643017,
+          "modelRoadMeters": 3164.3907572634876
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 3,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 2.192405797706266,
+          "modelRoadMeters": 2741.7784729375276
+        },
+        {
+          "distanceKm": 2.9487494299760724,
+          "modelRoadMeters": 3767.763823918195
+        },
+        {
+          "distanceKm": 2.490000767108817,
+          "modelRoadMeters": 2792.1459827075983
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 3,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 2.260116848348957,
+          "modelRoadMeters": 2579.2072646740257
+        },
+        {
+          "distanceKm": 2.707472673646061,
+          "modelRoadMeters": 3268.3029843842373
+        },
+        {
+          "distanceKm": 2.4140166225563817,
+          "modelRoadMeters": 2871.963673713999
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 3,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 2.6616937610941145,
+          "modelRoadMeters": 3301.8738899337222
+        },
+        {
+          "distanceKm": 2.3522863066180193,
+          "modelRoadMeters": 2834.185615601103
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 3,
+      "category": "写真",
+      "candidates": []
+    },
+    {
+      "originLabel": "港南台",
+      "band": 5,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 4.262999386549762,
+          "modelRoadMeters": 4602.566868002891
+        },
+        {
+          "distanceKm": 4.023512965258958,
+          "modelRoadMeters": 4233.734304406337
+        },
+        {
+          "distanceKm": 3.648824505729667,
+          "modelRoadMeters": 4586.168800800232
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 5,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 3.8977065471733794,
+          "modelRoadMeters": 4479.7490455519555
+        },
+        {
+          "distanceKm": 4.401427235303985,
+          "modelRoadMeters": 5129.167965287259
+        },
+        {
+          "distanceKm": 3.885568590492533,
+          "modelRoadMeters": 4238.421511700951
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 5,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 3.5674400837684437,
+          "modelRoadMeters": 4510.291805615217
+        },
+        {
+          "distanceKm": 3.7342667749502434,
+          "modelRoadMeters": 4351.134848362356
+        },
+        {
+          "distanceKm": 4.254126273185956,
+          "modelRoadMeters": 5040.494456498653
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 5,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 3.7318472055409595,
+          "modelRoadMeters": 4691.009298804158
+        },
+        {
+          "distanceKm": 4.214300443923975,
+          "modelRoadMeters": 4847.574783378166
+        },
+        {
+          "distanceKm": 4.096337001739304,
+          "modelRoadMeters": 5812.390863532903
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 5,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 4.334417131188881,
+          "modelRoadMeters": 5541.002226323211
+        },
+        {
+          "distanceKm": 4.452828776726193,
+          "modelRoadMeters": 5862.930310862726
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 10,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 8.950778755661144,
+          "modelRoadMeters": 9674.962953894019
+        },
+        {
+          "distanceKm": 8.782793879061137,
+          "modelRoadMeters": 10440.159147591052
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 10,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 8.91702169022874,
+          "modelRoadMeters": 10083.59817131786
+        },
+        {
+          "distanceKm": 8.071574722686398,
+          "modelRoadMeters": 8710.66356544904
+        },
+        {
+          "distanceKm": 8.353039179374235,
+          "modelRoadMeters": 9372.34984335512
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 10,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 8.745591496632342,
+          "modelRoadMeters": 10827.925484740479
+        },
+        {
+          "distanceKm": 8.452112475357135,
+          "modelRoadMeters": 9335.475699244596
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 10,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 8.731567062725693,
+          "modelRoadMeters": 10011.793276193659
+        },
+        {
+          "distanceKm": 8.165970689583535,
+          "modelRoadMeters": 9734.940200638663
+        },
+        {
+          "distanceKm": 8.251066041415934,
+          "modelRoadMeters": 9241.069716642869
+        }
+      ]
+    },
+    {
+      "originLabel": "港南台",
+      "band": 10,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 8.476314017058257,
+          "modelRoadMeters": 10111.954189871543
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 1,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 0.9459014131804491,
+          "modelRoadMeters": 1295.4144402666643
+        },
+        {
+          "distanceKm": 1.2624566428527286,
+          "modelRoadMeters": 2135.724588188852
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 1,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 1.431077594147963,
+          "modelRoadMeters": 2117.170015759081
+        },
+        {
+          "distanceKm": 1.4430478818470258,
+          "modelRoadMeters": 2378.9704311971163
+        },
+        {
+          "distanceKm": 1.3720479706372812,
+          "modelRoadMeters": 2053.4927943073235
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 1,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 0.8595080832836205,
+          "modelRoadMeters": 1109.9014583717608
+        },
+        {
+          "distanceKm": 1.173746088100984,
+          "modelRoadMeters": 1819.6875573559769
+        },
+        {
+          "distanceKm": 1.4287448051235374,
+          "modelRoadMeters": 2316.1897152250053
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 1,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 1.014817789558195,
+          "modelRoadMeters": 1768.9682453368473
+        },
+        {
+          "distanceKm": 0.8824989471257046,
+          "modelRoadMeters": 1192.995119279694
+        },
+        {
+          "distanceKm": 0.6768459324300997,
+          "modelRoadMeters": 1331.768244946781
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 1,
+      "category": "写真",
+      "candidates": []
+    },
+    {
+      "originLabel": "相模原",
+      "band": 3,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 2.741787638875605,
+          "modelRoadMeters": 2856.3690191108044
+        },
+        {
+          "distanceKm": 2.7498040257178475,
+          "modelRoadMeters": 2978.7673257255956
+        },
+        {
+          "distanceKm": 2.296936775196822,
+          "modelRoadMeters": 2845.49961715299
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 3,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 2.400518847749022,
+          "modelRoadMeters": 3151.1512061617514
+        },
+        {
+          "distanceKm": 2.4214209404105747,
+          "modelRoadMeters": 3153.402804338527
+        },
+        {
+          "distanceKm": 2.5514326598846426,
+          "modelRoadMeters": 3256.952284690894
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 3,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 2.444334666508351,
+          "modelRoadMeters": 3712.774870148422
+        },
+        {
+          "distanceKm": 2.9928697014474577,
+          "modelRoadMeters": 4012.9790757991077
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 3,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 2.438447601811526,
+          "modelRoadMeters": 3139.8992232588803
+        },
+        {
+          "distanceKm": 2.808669645847348,
+          "modelRoadMeters": 4137.911627342464
+        },
+        {
+          "distanceKm": 2.061175928630066,
+          "modelRoadMeters": 2690.8933843087784
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 3,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 2.9316552714728714,
+          "modelRoadMeters": 4298.1449864409
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 5,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 3.7232245183897277,
+          "modelRoadMeters": 4478.656303280143
+        },
+        {
+          "distanceKm": 3.6279284203541518,
+          "modelRoadMeters": 4562.109297977759
+        },
+        {
+          "distanceKm": 3.874447980985299,
+          "modelRoadMeters": 4625.008531323643
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 5,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 4.410543273818962,
+          "modelRoadMeters": 5530.560864699147
+        },
+        {
+          "distanceKm": 4.414307756233001,
+          "modelRoadMeters": 5479.052862708783
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 5,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 3.800671421549251,
+          "modelRoadMeters": 4511.071046480566
+        },
+        {
+          "distanceKm": 3.9836495896331154,
+          "modelRoadMeters": 5200.108989010181
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 5,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 4.002178097951774,
+          "modelRoadMeters": 5045.642642156956
+        },
+        {
+          "distanceKm": 4.378013387125083,
+          "modelRoadMeters": 5351.882237528557
+        },
+        {
+          "distanceKm": 3.923853706257937,
+          "modelRoadMeters": 4473.900458160236
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 5,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 4.474352997806819,
+          "modelRoadMeters": 5677.629565536638
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 10,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 8.622338385468629,
+          "modelRoadMeters": 10080.127365603546
+        },
+        {
+          "distanceKm": 8.800297166716252,
+          "modelRoadMeters": 10336.487967675368
+        },
+        {
+          "distanceKm": 8.300216859145808,
+          "modelRoadMeters": 9472.187831370022
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 10,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 8.024568410841391,
+          "modelRoadMeters": 9216.987848677532
+        },
+        {
+          "distanceKm": 8.817113941388701,
+          "modelRoadMeters": 10318.318063046649
+        },
+        {
+          "distanceKm": 8.077218511818826,
+          "modelRoadMeters": 9519.363979433518
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 10,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 8.668142439941697,
+          "modelRoadMeters": 10647.572340363295
+        },
+        {
+          "distanceKm": 8.836677420750311,
+          "modelRoadMeters": 11821.275461254358
+        },
+        {
+          "distanceKm": 8.15565563848084,
+          "modelRoadMeters": 9343.719681772847
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 10,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 8.687170394981255,
+          "modelRoadMeters": 11047.10950757953
+        },
+        {
+          "distanceKm": 8.509573147266662,
+          "modelRoadMeters": 9515.84583142327
+        },
+        {
+          "distanceKm": 8.829790525975428,
+          "modelRoadMeters": 10629.738268187197
+        }
+      ]
+    },
+    {
+      "originLabel": "相模原",
+      "band": 10,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 8.471333654798036,
+          "modelRoadMeters": 9982.004500243833
+        },
+        {
+          "distanceKm": 8.899376908880445,
+          "modelRoadMeters": 9628.186531352863
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 1,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 1.4780009363862001,
+          "modelRoadMeters": 1670.5218702128118
+        },
+        {
+          "distanceKm": 1.4831162544496213,
+          "modelRoadMeters": 1669.0532276858169
+        },
+        {
+          "distanceKm": 0.8167949308830026,
+          "modelRoadMeters": 811.3288608586834
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 1,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 0.5433078969969889,
+          "modelRoadMeters": 680.2553373003319
+        },
+        {
+          "distanceKm": 0.5954303003262563,
+          "modelRoadMeters": 673.6291445678056
+        },
+        {
+          "distanceKm": 0.703137129642785,
+          "modelRoadMeters": 846.5212895058661
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 1,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 0.7829824942565048,
+          "modelRoadMeters": 1076.5767966870228
+        },
+        {
+          "distanceKm": 1.2355273659563644,
+          "modelRoadMeters": 1606.7055272364432
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 1,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 1.0074077636440497,
+          "modelRoadMeters": 1143.5110898535213
+        },
+        {
+          "distanceKm": 1.285079278928919,
+          "modelRoadMeters": 1620.6759543513867
+        },
+        {
+          "distanceKm": 1.4316675938703756,
+          "modelRoadMeters": 1883.9892182147
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 1,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 0.9736620716836999,
+          "modelRoadMeters": 1178.8704851909038
+        },
+        {
+          "distanceKm": 1.361918287118265,
+          "modelRoadMeters": 1842.57677031418
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 3,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 2.2961853123825313,
+          "modelRoadMeters": 2814.6744974462154
+        },
+        {
+          "distanceKm": 2.0838853682939185,
+          "modelRoadMeters": 2430.483337139462
+        },
+        {
+          "distanceKm": 2.2702285000082565,
+          "modelRoadMeters": 2525.7268908523097
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 3,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 2.051878144280747,
+          "modelRoadMeters": 2422.8295370984174
+        },
+        {
+          "distanceKm": 2.8176492585205657,
+          "modelRoadMeters": 3166.684767800167
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 3,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 2.412719631627242,
+          "modelRoadMeters": 3106.9193560957997
+        },
+        {
+          "distanceKm": 2.7661956665236107,
+          "modelRoadMeters": 3314.1870846002503
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 3,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 2.77930394895232,
+          "modelRoadMeters": 3140.263028479726
+        },
+        {
+          "distanceKm": 2.5002515687272022,
+          "modelRoadMeters": 3344.932832879674
+        },
+        {
+          "distanceKm": 2.683413728347403,
+          "modelRoadMeters": 2902.2194780777763
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 3,
+      "category": "写真",
+      "candidates": [
+        {
+          "distanceKm": 2.0446265388381395,
+          "modelRoadMeters": 2413.037114697923
+        },
+        {
+          "distanceKm": 2.3310261925045226,
+          "modelRoadMeters": 3331.1688480063726
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 5,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 4.102324063195169,
+          "modelRoadMeters": 4678.816122816493
+        },
+        {
+          "distanceKm": 3.901596034918114,
+          "modelRoadMeters": 4518.496165594657
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 5,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 4.152166146448303,
+          "modelRoadMeters": 4858.770725638573
+        },
+        {
+          "distanceKm": 4.005697033407047,
+          "modelRoadMeters": 4751.331172965343
+        },
+        {
+          "distanceKm": 3.7663237667067992,
+          "modelRoadMeters": 4395.16570558301
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 5,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 3.5751175271959146,
+          "modelRoadMeters": 4509.852324966587
+        },
+        {
+          "distanceKm": 3.719817398222455,
+          "modelRoadMeters": 4418.381503917814
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 5,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 4.125766801082964,
+          "modelRoadMeters": 5275.579656001308
+        },
+        {
+          "distanceKm": 3.7657600883281686,
+          "modelRoadMeters": 4395.416405665537
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 5,
+      "category": "写真",
+      "candidates": []
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 10,
+      "category": "カフェ",
+      "candidates": [
+        {
+          "distanceKm": 8.217890119013433,
+          "modelRoadMeters": 10141.331556202524
+        },
+        {
+          "distanceKm": 8.573448100042047,
+          "modelRoadMeters": 11541.16732494165
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 10,
+      "category": "グルメ",
+      "candidates": [
+        {
+          "distanceKm": 8.848778070967654,
+          "modelRoadMeters": 10564.890728829523
+        },
+        {
+          "distanceKm": 8.670503699507199,
+          "modelRoadMeters": 10516.963271820021
+        },
+        {
+          "distanceKm": 8.565197013685063,
+          "modelRoadMeters": 10764.651429929878
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 10,
+      "category": "神社・お寺",
+      "candidates": [
+        {
+          "distanceKm": 8.848461834406724,
+          "modelRoadMeters": 10374.638386137061
+        },
+        {
+          "distanceKm": 8.079037798964167,
+          "modelRoadMeters": 10591.200763493574
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 10,
+      "category": "自然",
+      "candidates": [
+        {
+          "distanceKm": 8.325141306199566,
+          "modelRoadMeters": 9691.019681892129
+        },
+        {
+          "distanceKm": 8.193648736628937,
+          "modelRoadMeters": 9671.248257817631
+        },
+        {
+          "distanceKm": 8.149406554120702,
+          "modelRoadMeters": 9741.466066603429
+        }
+      ]
+    },
+    {
+      "originLabel": "鎌倉",
+      "band": 10,
+      "category": "写真",
+      "candidates": []
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 import { authorizeWalkingTrial } from './walkingTrial';
 import { loadLocalStaticFacilities, resolveStaticCondition, resetStaticFacilityCache } from './staticFacilities';
 import { calculateDistance } from '../features/distance';
-import { getEligibleRegisteredTreasures, selectNormalSearchCandidate } from '../features/normalTreasureCandidates';
+import { getEligibleRegisteredTreasures } from '../features/normalTreasureCandidates';
+import { selectApproximateSearchCandidate } from '../features/approximateCandidateWeighting';
 import type { Treasure } from './treasures';
 function waitForStatic<T>(task:Promise<T>,signal:AbortSignal):Promise<T> {
  return new Promise((resolve,reject)=>{
@@ -37,7 +38,9 @@ export async function searchApproximate(point:{latitude:number;longitude:number}
  const registered=getEligibleRegisteredTreasures(treasureRows,point,choices.mood,range,choices.foodGenre).filter(c=>Math.abs(c.treasure.latitude)<=90&&Math.abs(c.treasure.longitude)<=180);
  times.selection=performance.now()-selectionStarted;stage='結果の本人確認';
  if(!await timed('finalAuthorization',()=>authorizeWalkingTrial(signal)))throw Error('本人限定試験版の権限が変更されました。');check();
- const selected=selectNormalSearchCandidate(general,registered,random);
+ const weightedStarted=performance.now();
+ const selected=selectApproximateSearchCandidate(general,registered,Number.parseInt(choices.distance,10),random);
+ times.selection! += performance.now()-weightedStarted;
  if(!selected)throw Error('この直線距離・ジャンル条件に合う候補がありませんでした。条件は変更していません。');
  return {spot:selected.source==='overpass'?selected.candidate.spot:null,treasure:selected.source==='treasure'?selected.treasure:null,distanceKm:selected.source==='treasure'?selected.distanceKm:selected.candidate.distanceKm,report:[report(),'距離条件：'+choices.distance,'検索カテゴリ：'+condition.mood,'一般施設候補：'+general.length+'件','登録宝物候補：'+registered.length+'件','抽選元：'+(selected.source==='treasure'?'登録宝物':'OSM施設'),'実際の徒歩距離・所要時間はGoogleマップで確認してください。'].join('\n')};
  }catch(error){if(error instanceof Error)throw Object.assign(error,{report:report()});throw Object.assign(Error('検索を完了できませんでした。条件を保って再試行してください。'),{report:report()});}
