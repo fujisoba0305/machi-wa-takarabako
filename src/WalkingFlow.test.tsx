@@ -245,7 +245,7 @@ vi.mock('./services/accountAuth', () => ({
 
 it('uses the verified arrival fix on home and keeps category/menu navigation consistent',async()=>{
  await seed();await mount();await click('到着した！');await click('ホームに戻る');
- expect(container.textContent).toContain('現在地の取得履歴あり');expect(container.textContent).not.toContain('たからんを押して現在地を取得');
+ expect(container.textContent).toContain('現在地を確認しました');expect(container.textContent).not.toContain('たからんを押して現在地を取得');
  geolocation.mockClear();await click('公園・自然');expect(container.querySelector('.condition-screen')).not.toBeNull();expect(geolocation).not.toHaveBeenCalled();
  await click('ホーム');await click('距離と気分から宝物を探す');expect(container.querySelector('.condition-screen')).not.toBeNull();
  await click('ホーム');await act(async()=>container.querySelector<HTMLButtonElement>('.bottom-nav button:nth-child(3)')!.click());expect(container.querySelector('.condition-screen')).not.toBeNull();expect(alert).not.toHaveBeenCalled();expect(localStorage.getItem('machiTakarabakoExp')).toBe('20');

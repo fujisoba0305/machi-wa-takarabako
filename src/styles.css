@@ -5132,3 +5132,8 @@ button:focus-visible, summary:focus-visible { outline: 3px solid #087cb6; outlin
 
 .treasure-editor .photo-thumbnails button {margin:0;}
 .collection-detail > img {max-height:420px;object-fit:contain;}
+
+.home-location-status {margin:16px;padding:16px;border-radius:16px;background:#fffdf6;border:1px solid #dedbcf;}
+.home-location-status p {margin:0 0 10px;}
+.home-location-status button {min-height:44px;padding:10px 16px;border-radius:12px;}
+.home-location-status small {display:block;margin-top:10px;line-height:1.7;}

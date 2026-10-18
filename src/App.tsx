@@ -1,3 +1,5 @@
+import {HomeLocationStatus,type HomeLocationState} from './components/HomeLocationStatus';
+import {readHomeLocationPermission} from './services/homeLocationPermission';
 import {saveArrivedDiscovery,type PersonalDiscovery} from './features/personalDiscoveries';
 import {registrationCategories} from './features/treasureCategories';
 import {PhotoThumbnails} from './components/PhotoThumbnails';
@@ -319,8 +321,8 @@ additionalImage?: File | null;
 
 const treasureCategories = registrationCategories;
 
-function requestCurrentCoordinates(): ReturnType<typeof requestFreshSearchPosition> {
-return requestAccountPosition(requestFreshSearchPosition);
+function requestCurrentCoordinates(signal?:AbortSignal,expectedUid?:string): ReturnType<typeof requestFreshSearchPosition> {
+return requestAccountPosition(()=>requestFreshSearchPosition({signal}),expectedUid);
 }
 
 export default function App() {
@@ -349,7 +351,7 @@ const profileIdentity = useRef<string | null | undefined>(undefined);
 useEffect(() => { if (validAdventurerName(recoveredName) && !readAdventurerProfile(localStorage, null)) { try { saveAdventurerProfile(localStorage, null, { name: recoveredName, started: true }); } catch { /* Existing adventure remains usable when storage is unavailable. */ } } }, []);
 const [hasStarted, setHasStarted] = useState(false);
 const [takaranSpeech, setTakaranSpeech] = useState(
-"😊 まずは僕を押してね！"
+"😊 条件を選んで冒険に出かけよう！"
 );
 const [searchFailed, setSearchFailed] = useState(false);
 const [searchFailureMessage, setSearchFailureMessage] = useState('');
@@ -381,6 +383,19 @@ shrineGenre:',',
 const locationFetchedAt = useRef(0);
 const locationPending = useRef<ReturnType<typeof requestFreshSearchPosition> | null>(null);
 const locationGate = useRef(0);
+const locationAbort=useRef<AbortController|null>(null);
+const [homeLocationState,setHomeLocationState]=useState<HomeLocationState>('idle');
+function cancelLocationRequest(){locationAbort.current?.abort();locationAbort.current=null;locationPending.current=null;setLocationBusy(false);}
+useEffect(()=>()=>{locationAbort.current?.abort();locationGate.current++;},[]);
+useEffect(()=>{
+ if(!hasStarted||screen!=='home'||!profileIdentity.current)return;
+ let alive=true;const gate=locationGate.current;
+ const fresh=()=>locationFetchedAt.current>0&&Date.now()-locationFetchedAt.current<=30_000&&Date.now()-locationFetchedAt.current>=-5000;
+ if(fresh()){setHomeLocationState('confirmed');return;}
+ setHomeLocationState('checking');
+ void(async()=>{let permission:Awaited<ReturnType<typeof readHomeLocationPermission>>="unavailable";try{permission=await readHomeLocationPermission(navigator.permissions);}catch{/* Restricted Safari contexts use explicit acquisition. */}if(!alive||gate!==locationGate.current)return;if(fresh()){setHomeLocationState('confirmed');return;}if(locationPending.current)return;if(permission==='granted')await getCurrentLocation();else setHomeLocationState(permission);})();
+ return()=>{alive=false;};
+},[hasStarted,screen]);
 const [locationBusy, setLocationBusy] = useState(false);
 const [locationMessage, setLocationMessage] = useState('');
 const [locationDiagnostic,setLocationDiagnostic]=useState('');
@@ -391,7 +406,7 @@ try { const { data } = getAccountClient().auth.onAuthStateChange((_event, sessio
 const next = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user.id : null;
 if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
 profileIdentity.current = undefined;
-setLocationDiagnostic('');locationPending.current=null;changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
+setLocationDiagnostic('');cancelLocationRequest();setHomeLocationState('idle');changeApproximateEnabled(false); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); changeTrialEnabled(false);
 departureAbort.current?.abort();adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
 }
@@ -458,7 +473,7 @@ const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
 function setScreen(next: typeof screen) {
-locationGate.current++;
+cancelLocationRequest();locationGate.current++;
 dateSession.cancelPending();
 adventureOperationRef.current++;
 // Leaving the search flow invalidates pending results synchronously.
@@ -638,34 +653,39 @@ function rememberCurrentFix(fix: {latitude:number;longitude:number;timestamp:num
  locationFetchedAt.current=fix.timestamp;
  setCurrentLocation({latitude:fix.latitude,longitude:fix.longitude});
  setLocationMessage('');setLocationDiagnostic('');
- setTakaranSpeech('🎉 現在地を確認したよ！検索前にも新しい位置を確認するね。');
+ setHomeLocationState('confirmed');setTakaranSpeech('🎉 現在地を確認しました。');
 }
 function openSearchConditions(mood?: string) {
  if(mood)selectChoice('mood',mood);
  setSearchExpandLevel(0);setCourseStep(1);setScreen('condition');
 }
 
+function acquireCurrentCoordinates(){
+if (!locationPending.current) {const controller=new AbortController();locationAbort.current=controller;const pending=requestCurrentCoordinates(controller.signal,profileIdentity.current??undefined).finally(()=>{if(locationPending.current===pending){locationPending.current=null;locationAbort.current=null;}});locationPending.current=pending;}
+return locationPending.current!;
+}
+
 async function getCurrentLocation() {
 const locationGeneration = locationGate.current;
+setLocationBusy(true);setHomeLocationState('checking');
 setTakaranSpeech("🔍 現在地を探してるよ...");
 
 try {
-if (!locationPending.current) { const pending=requestCurrentCoordinates().finally(() => { if(locationPending.current===pending)locationPending.current = null; });locationPending.current=pending; }
-const coordinates = await locationPending.current;
+const coordinates = await acquireCurrentCoordinates();
 if (locationGeneration !== locationGate.current) return false;
 rememberCurrentFix(coordinates);
 setLocationMessage('');setLocationDiagnostic('');
-setTakaranSpeech("🎉 よし！冒険に行こう！");
+setTakaranSpeech("🎉 現在地を確認しました。");
 return true;
 } catch (error) {
 if (locationGeneration !== locationGate.current) return false;
 locationFetchedAt.current = 0;
-setCurrentLocation(null);
+setCurrentLocation(null);setHomeLocationState('error');
 console.warn('[location] acquisition_failed');
 setTakaranSpeech("😢 現在地が見つからなかったよ...");
 setLocationMessage(locationFailureMessage(error));setLocationDiagnostic(error instanceof StartupLocationFailure?error.report:'現在地取得の診断（座標・住所・氏名なし）\n停止段階：ログイン状態確認またはGPS開始前\nGPS位置データの検証：未実施');
 return false;
-}
+} finally {if(locationGeneration===locationGate.current)setLocationBusy(false);}
 }
 
 function resetTreasureRegistration() {
@@ -687,8 +707,8 @@ setIsTreasureLocationLoading(true);
 setTreasureLocationError('');
 
 try {
-const coordinates = await requestCurrentCoordinates();
-
+const generation=locationGate.current;const coordinates = await acquireCurrentCoordinates();
+if(generation!==locationGate.current)return;rememberCurrentFix(coordinates);
 resetTreasureRegistration();
 setTreasureLocation(coordinates);
 setScreen('treasure-register');
@@ -1155,8 +1175,10 @@ console.info('[date-search] stopped', { reason: 'pair-shortage', waypointCount: 
 }
 }
 
+function searchAcquiresOwnGps(){return (approximateEnabled&&matchesApproximateScope(choices))||(walkingTrialEnabled&&matchesTrialScope(choices));}
+
 async function findNearbySpot(normalSearchExpandLevel = searchExpandLevel) {
-if (!currentLocation || !locationFetchedAt.current || Date.now() - locationFetchedAt.current > 30_000) { setLocationMessage('検索前に新しい現在地を確認してください。以前の位置では検索しません。'); setIsSearching(false); setSearchFailed(false); setScreen('coin'); return; }
+if (!searchAcquiresOwnGps() && (!currentLocation || !locationFetchedAt.current || Date.now() - locationFetchedAt.current > 30_000)) { setLocationMessage('検索前に新しい現在地を確認してください。以前の位置では検索しません。'); setIsSearching(false); setSearchFailed(false); setScreen('coin'); return; }
 if (!resetNormalAdventure()) return;
 const searchId = `${Date.now().toString(36)}-${++normalSearchSequenceRef.current}`;
 
@@ -1211,7 +1233,7 @@ if(walkingTrialEnabled && matchesTrialScope(choices)) {
 const controller=new AbortController();trialAbortRef.current=controller;
 const trialTrace = new WalkingTrialTrace();
 try {
-setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAccountPosition(requestFreshSearchPosition);const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;
+setTrialProgress('GPS現在地を確認しています…');const gpsStarted=performance.now();const freshOrigin=await requestAccountPosition(()=>requestFreshSearchPosition({signal:controller.signal}));const gpsMs=performance.now()-gpsStarted;if(freshOrigin.accuracy>50)throw Error('GPS精度が50mを超えています。現在地を再取得してからお試しください。');if(!isCurrent()||controller.signal.aborted)return;rememberCurrentFix(freshOrigin);
 trialTrace.stage('registered');setTrialProgress('登録宝物の読み込みを確認しています…');
 const treasureRows=await withWalkingTrialDeadline(getTreasures(),controller.signal);
 if(!isCurrent()||controller.signal.aborted)return;
@@ -1225,6 +1247,7 @@ setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDist
 return;
 }
 
+if(!currentLocation)return;
 const sources = await loadNormalSearchSources(
 () => getSpotsByMood(normalSearchExpandLevel),
 getTreasures
@@ -2264,17 +2287,20 @@ onArrive={confirmNormalArrival}
 />
 ) : screen === 'home' ? (
 <section className="home-screen">
+<HomeLocationStatus state={homeLocationState} busy={locationBusy} message={locationMessage} diagnostic={locationDiagnostic} onRetry={()=>{void getCurrentLocation();}}/>
 <HomeExplore name={trimmedName} onExplore={openSearchConditions} onCollection={openTreasureMap} />
 <details className="home-companion">
 <summary><IconText text="🌿 たからんと冒険の記録 " /><span>Lv.{takaran.level}</span></summary>
 <div
 className="treasure-box-card takaran-tap-card"
-onClick={getCurrentLocation}
 >
 <button
 type="button"
 className="takaran-character-button"
+disabled={locationBusy}
+aria-label="たからんで現在地を再取得する"
 onClick={(event) => {
+void getCurrentLocation();
 const button = event.currentTarget;
 
 button.classList.remove('is-bouncing');
@@ -2306,31 +2332,16 @@ className="takaran-main-image"
 </p>
 </div>
 
-<small>
-{currentLocation ? (
-<IconText text="🧭 冒険に出発しよう！" />
-) : (
-<><IconText text=" 📍 現在地を取得します " /><br />
-君の近くに眠る宝物を探すため、
-<br />
-現在地を取得します。
-<br />
-<br />
-※位置情報は宝物を探すためだけに利用します。
-</>
-)}
-</small>
+<small>位置情報は、宝物検索・登録・冒険のために利用します。</small>
 <button
 className="takaran-location-button"
 type="button"
 onClick={(event) => { event.stopPropagation(); openSearchConditions(); }}
 >
-<IconText text={currentLocation ? '✨ 宝物を探しに行く' : '📍 条件を選んで現在地を確認'} />
+<IconText text="✨ 宝物を探しに行く" />
 </button>
 <p className="adventure-ready">
-<IconText text={currentLocation
-? '🧭 現在地の取得履歴あり。検索前に再確認します'
-: '📍 検索前に現在地を確認します'} />
+<IconText text="🧭 条件を選ぶだけで、検索時に現在地を確認します" />
 </p>
 
 {takaranNextInfo.remainingExp > 0 ? (
@@ -2770,7 +2781,7 @@ setScreen('coin');
   onContinue={async () => {
 if (locationBusy) return;
 const gate = locationGate.current;
-if (!currentLocation || Date.now() - locationFetchedAt.current > 30_000 || !locationFetchedAt.current) {
+if(!searchAcquiresOwnGps()){
 setLocationBusy(true); setLocationMessage('現在地を確認しています…');
 const ready = await getCurrentLocation();
 setLocationBusy(false);
