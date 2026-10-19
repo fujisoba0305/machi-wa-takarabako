@@ -8,17 +8,18 @@ import type { Treasure } from './treasures';
 export type TrialDistance = { roadMeters: number; estimated: true; origin: string; quality: string };
 export type TrialResult = { spot: Spot | null; treasure: Treasure | null; distance: TrialDistance; report: string };
 let permittedDistances=[1];
-export async function authorizeWalkingTrial(signal?: AbortSignal) {
+export async function authorizeWalkingTrial(signal?: AbortSignal, standard = false) {
   const { data, error } = await getAccountClient().auth.getSession();
   if (error || !data.session?.access_token) return false;
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
   const abort = () => controller.abort(); signal?.addEventListener('abort', abort, { once: true });
   if (signal?.aborted) controller.abort();
   try {
-    const response = await fetch('/api/walking-trial-access', { headers: { Authorization: 'Bearer ' + data.session.access_token }, cache: 'no-store', signal: controller.signal });
-    const config=await response.json();const allowed=response.ok&&config.allowed===true;permittedDistances=allowed&&Array.isArray(config.distances)&&config.distances.includes(3)?[1,3]:[1];return allowed;
+    const response = await fetch('/api/walking-trial-access'+(standard?'?mode=straight':''), { headers: { Authorization: 'Bearer ' + data.session.access_token }, cache: 'no-store', signal: controller.signal });
+    const config=await response.json();const allowed=response.ok&&config.allowed===true&&(!standard||config.mode==='straight');if(!standard)permittedDistances=allowed&&Array.isArray(config.distances)&&config.distances.includes(3)?[1,3]:[1];return allowed;
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
+export function authorizeStandardSearch(signal?: AbortSignal) { return authorizeWalkingTrial(signal,true); }
 type Point = { latitude: number; longitude: number };
 type Choice = { distance: string; mood: string; foodGenre?: string; eventGenre?: string; shrineGenre?: string };
 type Candidate = { id: string; lat: number; lon: number; name: string; distanceMeters: number; evaluatedDistanceMeters?: number; approachEstimateMeters?: number|null; quality: string };

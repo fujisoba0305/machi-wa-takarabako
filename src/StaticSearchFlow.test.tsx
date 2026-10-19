@@ -4,6 +4,7 @@ import { act, Simulate } from 'react-dom/test-utils';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+vi.mock('./services/walkingTrial',async original=>({...await original<typeof import('./services/walkingTrial')>(),authorizeStandardSearch:vi.fn().mockResolvedValue(true)}));
 import { getNearbyParks, getNearbyRestaurants } from './services/overpass';
 import { getWalkingDistances } from './services/walkingDistance';
 import { navigateAdventureMap } from './features/googleMaps';
@@ -94,11 +95,10 @@ it('keeps data failure distinct and does not fall back to public API', async () 
   expect(getNearbyParks).not.toHaveBeenCalled(); expect(getWalkingDistances).not.toHaveBeenCalled();
   expect(localStorage.getItem('machiTakarabakoExp')).toBe('0');
 });
-it('keeps fixed-distance search on existing path and walking confirmation', async () => {
+it('fixed-distance standard search uses static facilities and no walking API', async () => {
   vi.mocked(getNearbyParks).mockResolvedValue([{ ...spot, lat: latitude + .007, lon: longitude }]);
   await enterGacha('1km'); await click('ガチャのハンドルを回す'); await advance(4000); await advance(1500);
-  expect(getNearbyParks).toHaveBeenCalledOnce(); expect(getWalkingDistances).toHaveBeenCalledOnce();
-  expect(fetch).not.toHaveBeenCalled();
+  expect(getNearbyParks).not.toHaveBeenCalled();expect(getWalkingDistances).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(2);expect(container.textContent).toContain('現在地から直線距離');
 });
 it('explicit off switch restores the original random-distance provider', async () => {
   vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'off');

@@ -11,3 +11,14 @@ for(const [id,anonymous,status] of [[owner,false,200],['another-account',false,4
 it('認証失効・通信切断は許可扱いにしない',async()=>{configure();vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false,status:401}));expect((await run()).status).toHaveBeenCalledWith(401);vi.stubGlobal('fetch',vi.fn().mockRejectedValue(Error('offline')));expect((await run()).status).toHaveBeenCalledWith(503);});
 
 it('3kmは初期無効、サーバー専用設定on時だけ許可距離に含める',async()=>{configure();vi.stubEnv('WALKING_TRIAL_3KM_ENABLED','on');vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({id:owner,is_anonymous:false})}));const r=await run();expect(r.json).toHaveBeenCalledWith({allowed:true,distances:[1,3]});});
+
+it('standard straight search allows any verified non-anonymous user without enabling legacy road trials',async()=>{
+ configure();vi.stubEnv('WALKING_TRIAL_ENABLED','off');vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({id:'another-account',is_anonymous:false})}));
+ const result=await run('Bearer test.token.value',{mode:'straight'});expect(result.status).toHaveBeenCalledWith(200);expect(result.json).toHaveBeenCalledWith({allowed:true,mode:'straight'});expect(fetch).toHaveBeenCalledOnce();
+ expect((await run()).status).toHaveBeenCalledWith(403);
+});
+it('standard mode never grants access from the URL alone, anonymous accounts or expired tokens',async()=>{
+ configure();expect((await run('',{mode:'straight'})).status).toHaveBeenCalledWith(401);
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({id:owner,is_anonymous:true})}));expect((await run('Bearer test.token.value',{mode:'straight'})).status).toHaveBeenCalledWith(403);
+ vi.mocked(fetch).mockResolvedValue({ok:false,status:401} as Response);expect((await run('Bearer test.token.value',{mode:'straight'})).status).toHaveBeenCalledWith(401);
+});
