@@ -30,7 +30,7 @@ describe('MyPage', () => {
   it('reflects account changes, handles image failures and clears profile on logout', async () => {
     await render(); await act(async()=>auth.change?.('SIGNED_IN',{user:{id:'a',user_metadata:{full_name:'冒険者A',avatar_url:'https://lh3.googleusercontent.com/a'}}}));
     expect(container.querySelector('.my-page-card h2')?.textContent).toBe('冒険者名は未登録です');expect(container.textContent).not.toContain('冒険者A');
-    act(()=>container.querySelector('img')!.dispatchEvent(new Event('error'))); expect(container.querySelector('img')).toBeNull();
+    act(()=>container.querySelector('.my-page-avatar img')!.dispatchEvent(new Event('error'))); expect(container.querySelector('.my-page-avatar img')).toBeNull();
     await act(async()=>container.querySelector<HTMLButtonElement>('.my-page-login')!.click());
     expect(auth.logout).toHaveBeenCalledOnce(); expect(container.textContent).not.toContain('冒険者A');
   });

@@ -1,4 +1,5 @@
 import {LegacyHistoryNotice} from './LegacyHistoryNotice';
+import {TakaranGrowth} from './TakaranGrowth';
 import {readPersonalDiscoveries} from '../features/personalDiscoveries';
 import {MyTreasureManager} from './MyTreasureManager';
 import { AccountPersistenceDiagnostic } from './AccountPersistenceDiagnostic';
@@ -86,6 +87,7 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
         catch { setMessage('冒険者名を保存できませんでした。1〜40文字とブラウザの保存設定を確認してください。'); }
       }}><label htmlFor="adventurer-name-edit">冒険者名（この端末・アカウント別）</label><input id="adventurer-name-edit" value={draftName} maxLength={40} disabled={loading || busy || adventureInProgress} onChange={event => setDraftName(event.target.value)} /><button disabled={loading || busy || adventureInProgress} type="submit">冒険者名を保存</button></form>}
     </div>
+    {user&&!loading&&<TakaranGrowth key={user.id} uid={user.id} adventureInProgress={adventureInProgress}/>}
     <div className="my-page-card my-page-records"><AppIcon name="book" /><h2>冒険の記録について</h2>
       <p>現在のEXP・冒険回数・旧形式の発見履歴は、このブラウザのゲスト記録です。新しい図鑑の発見記録は、この端末のGoogleアカウント別に保存します。</p>
       <p><strong>アカウントへの引き継ぎ・端末間の同期は、まだ利用できません。</strong>ログインしても、既存の記録や投稿が自動で紐づくことはありません。図鑑も別端末へは自動同期されません。</p>
