@@ -1,4 +1,4 @@
-import {managementEnabled,createManagedTreasure} from './treasureManagement';
+import {saveOnsiteTreasure,type PostingContext} from './onsitePosting';
 import { getSupabaseClient } from './supabase';
 import { saveDiagnostic, TreasureSaveError } from '../features/treasureSaveDiagnostics';
 
@@ -81,34 +81,9 @@ throw new Error('Treasure discovery increment returned an invalid count');
 return data;
 }
 
-export async function createTreasure(treasure: TreasureInsert) {
-if(managementEnabled()){await createManagedTreasure(treasure);return;}
-console.info('[treasure-save] INSERT start', {
-namePresent: treasure.name.length > 0,
-categoryPresent: treasure.category.length > 0,
-latitudeType: typeof treasure.latitude,
-longitudeType: typeof treasure.longitude,
-});
-
-let requestComplete = false;
-
-try {
-const supabase = getSupabaseClient();
-console.info('[treasure-save] client_init_success');
-
-console.info('[treasure-save] request_start');
-const { error, status } = await supabase.from('treasures').insert(treasure);
-requestComplete = true;
-console.info('[treasure-save] request_complete');
-
-if (error) {
-throw new TreasureSaveError(saveDiagnostic({ code: error.code, status }, 'db_insert'));
-}
-} catch (error) {
-const diagnostic = saveDiagnostic(error, 'db_insert');
-console.error('[treasure-save] failed', { ...diagnostic, responseReceived: requestComplete });
-throw error instanceof TreasureSaveError ? error : new TreasureSaveError(diagnostic);
-}
+export async function createTreasure(treasure: TreasureInsert, context?: PostingContext) {
+ if(!context)throw new Error('現地でのGPS確認が必要です。投稿画面から再試行してください。');
+ await saveOnsiteTreasure(treasure,context);
 }
 
 /** Read-only schema preflight before any second-image upload. No migration or writes. */

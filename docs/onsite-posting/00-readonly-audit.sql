@@ -1,0 +1,12 @@
+-- READ ONLY: metadata and counts only. No row contents or personal data.
+SELECT jsonb_build_object(
+ 'treasure_columns',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT column_name,data_type,is_nullable FROM information_schema.columns WHERE table_schema='public' AND table_name='treasures' ORDER BY ordinal_position)x),
+ 'treasure_privileges',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT r.role,p.privilege,has_table_privilege(r.role,'public.treasures',p.privilege) allowed FROM (VALUES('anon'),('authenticated'),('service_role')) r(role) CROSS JOIN (VALUES('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'))p(privilege) ORDER BY 1,2)x),
+ 'policies',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT schemaname,tablename,policyname,roles,cmd,qual,with_check FROM pg_policies WHERE (schemaname,tablename) IN (('public','treasures'),('storage','objects')) ORDER BY 1,2,3)x),
+ 'treasure_write_functions',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT p.proname,pg_get_function_identity_arguments(p.oid) args,p.prosecdef,has_function_privilege('anon',p.oid,'EXECUTE') anon_execute,has_function_privilege('authenticated',p.oid,'EXECUTE') account_execute FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prokind='f' AND (p.proname IN ('increment_treasure_discovery','create_my_treasure','onsite_post_prepare','onsite_post_commit') OR pg_get_functiondef(p.oid) ILIKE '%INSERT%treasures%') ORDER BY 1,2)x),
+ 'role_memberships',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT member_role.rolname member,parent_role.rolname inherited_role FROM pg_auth_members m JOIN pg_roles member_role ON member_role.oid=m.member JOIN pg_roles parent_role ON parent_role.oid=m.roleid WHERE member_role.rolname IN ('anon','authenticated','service_role'))x),
+ 'rls',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT relname,relrowsecurity FROM pg_class WHERE oid IN ('public.treasures'::regclass,'storage.objects'::regclass))x),
+ 'storage_columns',(SELECT jsonb_agg(to_jsonb(x)) FROM (SELECT column_name,data_type FROM information_schema.columns WHERE table_schema='storage' AND table_name='objects' AND column_name IN ('id','name','bucket_id','owner_id'))x),
+ 'treasure_counts',(SELECT jsonb_build_object('treasures',count(*),'covers',count(image_url),'additional',count(additional_image_url)) FROM public.treasures),
+ 'photo_count',(SELECT count(*) FROM storage.objects WHERE bucket_id='treasure-images')
+) AS readonly_audit;

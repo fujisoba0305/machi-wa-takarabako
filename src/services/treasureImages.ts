@@ -27,13 +27,14 @@ return mimeExtension && /^[a-z0-9]+$/.test(mimeExtension)
 }
 
 export async function uploadTreasureImage(
-file: File
+file: File, onsiteUid?:string
 ): Promise<UploadedTreasureImage> {
 let stage: TreasureSaveStage = 'image_prepare';
+let completedPath:string|undefined;
 try {
 const prepared=await compressTreasurePhoto(file);
 stage='image_upload';
-let supabase=getSupabaseClient();let prefix='';if(managementEnabled()){supabase=getAccountClient();const {data,error}=await supabase.auth.getUser();if(error||!data.user||data.user.is_anonymous)throw Error('Googleログインを確認してください。');prefix=data.user.id+'/';}
+let supabase=getSupabaseClient();let prefix='';if(onsiteUid||managementEnabled()){supabase=getAccountClient();const {data,error}=await supabase.auth.getUser();if(error||!data.user||data.user.is_anonymous||(onsiteUid&&data.user.id!==onsiteUid))throw Error('Googleログインを確認してください。');prefix=data.user.id+'/';}
 const path = prefix+crypto.randomUUID()+'.'+getFileExtension(prepared.file);
 const { error } = await supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
@@ -46,6 +47,7 @@ if (error) {
 throw new TreasureSaveError(saveDiagnostic(error, 'image_upload'));
 }
 
+completedPath=path;
 stage = 'image_url';
 const { data } = supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
@@ -59,14 +61,16 @@ preparedFile:prepared.file,
 photo:{originalBytes:prepared.originalBytes,compressedBytes:prepared.compressedBytes,width:prepared.width,height:prepared.height,quality:prepared.quality,targetMet:prepared.targetMet},
 };
 } catch (error) {
+if(onsiteUid&&completedPath){try{await deleteTreasureImage(completedPath,onsiteUid);}catch{/* An unreferenced object is retained if ownership/cleanup cannot be verified. */}}
 const diagnostic = saveDiagnostic(error, stage);
 console.error('[treasure-image] failed', { ...diagnostic, ...imageDiagnostic(file) });
 throw error instanceof TreasureSaveError ? error : new TreasureSaveError(diagnostic);
 }
 }
 
-export async function deleteTreasureImage(path: string) {
-const supabase = getSupabaseClient();
+export async function deleteTreasureImage(path: string, onsiteUid?:string) {
+let supabase = getSupabaseClient();
+if(onsiteUid){supabase=getAccountClient();const {data,error}=await supabase.auth.getUser();if(error||data.user?.id!==onsiteUid||!path.startsWith(onsiteUid+'/'))throw Error('写真の所有者を確認できないため後処理を中止しました。');}
 const { error } = await supabase.storage
 .from(TREASURE_IMAGE_BUCKET)
 .remove([path]);

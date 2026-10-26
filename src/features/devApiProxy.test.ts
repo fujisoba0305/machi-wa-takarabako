@@ -6,7 +6,8 @@ import { localApi } from '../../dev/localApi';
 let server: ViteDevServer | undefined;
 afterEach(async()=>{ await server?.close(); server=undefined; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 async function call(path: string, body = {}) {
- if (!server) { server=await createServer({ configFile:false, plugins:[localApi()], optimizeDeps:{noDiscovery:true}, server:{host:'127.0.0.1',port:0},logLevel:'silent' }); await server.listen(); }
+ // HTTP-only test: do not crawl/watch the large static OSM dataset for unused HMR.
+ if (!server) { server=await createServer({ configFile:false, plugins:[localApi()], optimizeDeps:{noDiscovery:true}, server:{host:'127.0.0.1',port:0,watch:null},logLevel:'silent' }); await server.listen(); }
  const address=server.httpServer!.address() as {port:number};
  return new Promise<{status:number,body:any,environment:unknown}>((resolve,reject)=>{
  const req=request({hostname:'127.0.0.1',port:address.port,path,method:'POST',headers:{'Content-Type':'application/json'}},res=>{let text='';res.on('data',chunk=>text+=chunk);res.on('end',()=>resolve({status:res.statusCode!,body:JSON.parse(text),environment:res.headers['x-machi-api-environment']}));});req.on('error',reject);req.end(JSON.stringify(body)); });

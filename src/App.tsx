@@ -1,3 +1,5 @@
+import {PostingError,validatePostingFix,type PostingFix,type PostingMode} from './features/onsitePosting';
+import {postingAccount,readPendingPosting} from './services/onsitePosting';
 import {HomeLocationStatus,type HomeLocationState} from './components/HomeLocationStatus';
 import {readHomeLocationPermission} from './services/homeLocationPermission';
 import {saveArrivedDiscovery,type PersonalDiscovery} from './features/personalDiscoveries';
@@ -399,6 +401,7 @@ try { const { data } = getAccountClient().auth.onAuthStateChange((_event, sessio
 const next = session && (!session.expires_at || session.expires_at * 1000 > Date.now()) && !session.user.is_anonymous ? session.user.id : null;
 if ((previous !== undefined && previous !== next) || (profileIdentity.current !== undefined && profileIdentity.current !== next)) {
 profileIdentity.current = undefined;
+postingSequence.current++;setIsTreasureLocationLoading(false);setScreenState(current=>current==='treasure-register'?'home':current);
 setLocationDiagnostic('');cancelLocationRequest();setHomeLocationState('idle');trialAbortRef.current?.abort(); locationGate.current++; locationFetchedAt.current = 0; setCurrentLocation(null); cancelWalkingTrial();
 departureAbort.current?.abort();adventureSession.cancelPending(); dateSession.cancelPending(); adventureOperationRef.current++;
 setName(''); setHasStarted(false);
@@ -445,7 +448,14 @@ const [registeredTreasure, setRegisteredTreasure] =
 useState<TreasureRegistration | null>(null);
 const [isTreasureSaving, setIsTreasureSaving] = useState(false);
 const [treasureSaveError, setTreasureSaveError] = useState('');
-const [treasureLocation, setTreasureLocation] = useState<Coordinates | null>(null);
+const [treasureLocation, setTreasureLocation] = useState<PostingFix | null>(null);
+const [postingMode,setPostingMode]=useState<PostingMode>('daily');
+const postingUid=useRef('');
+const postingDraftActive=useRef(false);
+const postingTarget=useRef<Coordinates|null>(null);
+const postingSequence=useRef(0);
+const postingAttempt=useRef<{requestId:string;value:TreasureRegistration;row?:Treasure;images:Awaited<ReturnType<typeof uploadTreasureImage>>[]}|null>(null);
+const [postingUncertain,setPostingUncertain]=useState(false);
 const [isTreasureLocationLoading, setIsTreasureLocationLoading] = useState(false);
 const [treasureLocationError, setTreasureLocationError] = useState('');
 const [mapTreasures, setMapTreasures] = useState<Treasure[]>([]);
@@ -466,6 +476,7 @@ const ratingSubmissionPreviousRankRef = useRef<TreasureRank | null>(null);
 const normalSearchSequenceRef = useRef(0);
 const activeNormalSearchIdRef = useRef<string | null>(null);
 function setScreen(next: typeof screen) {
+postingSequence.current++;if(next!=='treasure-register')setIsTreasureLocationLoading(false);
 cancelLocationRequest();locationGate.current++;
 dateSession.cancelPending();
 adventureOperationRef.current++;
@@ -682,6 +693,7 @@ return false;
 }
 
 function resetTreasureRegistration() {
+postingSequence.current++;postingDraftActive.current=false;postingAttempt.current=null;postingTarget.current=null;setPostingUncertain(false);
 setTreasureName('');
 setTreasureComment('');
 setTreasureCategory('');
@@ -693,26 +705,36 @@ setTreasureSaveError('');
 setTreasureLocation(null);
 }
 
-async function openTreasureRegistration() {
-if (isTreasureLocationLoading) return;
-
-setIsTreasureLocationLoading(true);
-setTreasureLocationError('');
-
-try {
-const generation=locationGate.current;const coordinates = await acquireCurrentCoordinates();
-if(generation!==locationGate.current)return;rememberCurrentFix(coordinates);
-resetTreasureRegistration();
-setTreasureLocation(coordinates);
-setScreen('treasure-register');
-} catch (error) {
-console.error(error);
-setTreasureLocationError(
-'現在地を取得できませんでした。位置情報の許可を確認して、もう一度お試しください。'
-);
-} finally {
-setIsTreasureLocationLoading(false);
+async function openTreasureRegistration(mode:PostingMode='daily') {
+ if(isTreasureLocationLoading||treasureSaveInFlightRef.current)return;
+ const generation=locationGate.current,sequence=++postingSequence.current;
+ setIsTreasureLocationLoading(true);setTreasureLocationError('');
+ try{
+  const uid=await postingAccount();
+  if(generation!==locationGate.current||sequence!==postingSequence.current)return;
+  if(postingDraftActive.current){if(uid!==postingUid.current)throw new PostingError('POST_AUTH','元のアカウントで投稿結果を再確認してください。');setIsTreasureLocationLoading(false);setScreen('treasure-register');return;}
+  const pending=readPendingPosting(uid);
+  if(pending){
+   const row=pending.value;resetTreasureRegistration();postingDraftActive.current=true;postingUid.current=uid;postingTarget.current={latitude:row.latitude,longitude:row.longitude};
+   const value:TreasureRegistration={name:row.name,comment:row.comment,category:row.category as TreasureCategory,latitude:row.latitude,longitude:row.longitude,image:null,additionalImage:null};
+   postingAttempt.current={requestId:pending.requestId,value,row,images:[]};setPostingMode(pending.mode);setTreasureName(row.name);setTreasureComment(row.comment);setTreasureCategory(row.category as TreasureCategory);setTreasureImagePreview(row.image_url);setAdditionalTreasurePreview(row.additional_image_url??null);setPostingUncertain(true);setTreasureLocation(null);setIsTreasureLocationLoading(false);setScreen('treasure-register');return;
+  }
+  const adventure=adventureSession.current;
+  if(mode==='adventure'&&(!adventure?.rewardClaimed||!adventure.arrival||adventure.result.discovererUid!==uid))throw new PostingError('POST_ARRIVAL','このアカウントで目的地へのGPS到着確認を完了してから投稿してください。');
+  const coordinates=await requestCurrentCoordinates(undefined,uid);
+  const target=mode==='adventure'?adventure!.target:{latitude:coordinates.latitude,longitude:coordinates.longitude};
+  validatePostingFix(coordinates,target);
+  if(generation!==locationGate.current||sequence!==postingSequence.current||await postingAccount()!==uid)return;
+  resetTreasureRegistration();postingDraftActive.current=true;postingUid.current=uid;postingTarget.current={latitude:target.latitude,longitude:target.longitude};
+  setPostingMode(mode);setTreasureLocation(coordinates);rememberCurrentFix(coordinates);setIsTreasureLocationLoading(false);setScreen('treasure-register');
+ }catch(error){if(generation===locationGate.current&&sequence===postingSequence.current)setTreasureLocationError(error instanceof Error?error.message:'現在地を確認できません。再取得してください。');}
+ finally{if(sequence===postingSequence.current)setIsTreasureLocationLoading(false);}
 }
+async function refreshPostingLocation(){
+ const sequence=++postingSequence.current;setIsTreasureLocationLoading(true);setTreasureSaveError('');
+ try{const fix=await requestCurrentCoordinates(undefined,postingUid.current);validatePostingFix(fix,postingTarget.current!);if(sequence!==postingSequence.current)return;setTreasureLocation(fix);}
+ catch(error){if(sequence===postingSequence.current)setTreasureSaveError(error instanceof Error?error.message:'現在地を確認できません。入力は残っています。');}
+ finally{if(sequence===postingSequence.current)setIsTreasureLocationLoading(false);}
 }
 
 function resumeWalkingAdventure() {
@@ -734,6 +756,8 @@ normalArrivalRewardClaimedRef.current = false;
 setScreen(adventureReturnScreen(adventure));
 }
 function closeTreasureRegistration() {
+if(postingUncertain){resumeWalkingAdventure();return;}
+postingSequence.current++;
 if (treasureSaveInFlightRef.current) return;
 resetTreasureRegistration();
 resumeWalkingAdventure();
@@ -751,47 +775,59 @@ event.preventDefault();
 
 if (
 treasureSaveInFlightRef.current ||
-!treasureLocation ||
+(!treasureLocation&&!postingUncertain) ||
 !treasureName.trim() ||
 !treasureCategory
 ) {
 return;
 }
 
-const registration: TreasureRegistration = {
+const registration: TreasureRegistration = postingAttempt.current?.value ?? {
 name: treasureName.trim(),
 comment: treasureComment.trim(),
 category: treasureCategory,
-latitude: treasureLocation.latitude,
-longitude: treasureLocation.longitude,
+latitude: postingTarget.current!.latitude,
+longitude: postingTarget.current!.longitude,
 image: treasureImage,
 additionalImage:additionalTreasureImage,
 };
 
+const saveSequence=postingSequence.current;
 treasureSaveInFlightRef.current = true;
 setIsTreasureSaving(true);
 setTreasureSaveError('');
 
 let saveStage: TreasureSaveStage = 'image_prepare';
-const uploadedImages:Awaited<ReturnType<typeof uploadTreasureImage>>[]=[];
+const attempt:{requestId:string;value:TreasureRegistration;row?:Treasure;images:Awaited<ReturnType<typeof uploadTreasureImage>>[]}=postingAttempt.current??{requestId:crypto.randomUUID(),value:registration,images:[]};
+postingAttempt.current=attempt;
+const uploadedImages=attempt.images;
 try {
+if(isTreasureLocationLoading)throw new PostingError('POST_BUSY','GPSの確認完了を待ってください。');
+if(await postingAccount()!==postingUid.current)throw new PostingError('POST_AUTH','アカウントが変わりました。入力は保持しています。');
+let fix=await requestCurrentCoordinates(undefined,postingUid.current);validatePostingFix(fix,postingTarget.current!);if(saveSequence!==postingSequence.current)throw new PostingError('POST_CANCELLED','画面またはアカウントが変わったため投稿を停止しました。入力は残っています。');setTreasureLocation(fix);
 if(registration.additionalImage)await requireAdditionalImageSupport();
 const reports:string[]=[];
 for(const [index,file] of [registration.image,registration.additionalImage].entries()){
- if(!file)continue;saveStage='image_upload';const uploaded=await uploadTreasureImage(file);uploadedImages.push(uploaded);
+ if(!file||uploadedImages[index])continue;saveStage='image_upload';const uploaded=await uploadTreasureImage(file,postingUid.current);uploadedImages.push(uploaded);
  if(uploaded.preparedFile){const preview=URL.createObjectURL(uploaded.preparedFile);if(index===0)setTreasureImagePreview(preview);else setAdditionalTreasurePreview(preview);}
  if(uploaded.photo)reports.push((index===0?'代表画像':'追加画像')+'：'+(uploaded.photo.originalBytes/1000).toFixed(1)+'KB → '+(uploaded.photo.compressedBytes/1000).toFixed(1)+'KB'+(uploaded.photo.targetMet?'':'（画質優先）'));
  setPhotoSizeReport(reports.join(' / '));
 }
+fix=await requestCurrentCoordinates(undefined,postingUid.current);validatePostingFix(fix,postingTarget.current!);if(saveSequence!==postingSequence.current)throw new PostingError('POST_CANCELLED','画面またはアカウントが変わったため投稿を停止しました。入力は残っています。');setTreasureLocation(fix);
 saveStage='db_insert';
-await createTreasure({name:registration.name,comment:registration.comment,category:registration.category,latitude:registration.latitude,longitude:registration.longitude,image_url:uploadedImages[0]?.publicUrl??null,...(registration.additionalImage?{additional_image_url:uploadedImages[1].publicUrl}:{})});
+await createTreasure(attempt.row??{name:registration.name,comment:registration.comment,category:registration.category,latitude:registration.latitude,longitude:registration.longitude,image_url:uploadedImages[0]?.publicUrl??null,...(registration.additionalImage?{additional_image_url:uploadedImages[1].publicUrl}:{})},{uid:postingUid.current,mode:postingMode,requestId:attempt.requestId,fix});
+postingAttempt.current=null;postingDraftActive.current=false;setPostingUncertain(false);
+if(saveSequence!==postingSequence.current)return;
 setRegisteredTreasure(registration);
 } catch(error) {
 const diagnostic=saveDiagnostic(error,saveStage);
 // Only this attempt's newly created objects may be rolled back; never historical images.
-if(saveStage!=='db_insert'||diagnostic.outcome==='rejected')for(const uploaded of uploadedImages){try{await deleteTreasureImage(uploaded.path);}catch(cleanupError){console.error('[treasure-registration] cleanup failed',saveDiagnostic(cleanupError,'image_cleanup'));}}
+const unknown=postingUncertain||(error instanceof PostingError?error.uncertain:saveStage==='db_insert'&&diagnostic.outcome==='unknown');
+setPostingUncertain(unknown);
+if(!unknown)for(const uploaded of uploadedImages){try{await deleteTreasureImage(uploaded.path,postingUid.current);}catch(cleanupError){console.error('[treasure-registration] cleanup failed',saveDiagnostic(cleanupError,'image_cleanup'));}}
 console.error('[treasure-registration] Treasure save failed',diagnostic);
-setTreasureSaveError(saveFailureMessage(error,saveStage,registration.image));
+if(!unknown)postingAttempt.current=null;
+setTreasureSaveError(error instanceof PostingError?error.message:error instanceof StartupLocationFailure?locationFailureMessage(error):saveFailureMessage(error,saveStage,registration.image));
 } finally {
 treasureSaveInFlightRef.current = false;
 setIsTreasureSaving(false);
@@ -2246,6 +2282,7 @@ else setScreen(adventureSession.current ? adventureRestoreScreen(adventureSessio
 <ArrivalScreen
 adventure={adventureSession.current}
 rank={displayedTreasureRank?.label}
+onPost={() => void openTreasureRegistration('adventure')}
 onHome={() => { setScreen('home'); window.scrollTo(0, 0); }}
 onNext={() => { setSearchExpandLevel(0); setCourseStep(1); setScreen('condition'); window.scrollTo(0, 0); }}
 onRate={() => { arrivalRatingRequestedRef.current = true; setScreen('result'); }}
@@ -2256,7 +2293,7 @@ adventure={adventureSession.current}
 busy={isAdventureBusy}
 registering={isTreasureLocationLoading}
 message={adventureMessage}
-onDiscover={openTreasureRegistration}
+onDiscover={() => {setTreasureLocationError('冒険の目的地への投稿は、GPS到着確認後に行えます。途中の発見はホームの「今いる場所を宝物にする」から投稿できます。');}}
 onNavigate={resumeAdventureNavigation}
 onArrive={confirmNormalArrival}
 />
@@ -2387,16 +2424,16 @@ width: `${Math.min(walkRankInfo.progress, 100)}%`,
 <button
 className="treasure-discovery-button"
 type="button"
-onClick={openTreasureRegistration}
+onClick={() => void openTreasureRegistration('daily')}
 disabled={isTreasureLocationLoading}
 >
 <span aria-hidden="true"><IconText text="💎" /></span>
 <span>
 <strong>
-{isTreasureLocationLoading ? '今いる場所を確認中…' : '宝物を発見！'}
+{isTreasureLocationLoading ? '今いる場所を確認中…' : '今いる場所を宝物にする'}
 </strong>
 <small>
-押した場所を新しく取得して記録する
+冒険検索なしで、その場の宝物を投稿する
 </small>
 </span>
 </button>
@@ -2420,7 +2457,7 @@ selectedMapTreasure={selectedMapTreasure}
 onSelectMapTreasure={setSelectedMapTreasure}
 currentLocation={currentLocation}
 onStartAdventure={() => setScreen('condition')}
-onRegisterTreasure={openTreasureRegistration}
+onRegisterTreasure={() => void openTreasureRegistration('daily')}
 adventureHistory={adventureHistory}
 discoveries={personalDiscoveries}
 discoveryMessage={personalDiscoveryMessage}
@@ -2475,7 +2512,7 @@ className="treasure-photo-preview"
 </div>
 <div>
 <dt>写真</dt>
-<dd>{registeredTreasure.image?'代表画像1枚'+(registeredTreasure.additionalImage?'・追加画像1枚':''):'（なし）'}</dd>
+<dd>{treasureImagePreview?'代表画像1枚'+(additionalTreasurePreview?'・追加画像1枚':''):'（なし）'}</dd>
 </div>
 </dl>
 
@@ -2489,14 +2526,19 @@ onClick={closeTreasureRegistration}
 </div>
 ) : (
 <form className="treasure-register-form" onSubmit={handleTreasureRegistration}>
+<p>{postingMode==='adventure'?'GPS到着済みの目的地への投稿':'日常の発見：最初に確認した地点への投稿'}。保存直前にGPSを再確認します。投稿だけではEXP・育成の発見数は増えません。</p>
+<p role="status">{treasureLocation ? '前回確認したGPS精度：約'+Math.ceil(treasureLocation.accuracy)+'m（保存時に再確認）' : '現在地の再確認が必要です。'}</p>
+<button type="button" disabled={isTreasureSaving||isTreasureLocationLoading} onClick={()=>void refreshPostingLocation()}>{isTreasureLocationLoading?'現在地を確認中…':'投稿用の現在地だけ再取得する'}</button>
+{postingUncertain&&<p role="alert">保存結果が不明です。内容を固定しています。「同じ投稿の保存を再確認する」で重複せず再確認できます。写真は削除していません。</p>}
+<fieldset disabled={isTreasureSaving||postingUncertain} style={{border:0,padding:0,margin:0,minWidth:0}}>
 <div className="treasure-location-card">
 <span aria-hidden="true"><IconText text="📍" /></span>
 <div>
-<strong>この場所の現在地</strong>
-{treasureLocation ? (
+<strong>固定した投稿地点</strong>
+{postingTarget.current ? (
 <p>
-緯度 {treasureLocation.latitude.toFixed(6)}<br />
-経度 {treasureLocation.longitude.toFixed(6)}
+緯度 {postingTarget.current.latitude.toFixed(6)}<br />
+経度 {postingTarget.current.longitude.toFixed(6)}
 </p>
 ) : (
 <p>現在地を取得できていません。</p>
@@ -2562,6 +2604,7 @@ required
 </select>
 </label>
 
+</fieldset>
 {treasureSaveError && (
 <p className="treasure-save-error" role="alert">
 {treasureSaveError}
@@ -2581,13 +2624,13 @@ disabled={isTreasureSaving}
 className="gacha-button treasure-register-primary"
 type="submit"
 disabled={
-isTreasureSaving ||
-!treasureLocation ||
+isTreasureSaving || isTreasureLocationLoading ||
+(!treasureLocation&&!postingUncertain) ||
 !treasureName.trim() ||
 !treasureCategory
 }
 >
-<IconText text={isTreasureSaving ? '💎 宝物を保存しています…' : '💎 登録する'} />
+<IconText text={isTreasureSaving ? '💎 宝物を保存しています…' : postingUncertain?'同じ投稿の保存を再確認する':'💎 登録する'} />
 </button>
 </div>
 </form>
@@ -3192,7 +3235,7 @@ screen === 'result' &&
 <button
 className="treasure-floating-button"
 type="button"
-onClick={openTreasureRegistration}
+onClick={() => void openTreasureRegistration('daily')}
 aria-label="今いる場所で宝物を発見する"
 title="宝物を発見"
 >

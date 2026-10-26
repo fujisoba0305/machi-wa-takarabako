@@ -6,12 +6,17 @@
     "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "outDir": "./node_modules/.cache/machi-config",
-    "tsBuildInfoFile": "./node_modules/.cache/machi-config/build.tsbuildinfo"
+    "tsBuildInfoFile": "./node_modules/.cache/machi-config/build.tsbuildinfo",
+    "target": "ES2020"
   },
   "include": [
     "vite.config.ts",
     "dev/**/*.ts",
     "api/overpass.ts",
-    "api/walking-trial-access.ts"
+    "api/walking-trial-access.ts",
+    "api/treasure-post.ts",
+    "src/features/onsitePosting.ts",
+    "src/features/distance.ts",
+    "src/features/treasureCategories.ts"
   ]
 }

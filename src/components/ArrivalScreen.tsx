@@ -5,9 +5,9 @@ import { getNormalArrivalRewardExp } from '../features/normalArrivalReward';
 import { walkingDestination } from '../features/walkingAdventure';
 import { DestinationPhoto } from './HomeExplore';
 
-type Props = { adventure: ActiveAdventure; rank?: string; onHome: () => void; onNext: () => void; onRate: () => void };
+type Props = { adventure: ActiveAdventure; rank?: string; onHome: () => void; onNext: () => void; onRate: () => void; onPost?:()=>void };
 // Presentation only: no storage writes, reward callbacks, or animation-completion side effects.
-export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate }: Props) {
+export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate, onPost }: Props) {
   if (!adventure.rewardClaimed || !adventure.completedAt || !adventure.arrival) return null;
   const destination = walkingDestination(adventure);
   const reward = getNormalArrivalRewardExp(adventure.target.kind === 'treasure');
@@ -33,6 +33,7 @@ export function ArrivalScreen({ adventure, rank, onHome, onNext, onRate }: Props
       <div><dt>冒険開始からの経過時間</dt><dd>{elapsedMinutes < 1 ? '1分未満' : `${elapsedMinutes}分`}</dd></div>
     </dl><p>{adventure.result.distanceKind === 'straight-line' ? '直線距離は検索時の目安です。実際に歩いた距離ではありません。' : 'ルート距離は出発時の案内です。実際に歩いた距離ではありません。'}</p></details>
     <div className="arrival-actions">
+      {onPost&&<button type="button" onClick={onPost}>到着した目的地を宝物にする</button>}
       {adventure.target.kind === 'treasure' && <button type="button" className="arrival-rate" onClick={onRate}><IconText text="⭐ この宝物を評価する" /></button>}
       <button type="button" className="arrival-next" onClick={onNext}><IconText text="🧭 次の冒険に行く" /></button>
       <button type="button" className="arrival-home" onClick={onHome}><IconText text="🏠 ホームに戻る" /></button>

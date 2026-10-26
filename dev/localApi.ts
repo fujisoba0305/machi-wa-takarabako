@@ -1,3 +1,4 @@
+import treasurePost from '../api/treasure-post';
 import type { Plugin } from 'vite';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import walkingTrialAccess from '../api/walking-trial-access';
@@ -11,6 +12,7 @@ export function localApi(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         const path = req.url?.split('?')[0];
         if(path === '/api/walking-trial-access'){const reply={status(code:number){res.statusCode=code;return reply;},json(data:unknown){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));return reply;},setHeader(name:string,value:string){res.setHeader(name,value);return reply;}};await walkingTrialAccess({method:req.method,headers:req.headers} as VercelRequest,reply as unknown as VercelResponse);return;}
+        if(path==='/api/treasure-post'){let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>16384){res.statusCode=413;res.end('{}');return;}}const reply={status(code:number){res.statusCode=code;return reply;},json(data:unknown){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));return reply;},setHeader(name:string,value:string){res.setHeader(name,value);return reply;}};let parsed;try{parsed=JSON.parse(body);}catch{res.statusCode=400;res.end('{}');return;}await treasurePost({method:req.method,headers:req.headers,body:parsed} as VercelRequest,reply as unknown as VercelResponse);return;}
         if (path !== '/api/overpass' && path !== '/api/walking-distance' && path !== '/api/diagnostics') return next();
         res.setHeader('X-Machi-API-Environment', 'local');
         res.setHeader('Cache-Control', 'no-store');
