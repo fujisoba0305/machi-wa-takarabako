@@ -1,5 +1,5 @@
-import { calculateDistance } from './distance';
-import { registrationCategories } from './treasureCategories';
+import { calculateDistance } from './distance.js';
+import { registrationCategories } from './treasureCategories.js';
 export type PostingPoint={latitude:number;longitude:number};
 export type PostingFix=PostingPoint&{accuracy:number;timestamp:number};
 export type PostingMode='daily'|'adventure';

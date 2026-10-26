@@ -1,6 +1,6 @@
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 import {createHash,randomBytes} from 'node:crypto';
-import {canonicalPostingValue,validatePostingFix,PostingError,type PostingValue,type PostingFix} from '../src/features/onsitePosting';
+import {canonicalPostingValue,validatePostingFix,PostingError,type PostingValue,type PostingFix} from '../src/features/onsitePosting.js';
 const digest=(v:string)=>createHash('sha256').update(v).digest('hex');
 const messages:Record<string,string>={POST_DISABLED:'現地限定投稿は準備中です。入力は残っています。',POST_AUTH:'Googleログインを確認して再試行してください。',POST_EXPIRED:'位置確認の期限が切れました。GPSを再取得してください。',POST_CONFLICT:'前の投稿の保存結果を確認してください。内容を変更せず再試行してください。',POST_INVALID:'投稿内容または写真の所有者を確認できません。入力は残っています。',POST_NETWORK:'保存結果を確認できません。同じ内容で再確認してください。'};
 export default async function handler(req:VercelRequest,res:VercelResponse){
