@@ -1,0 +1,527 @@
+{
+  "scope": "PC localhost gzip HTTP with native fetch/SRI/automatic decompression. Auth fixture; empty registered treasures; no GPS/cloud/network latency. Not iPhone.",
+  "rows": [
+    {
+      "pref": "東京",
+      "distance": "1km",
+      "coldMs": 369.9162,
+      "warmMs": 15.929499999999962,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 248
+    },
+    {
+      "pref": "東京",
+      "distance": "3km",
+      "coldMs": 252.83579999999984,
+      "warmMs": 29.988200000000006,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 523
+    },
+    {
+      "pref": "東京",
+      "distance": "5km",
+      "coldMs": 281.4489000000001,
+      "warmMs": 26.491899999999987,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 351
+    },
+    {
+      "pref": "東京",
+      "distance": "10km",
+      "coldMs": 290.8751,
+      "warmMs": 43.261000000000195,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 154
+    },
+    {
+      "pref": "神奈川",
+      "distance": "1km",
+      "coldMs": 262.75019999999995,
+      "warmMs": 4.403500000000349,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 19
+    },
+    {
+      "pref": "神奈川",
+      "distance": "3km",
+      "coldMs": 269.5144,
+      "warmMs": 4.75649999999996,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 24
+    },
+    {
+      "pref": "神奈川",
+      "distance": "5km",
+      "coldMs": 278.59389999999985,
+      "warmMs": 6.015399999999772,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 59
+    },
+    {
+      "pref": "神奈川",
+      "distance": "10km",
+      "coldMs": 255.48160000000007,
+      "warmMs": 12.582800000000134,
+      "gzipBytes": 2051688,
+      "requests": 2,
+      "error": null,
+      "candidates": 171
+    },
+    {
+      "pref": "埼玉",
+      "distance": "1km",
+      "coldMs": 66.98169999999982,
+      "warmMs": 7.043599999999969,
+      "gzipBytes": 760998,
+      "requests": 3,
+      "error": null,
+      "candidates": 13
+    },
+    {
+      "pref": "埼玉",
+      "distance": "3km",
+      "coldMs": 74.28580000000011,
+      "warmMs": 1.7424999999998363,
+      "gzipBytes": 800396,
+      "requests": 5,
+      "error": null,
+      "candidates": 12
+    },
+    {
+      "pref": "埼玉",
+      "distance": "5km",
+      "coldMs": 63.72880000000032,
+      "warmMs": 2.104699999999866,
+      "gzipBytes": 800396,
+      "requests": 5,
+      "error": null,
+      "candidates": 24
+    },
+    {
+      "pref": "埼玉",
+      "distance": "10km",
+      "coldMs": 97.40419999999995,
+      "warmMs": 7.5538000000001375,
+      "gzipBytes": 840202,
+      "requests": 7,
+      "error": null,
+      "candidates": 15
+    },
+    {
+      "pref": "千葉",
+      "distance": "1km",
+      "coldMs": 61.346500000000106,
+      "warmMs": 1.3368000000000393,
+      "gzipBytes": 759483,
+      "requests": 5,
+      "error": null,
+      "candidates": 15
+    },
+    {
+      "pref": "千葉",
+      "distance": "3km",
+      "coldMs": 73.2802999999999,
+      "warmMs": 1.871599999999944,
+      "gzipBytes": 759483,
+      "requests": 5,
+      "error": null,
+      "candidates": 6
+    },
+    {
+      "pref": "千葉",
+      "distance": "5km",
+      "coldMs": 56.94210000000021,
+      "warmMs": 2.0098000000002685,
+      "gzipBytes": 759483,
+      "requests": 5,
+      "error": null,
+      "candidates": 6
+    },
+    {
+      "pref": "千葉",
+      "distance": "10km",
+      "coldMs": 65.51060000000007,
+      "warmMs": 3.7445999999999913,
+      "gzipBytes": 766376,
+      "requests": 7,
+      "error": null,
+      "candidates": 7
+    },
+    {
+      "pref": "茨城",
+      "distance": "1km",
+      "coldMs": 55.73070000000007,
+      "warmMs": 1.3810000000003129,
+      "gzipBytes": 699284,
+      "requests": 2,
+      "error": null,
+      "candidates": 27
+    },
+    {
+      "pref": "茨城",
+      "distance": "3km",
+      "coldMs": 51.927900000000136,
+      "warmMs": 3.6875999999997475,
+      "gzipBytes": 706639,
+      "requests": 3,
+      "error": null,
+      "candidates": 1
+    },
+    {
+      "pref": "茨城",
+      "distance": "5km",
+      "coldMs": 62.12490000000025,
+      "warmMs": 2.207300000000032,
+      "gzipBytes": 714483,
+      "requests": 5,
+      "error": null,
+      "candidates": 2
+    },
+    {
+      "pref": "茨城",
+      "distance": "10km",
+      "coldMs": 59.78200000000015,
+      "warmMs": 2.181800000000294,
+      "gzipBytes": 722553,
+      "requests": 10,
+      "error": null,
+      "candidates": 1
+    },
+    {
+      "pref": "栃木",
+      "distance": "1km",
+      "coldMs": 56.40809999999965,
+      "warmMs": 0.851799999999912,
+      "gzipBytes": 702796,
+      "requests": 3,
+      "error": null,
+      "candidates": 6
+    },
+    {
+      "pref": "栃木",
+      "distance": "3km",
+      "coldMs": 53.226900000000114,
+      "warmMs": 1.8032000000002881,
+      "gzipBytes": 702796,
+      "requests": 3,
+      "error": null,
+      "candidates": 4
+    },
+    {
+      "pref": "栃木",
+      "distance": "5km",
+      "coldMs": 59.64250000000038,
+      "warmMs": 1.2831000000005588,
+      "gzipBytes": 708226,
+      "requests": 5,
+      "error": null,
+      "candidates": 2
+    },
+    {
+      "pref": "栃木",
+      "distance": "10km",
+      "coldMs": 63.55370000000039,
+      "warmMs": 1.522200000000339,
+      "gzipBytes": 724060,
+      "requests": 13,
+      "error": "この直線距離・ジャンル条件に合う候補がありませんでした。条件は変更していません。",
+      "candidates": 0
+    },
+    {
+      "pref": "群馬",
+      "distance": "1km",
+      "coldMs": 61.642800000000534,
+      "warmMs": 1.0646000000006097,
+      "gzipBytes": 703670,
+      "requests": 3,
+      "error": null,
+      "candidates": 15
+    },
+    {
+      "pref": "群馬",
+      "distance": "3km",
+      "coldMs": 51.8121000000001,
+      "warmMs": 1.5084999999999127,
+      "gzipBytes": 703670,
+      "requests": 3,
+      "error": null,
+      "candidates": 1
+    },
+    {
+      "pref": "群馬",
+      "distance": "5km",
+      "coldMs": 55.369300000000294,
+      "warmMs": 1.9179999999996653,
+      "gzipBytes": 714934,
+      "requests": 5,
+      "error": null,
+      "candidates": 1
+    },
+    {
+      "pref": "群馬",
+      "distance": "10km",
+      "coldMs": 57.84240000000045,
+      "warmMs": 2.3320000000003347,
+      "gzipBytes": 721311,
+      "requests": 7,
+      "error": null,
+      "candidates": 12
+    }
+  ],
+  "paired": [
+    {
+      "distance": "1km",
+      "round": 0,
+      "mode": "before",
+      "ms": 238.14799999999923,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "1km",
+      "round": 0,
+      "mode": "after",
+      "ms": 240.6238000000003,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "1km",
+      "round": 1,
+      "mode": "before",
+      "ms": 248.14359999999942,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "1km",
+      "round": 1,
+      "mode": "after",
+      "ms": 250.75830000000042,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "1km",
+      "round": 2,
+      "mode": "before",
+      "ms": 235.29609999999957,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "1km",
+      "round": 2,
+      "mode": "after",
+      "ms": 238.21569999999974,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 19,
+      "selectedId": 2830649701
+    },
+    {
+      "distance": "3km",
+      "round": 0,
+      "mode": "before",
+      "ms": 239.57999999999993,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "3km",
+      "round": 0,
+      "mode": "after",
+      "ms": 236.70709999999963,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "3km",
+      "round": 1,
+      "mode": "before",
+      "ms": 229.29959999999937,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "3km",
+      "round": 1,
+      "mode": "after",
+      "ms": 231.8782000000001,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "3km",
+      "round": 2,
+      "mode": "before",
+      "ms": 237.34469999999965,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "3km",
+      "round": 2,
+      "mode": "after",
+      "ms": 225.78390000000036,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 24,
+      "selectedId": 13613755956
+    },
+    {
+      "distance": "5km",
+      "round": 0,
+      "mode": "before",
+      "ms": 231.46569999999974,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "5km",
+      "round": 0,
+      "mode": "after",
+      "ms": 233.01490000000013,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "5km",
+      "round": 1,
+      "mode": "before",
+      "ms": 231.5677999999998,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "5km",
+      "round": 1,
+      "mode": "after",
+      "ms": 262.5526,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "5km",
+      "round": 2,
+      "mode": "before",
+      "ms": 285.9235000000008,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "5km",
+      "round": 2,
+      "mode": "after",
+      "ms": 257.9848000000002,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 59,
+      "selectedId": 3561058427
+    },
+    {
+      "distance": "10km",
+      "round": 0,
+      "mode": "before",
+      "ms": 250.9328000000005,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    },
+    {
+      "distance": "10km",
+      "round": 0,
+      "mode": "after",
+      "ms": 253.23719999999958,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    },
+    {
+      "distance": "10km",
+      "round": 1,
+      "mode": "before",
+      "ms": 256.5702999999994,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    },
+    {
+      "distance": "10km",
+      "round": 1,
+      "mode": "after",
+      "ms": 253.60069999999905,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    },
+    {
+      "distance": "10km",
+      "round": 2,
+      "mode": "before",
+      "ms": 254.82040000000052,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    },
+    {
+      "distance": "10km",
+      "round": 2,
+      "mode": "after",
+      "ms": 236.8134000000009,
+      "bytes": 2051688,
+      "requests": 2,
+      "candidates": 171,
+      "selectedId": 3622775042
+    }
+  ]
+}

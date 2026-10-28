@@ -5,7 +5,7 @@ import manifest from '../data/staticFacilityManifest.json';
 import { loadLocalStaticFacilities, needsLocalStaticLookup, resetStaticFacilityCache, resolveStaticCondition, StaticFacilityError } from './staticFacilities';
 const gps = { latitude: 35.681236, longitude: 139.767125 }, choices = { mood: 'カフェ', distance: '？km' };
 export function localFileFetch(url: string) {
-  if (!url.startsWith('/facilities-local-v1/')) throw Error('Unexpected network request ' + url);
+  if (!url.startsWith('/facilities-local-v1/') && !url.startsWith('/facilities-kanto-v2/')) throw Error('Unexpected network request ' + url);
   return { ok: true, json: async () => JSON.parse(readFileSync(resolve(process.cwd(), 'public', url.slice(1)), 'utf8')) };
 }
 beforeEach(() => { vi.stubEnv('DEV', true); vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'on'); resetStaticFacilityCache(); vi.stubGlobal('fetch', vi.fn(localFileFetch)); });

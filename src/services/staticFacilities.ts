@@ -1,3 +1,4 @@
+import { kantoStaticEnabled, kantoLookupBounds, queryKantoFacilities, resetKantoFacilityCache } from './kantoFacilities';
 import exclusions from '../data/staticFacilityExclusions.json';
 import { hasInactiveFacilitySignal } from '../features/facilityAvailability';
 import manifest from '../data/staticFacilityManifest.json';
@@ -24,7 +25,7 @@ export function localStaticSearchEnabled() {
 }
 export function needsLocalStaticLookup(point: Point, choices: Choices) {
   return localStaticSearchEnabled() && choices.distance === '？km' && choices.mood !== 'デート' &&
-    manifest.boxes.some(([west, south, east, north]) => point.longitude >= west && point.longitude <= east && point.latitude >= south && point.latitude <= north);
+    (kantoStaticEnabled() ? kantoLookupBounds(point) : manifest.boxes.some(([west, south, east, north]) => point.longitude >= west && point.longitude <= east && point.latitude >= south && point.latitude <= north));
 }
 function insideRing(point: Point, ring: number[][]) {
   let inside = false;
@@ -92,22 +93,43 @@ const inactiveSnapshotIds=new Set(exclusions.sourceSha256===manifest.dataset.sha
 export function matchesStaticCondition(row: Row, clauses: ReturnType<typeof resolveStaticCondition>['clauses']) {
   return !inactiveSnapshotIds.has(row.type+':'+row.id) && !hasInactiveFacilitySignal(row.tags) && clauses.some(clause => row.type === clause.type && clause.predicates.every(p => p.op === 'exists' ? row.tags[p.key] !== undefined : p.op === '=' ? row.tags[p.key] === ('value' in p ? p.value : '') : typeof row.tags[p.key] === 'string' && new RegExp(('value' in p ? p.value : '') || '').test(row.tags[p.key])));
 }
+
+// Shared edges between Tokyo/Kanagawa are internal, not limits of their combined dataset.
+let legacyBoundary: number[][][]|null=null;
+function legacyCircleCovered(point:Point,radius:number,data:Region){
+ if(!isInsideStaticRegion(point,data))return false;
+ if(!legacyBoundary){legacyBoundary=[];for(const f of data.features)for(const p of f.geometry.coordinates)for(const ring of p)for(let i=1;i<ring.length;i++)legacyBoundary.push([ring[i-1],ring[i]]);}
+ if(!legacyBoundary.length)return false;
+ const margin=radius*1.03+100,dy=margin/100000,dx=dy/Math.cos(point.latitude*Math.PI/180),scaleX=111000*Math.cos(point.latitude*Math.PI/180);
+ // Cancel shared prefecture edges only after the conservative spatial filter.
+ // Identical endpoints have identical bounds, so this preserves the union boundary.
+ const nearby=new Map<string,number[][]>();
+ for(const[a,b]of legacyBoundary){if(Math.min(a[0],b[0])>point.longitude+dx||Math.max(a[0],b[0])<point.longitude-dx||Math.min(a[1],b[1])>point.latitude+dy||Math.max(a[1],b[1])<point.latitude-dy)continue;const key=[a.join(','),b.join(',')].sort().join('|');if(nearby.has(key))nearby.delete(key);else nearby.set(key,[a,b]);}
+ for(const[a,b]of nearby.values()){const ax=(a[0]-point.longitude)*scaleX,ay=(a[1]-point.latitude)*111000,bx=(b[0]-point.longitude)*scaleX,by=(b[1]-point.latitude)*111000,ex=bx-ax,ey=by-ay,u=Math.max(0,Math.min(1,-(ax*ex+ay*ey)/(ex*ex+ey*ey||1)));if(Math.hypot(ax+u*ex,ay+u*ey)<=margin)return false;}
+ return true;
+}
+async function queryRegional(point:Point,radius:number,clauses:ReturnType<typeof resolveStaticCondition>['clauses']){
+ if(!kantoStaticEnabled())return isInsideStaticRegion(point,await region())?queryStaticIndex(point,radius,clauses):null;
+ const oldBox=manifest.boxes.some(([w,s,e,n])=>point.longitude>=w&&point.longitude<=e&&point.latitude>=s&&point.latitude<=n);
+ if(oldBox&&legacyCircleCovered(point,radius,await region()))return queryStaticIndex(point,radius,clauses);
+ loadingStage.coverage='requesting'; loadingStage.dataset='requesting';
+ try{const result=await queryKantoFacilities(point,radius,isInsideStaticRegion,r=>matchesStaticCondition(r,clauses));loadingStage.coverage='loaded';loadingStage.dataset='ready';return result;}catch{loadingStage.dataset='failed';throw new StaticFacilityError();}
+}
+
 // null means out of scope: use the original provider. Errors NEVER trigger automatic fallback.
 export async function loadLocalStaticFacilities(point: Point, choices: Choices, radius: number, random = Math.random): Promise<Spot[] | null> {
   if (!needsLocalStaticLookup(point, choices)) return null;
-  if (!isInsideStaticRegion(point, await region())) return null;
   if (!Number.isFinite(radius) || radius < 0) throw new StaticFacilityError();
-  return queryStaticIndex(point, radius, resolveStaticCondition({ ...choices }, random).clauses);
+  return queryRegional(point, radius, resolveStaticCondition({ ...choices }, random).clauses);
 }
 export type DateSpotKind = 'cafe' | 'relax' | 'food' | 'view' | 'event' | 'park';
 export async function loadStaticDateSpots(point: Point, kind: DateSpotKind, radius: number): Promise<Spot[] | null> {
-  if (!localStaticSearchEnabled() || !manifest.boxes.some(([w,s,e,n]) => point.longitude >= w && point.longitude <= e && point.latitude >= s && point.latitude <= n)) return null;
-  if (!isInsideStaticRegion(point, await region())) return null;
+  if (!localStaticSearchEnabled() || !(kantoStaticEnabled()?kantoLookupBounds(point):manifest.boxes.some(([w,s,e,n]) => point.longitude >= w && point.longitude <= e && point.latitude >= s && point.latitude <= n))) return null;
   const clauses = kind === 'food'
     ? [['shop','bakery'],['shop','pastry'],['shop','confectionery'],['shop','chocolate'],['amenity','ice_cream']].map(([key,value]) => ({ type: 'node', predicates: [{ key, op: '=', value }] }))
     : kind === 'park' ? ['node','way'].map(type => ({ type, predicates: [{ key: 'leisure', op: '=', value: 'park' }] }))
     : resolveStaticCondition({ mood: { cafe: 'カフェ', relax: 'ストレス解消', view: '写真', event: 'イベント' }[kind], distance: '？km', eventGenre: 'おまかせ' }).clauses;
-  return queryStaticIndex(point, radius, clauses);
+  return queryRegional(point, radius, clauses);
 }
 async function queryStaticIndex(point: Point, radius: number, clauses: ReturnType<typeof resolveStaticCondition>['clauses']): Promise<Spot[]> {
   if (!Number.isFinite(radius) || radius < 0) throw new StaticFacilityError();
@@ -124,4 +146,4 @@ async function queryStaticIndex(point: Point, radius: number, clauses: ReturnTyp
   return rows;
 }
 // Only clears this provider's memory. Never touches player/Auth/localStorage data.
-export function resetStaticFacilityCache() { regionTask = null; datasetTask = null; loadingStage.coverage = 'idle'; loadingStage.dataset = 'idle'; }
+export function resetStaticFacilityCache() { resetKantoFacilityCache(); legacyBoundary=null; regionTask = null; datasetTask = null; loadingStage.coverage = 'idle'; loadingStage.dataset = 'idle'; }
