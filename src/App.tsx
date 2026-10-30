@@ -39,7 +39,7 @@ import { chooseDateCourse } from './features/dateCourse';
 import { chooseFoodWalk, foodWalkIsShort, isFoodShop, isFoodCafe } from './features/foodWalk';
 import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './features/treasureSaveDiagnostics';
 import { createTreasure, getTreasures, requireAdditionalImageSupport, incrementTreasureDiscovery, type Treasure } from './services/treasures';
-import { TreasureCollection } from './components/TreasureCollection';
+import { MyTreasureBook } from './components/MyTreasureBook';
 import { calculateDistance } from './features/distance';
 import { requestAdventurePosition, AdventureSession, type AdventureTarget } from './features/activeAdventure';
 import { DateAdventureSession } from './features/dateAdventure';
@@ -2449,19 +2449,19 @@ disabled={isTreasureLocationLoading}
 <button type="button" aria-current={screen === 'treasure-map' ? 'page' : undefined} onClick={openTreasureMap}>もう一度読み込む</button>
 </div>
 ) : (
-<TreasureCollection
-treasures={mapTreasures}
-ratingSummaries={mapTreasureRatingSummaries}
-ratingSummariesAvailable={areMapTreasureRatingsAvailable}
-selectedMapTreasure={selectedMapTreasure}
-onSelectMapTreasure={setSelectedMapTreasure}
-currentLocation={currentLocation}
-onStartAdventure={() => setScreen('condition')}
-onRegisterTreasure={() => void openTreasureRegistration('daily')}
-adventureHistory={adventureHistory}
-discoveries={personalDiscoveries}
-discoveryMessage={personalDiscoveryMessage}
-/>
+<MyTreasureBook key={profileIdentity.current??'guest'} uid={profileIdentity.current??null} onExplore={() => setScreen('condition')} collectionProps={{
+ treasures:mapTreasures,
+ ratingSummaries:mapTreasureRatingSummaries,
+ ratingSummariesAvailable:areMapTreasureRatingsAvailable,
+ selectedMapTreasure,
+ onSelectMapTreasure:setSelectedMapTreasure,
+ currentLocation,
+ onStartAdventure:()=>setScreen('condition'),
+ onRegisterTreasure:()=>void openTreasureRegistration('daily'),
+ adventureHistory,
+ discoveries:personalDiscoveries,
+ discoveryMessage:personalDiscoveryMessage,
+}}/>
 )}
 </section>
 ) : screen === 'treasure-register' ? (
@@ -2476,8 +2476,8 @@ discoveryMessage={personalDiscoveryMessage}
 <div className="treasure-registration-complete">
 <div className="treasure-registration-icon" aria-hidden="true"><IconText text="✨💎✨" /></div>
 <h3>宝物を登録しました！</h3>
-<p>投稿は「自分が投稿した宝物」で確認できます。宝物図鑑にはGPS到着で発見した宝物だけが追加されます。</p>
-<button type="button" onClick={()=>setScreen('my-page')}>自分の投稿を見る</button>
+<p>投稿は下部「図鑑」の「自分で発見した宝物」で確認できます。冒険の発見記録やEXPは投稿だけでは増えません。</p>
+<button type="button" onClick={()=>void openTreasureMap()}>自分の投稿を見る</button>
 <p className="treasure-registration-note">
 宝物の情報を保存しました。
 {photoSizeReport&&<span>{photoSizeReport}</span>}

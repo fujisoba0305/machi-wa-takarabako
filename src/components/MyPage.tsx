@@ -1,4 +1,3 @@
-import {MyTreasureBook} from './MyTreasureBook';
 import {LegacyHistoryNotice} from './LegacyHistoryNotice';
 import {TakaranGrowth} from './TakaranGrowth';
 import {readPersonalDiscoveries} from '../features/personalDiscoveries';
@@ -95,7 +94,6 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
       <p>機種変更の前に、元の端末のブラウザデータを消さずに保管してください。</p>
     </div>
     <LegacyHistoryNotice discoveries={user&&!loading?readPersonalDiscoveries(localStorage,user.id).records:undefined}/>
-    {user&&!loading&&<MyTreasureBook key={user.id} uid={user.id} onExplore={onBack}/>}
     {user&&!loading&&<MyTreasureManager/>}
     <button className="my-page-back" onClick={onBack}><AppIcon name="back" />冒険に戻る</button>
   </section>;
