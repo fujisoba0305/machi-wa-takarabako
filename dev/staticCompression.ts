@@ -6,9 +6,10 @@ import {createHash} from 'node:crypto';
 export function staticCompression():Plugin {
 return {name:'machi-local-static-compression',apply:'serve',configureServer(server){
   const manifest=JSON.parse(readFileSync(resolve(server.config.root,'src/data/staticFacilityManifest.json'),'utf8'));
+  const kanto=JSON.parse(readFileSync(resolve(server.config.root,'src/data/kantoFacilityManifest.json'),'utf8'));
   const compressed=new Map<string,Buffer>();
-  for(const asset of [manifest.dataset,manifest.region]){
-    if(!/^\/facilities-local-v1\/(candidates|coverage)-[a-f0-9]{12}\.json$/.test(asset.url))throw Error('Invalid static asset path');
+  for(const asset of [manifest.dataset,manifest.region,kanto.region,...Object.values(kanto.tiles) as {url:string;sha256:string}[]]){
+    if(!/^\/(?:facilities-local-v1\/(?:candidates|coverage)|facilities-kanto-v[23]\/(?:coverage|tile-\d+-\d+))-[a-f0-9]{12}\.json$/.test(asset.url))throw Error('Invalid static asset path');
     const raw=readFileSync(resolve(server.config.publicDir,asset.url.slice(1)));
     if(createHash('sha256').update(raw).digest('hex')!==asset.sha256)throw Error('Static asset integrity mismatch');
     compressed.set(asset.url,gzipSync(raw));

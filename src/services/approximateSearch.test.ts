@@ -6,7 +6,7 @@ vi.mock('./walkingTrial',()=>({authorizeStandardSearch:vi.fn(),withWalkingTrialD
 const nativeFetch=globalThis.fetch;
 const origin={latitude:35.575,longitude:139.658};let calls:string[]=[];
 const run=(distance='1km',mood='カフェ',treasures:any[]=[],random=()=>.9)=>searchApproximate(origin,{distance,mood},treasures,new AbortController().signal,random);
-beforeEach(()=>{vi.clearAllMocks();resetStaticFacilityCache();calls=[];vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');vi.mocked(authorizeStandardSearch).mockResolvedValue(true);vi.stubGlobal('fetch',vi.fn(async(url:string)=>{calls.push(url);if(!url.startsWith('/facilities-local-v1/'))throw Error('Forbidden API');return {ok:true,json:async()=>JSON.parse(fs.readFileSync(path.resolve('public',url.slice(1)),'utf8'))};}));vi.stubGlobal('Worker',class{constructor(){throw Error('Road Worker forbidden');}});});
+beforeEach(()=>{vi.clearAllMocks();resetStaticFacilityCache();calls=[];vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');vi.mocked(authorizeStandardSearch).mockResolvedValue(true);vi.stubGlobal('fetch',vi.fn(async(url:string)=>{calls.push(url);if(!url.startsWith('/facilities-local-v1/'))throw Error('Forbidden API');return {ok:true,json:async()=>JSON.parse(fs.readFileSync(path.resolve('public',url.slice(1)),'utf8'))};}));vi.stubGlobal('Worker',class{constructor(){throw Error('Road Worker forbidden');}});});
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();resetStaticFacilityCache();});
 it.each(Object.keys(approximateRanges))('selects %s strictly by straight-line range without roads or paid API',async distance=>{const r=await run(distance);expect(r.spot).not.toBeNull();expect(r.distanceKm).toBeGreaterThanOrEqual(approximateRanges[distance].min);expect(r.distanceKm).toBeLessThanOrEqual(approximateRanges[distance].max);expect(calls).toHaveLength(2);expect(r.report).not.toMatch(/35\.575|139\.658/);});
 it('reuses facility data on repeat; records PC cold and warm times',async()=>{const a=performance.now();await run();const cold=performance.now()-a,b=performance.now();await run();fs.writeFileSync('C:/Users/higep/Documents/Codex/2026-09-24/machi-wa-takarabako-work-work-c/approximate-pc-performance.json',JSON.stringify({coldMs:cold,warmMs:performance.now()-b,assetBodyBytes:calls.reduce((n,url)=>n+fs.statSync(path.resolve('public',url.slice(1))).size,0)},null,2));expect(calls).toHaveLength(2);});
@@ -35,6 +35,37 @@ it('checks every application subgenre and every omakase branch at all four dista
 it('loads treasures concurrently with facilities and keeps timing report free of coordinates',async()=>{let release!:(rows:any[])=>void;const load=vi.fn(()=>new Promise<any[]>(r=>{release=r;}));const task=searchApproximate(origin,{distance:'10km',mood:'カフェ'},load,new AbortController().signal);await new Promise(r=>setTimeout(r,0));expect(load).toHaveBeenCalledOnce();expect(calls.length).toBeGreaterThan(0);release([]);const r=await task;expect(r.report).toContain('施設データ読込・条件検索');expect(r.report).toContain('登録宝物取得');expect(r.report).not.toMatch(/35\.575|139\.658/);});
 it('does not turn a treasure load failure into an empty branch or a different candidate',async()=>{await expect(searchApproximate(origin,{distance:'1km',mood:'カフェ'},async()=>null,new AbortController().signal)).rejects.toThrow('登録宝物');});
 
-it('compares proposed bands against current bands on 24 public locations without live services',async()=>{vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');const samples=JSON.parse(fs.readFileSync('C:/Users/higep/Documents/Codex/2026-09-24/machi-wa-takarabako-work-work-c/static-facility-prototype/samples.json','utf8'));const previous=JSON.parse(JSON.stringify(approximateRanges));const proposed={'1km':{min:.5,max:1},'3km':{min:2,max:2.7},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}};const rows:any[]=[];try{for(const [band,ranges]of Object.entries({current:{'1km':{min:0,max:2},'3km':{min:2,max:4},'5km':{min:4,max:6},'10km':{min:9,max:11}},proposed,practical:{'1km':{min:.5,max:1.5},'3km':{min:2,max:3},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}}})){Object.assign(approximateRanges,ranges);for(const [site,latitude,longitude]of samples.town)for(const distance of Object.keys(approximateRanges))for(const mood of ['カフェ','グルメ','神社・お寺','自然','写真','おまかせ']){try{const r=await searchApproximate({latitude,longitude},{distance,mood},[],new AbortController().signal,()=>.9);expect(r.distanceKm).toBeGreaterThanOrEqual(approximateRanges[distance].min);expect(r.distanceKm).toBeLessThanOrEqual(approximateRanges[distance].max);rows.push({band,site,distance,mood,found:true,report:r.report});}catch(e){expect(String(e)).toContain('候補がありません');rows.push({band,site,distance,mood,found:false});}}}fs.writeFileSync('C:/Users/higep/Documents/Codex/2026-09-24/machi-wa-takarabako-work-work-c/walking-preflight-bands.json',JSON.stringify({rows},null,2));expect(rows).toHaveLength(1728);expect(calls).toHaveLength(2);}finally{Object.assign(approximateRanges,previous);}},30000);
+// Keep all 24 × 3 × 4 × 6 = 1,728 comparisons, but give each band/distance
+// its own isolated case. A single 1,728-search timer measured aggregate CPU
+// contention rather than one search. Production search and the 30s limit stay unchanged.
+const comparisonBands = {
+  current: {'1km':{min:0,max:2},'3km':{min:2,max:4},'5km':{min:4,max:6},'10km':{min:9,max:11}},
+  proposed: {'1km':{min:.5,max:1},'3km':{min:2,max:2.7},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}},
+  practical: {'1km':{min:.5,max:1.5},'3km':{min:2,max:3},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}},
+};
+const bandComparisons = Object.entries(comparisonBands).flatMap(([band,ranges])=>Object.keys(ranges).map(distance=>({band,ranges,distance})));
+it.each(bandComparisons)('compares proposed bands on 24 public locations: $band / $distance',async({band,ranges,distance})=>{
+  vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');
+  const samples=JSON.parse(fs.readFileSync('C:/Users/higep/Documents/Codex/2026-09-24/machi-wa-takarabako-work-work-c/static-facility-prototype/samples.json','utf8'));
+  expect(samples.town).toHaveLength(24);
+  const previous=structuredClone(approximateRanges),rows:any[]=[];
+  try {
+    Object.assign(approximateRanges,ranges);
+    for(const [site,latitude,longitude]of samples.town)for(const mood of ['カフェ','グルメ','神社・お寺','自然','写真','おまかせ']){
+      try {
+        const r=await searchApproximate({latitude,longitude},{distance,mood},[],new AbortController().signal,()=>.9);
+        expect(r.distanceKm).toBeGreaterThanOrEqual(approximateRanges[distance].min);
+        expect(r.distanceKm).toBeLessThanOrEqual(approximateRanges[distance].max);
+        rows.push({band,site,distance,mood,found:true,report:r.report});
+      }catch(e){expect(String(e)).toContain('候補がありません');rows.push({band,site,distance,mood,found:false});}
+    }
+    fs.writeFileSync('C:/Users/higep/Documents/Codex/2026-09-24/machi-wa-takarabako-work-work-c/walking-preflight-bands-'+band+'-'+distance+'.json',JSON.stringify({rows},null,2));
+    expect(rows).toHaveLength(144);
+    expect(calls).toHaveLength(2);
+  } finally { Object.assign(approximateRanges,previous); }
+},30000);
 
 it('uses only the approved trial ranges',()=>{expect(approximateRanges).toEqual({'1km':{min:.5,max:1.5},'3km':{min:2,max:3},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}});});
+
+it('distinguishes a transfer failure from candidate shortage without location diagnostics',async()=>{vi.mocked(fetch).mockRejectedValueOnce(Error('offline'));try{await run();throw Error('expected failure');}catch(e:any){expect(e.code).toBe('DATA_LOAD_FAILED');expect(e.report).toContain('停止コード：DATA_LOAD_FAILED');expect(e.report).not.toMatch(/35\.575|139\.658/);}});
+it('classifies a stalled load as timeout, not an empty result',async()=>{vi.useFakeTimers();try{vi.mocked(fetch).mockImplementationOnce(()=>new Promise(()=>{}));const task=run().catch(e=>e);await vi.advanceTimersByTimeAsync(20001);expect((await task).code).toBe('DATA_TIMEOUT');}finally{vi.useRealTimers();}});

@@ -1,3 +1,4 @@
+import {MyPosts} from './MyPosts';
 import {LegacyHistoryNotice} from './LegacyHistoryNotice';
 import {TakaranGrowth} from './TakaranGrowth';
 import {readPersonalDiscoveries} from '../features/personalDiscoveries';
@@ -10,7 +11,7 @@ import { AppIcon } from './AppIcon';
 import './MyPage.css';
 import { readAdventurerProfile, saveAdventurerProfile } from '../features/adventurerProfile';
 
-export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountChanged }: { onBack: () => void; adventureInProgress: boolean; adventurerName?: string; onNameChange?: (name: string) => void; onAccountChanged?: () => void }) {
+export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountChanged, showOwnPosts = false }: { onBack: () => void; adventureInProgress: boolean; showOwnPosts?: boolean; adventurerName?: string; onNameChange?: (name: string) => void; onAccountChanged?: () => void }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -94,6 +95,7 @@ export function MyPage({ onBack, adventureInProgress, onNameChange, onAccountCha
       <p>機種変更の前に、元の端末のブラウザデータを消さずに保管してください。</p>
     </div>
     <LegacyHistoryNotice discoveries={user&&!loading?readPersonalDiscoveries(localStorage,user.id).records:undefined}/>
+    {user&&!loading&&<MyPosts key={user.id} uid={user.id} initiallyOpen={showOwnPosts}/>}
     {user&&!loading&&<MyTreasureManager/>}
     <button className="my-page-back" onClick={onBack}><AppIcon name="back" />冒険に戻る</button>
   </section>;

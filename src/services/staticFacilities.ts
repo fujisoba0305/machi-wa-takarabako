@@ -1,3 +1,4 @@
+import kantoManifest from '../data/kantoFacilityManifest.json';
 import { kantoStaticEnabled, kantoLookupBounds, queryKantoFacilities, resetKantoFacilityCache } from './kantoFacilities';
 import exclusions from '../data/staticFacilityExclusions.json';
 import { hasInactiveFacilitySignal } from '../features/facilityAvailability';
@@ -87,11 +88,13 @@ export function resolveStaticCondition(choices: Choices, random = Math.random) {
   const shrineGenre = mood === '神社・お寺' && choices.shrineGenre === '御朱印巡り' ? '御朱印巡り' : '';
   const definition = definitions.find(d => d.choices.mood === mood && ('foodGenre' in d.choices ? d.choices.foodGenre?.replace('料理', '') : '') === (foodGenre === 'おまかせ' ? '' : foodGenre) && ('eventGenre' in d.choices ? d.choices.eventGenre : '') === eventGenre && ('shrineGenre' in d.choices ? d.choices.shrineGenre : '') === shrineGenre);
   if (!definition) throw new StaticFacilityError();
-  return { mood, clauses: definition.clauses };
+  const extra: [string,string][] = !kantoStaticEnabled()||!kantoManifest.preferTiles?[]:mood==='グルメ'&&(!foodGenre||foodGenre==='おまかせ')?[['shop','bakery'],['shop','pastry'],['shop','confectionery'],['shop','chocolate'],['shop','deli'],['shop','coffee'],['shop','tea'],['shop','ice_cream'],['amenity','food_court'],['amenity','ice_cream']]:mood==='自然'?[['leisure','garden'],['leisure','nature_reserve'],['leisure','recreation_ground'],['natural','waterfall'],['natural','beach']]:mood==='神社・お寺'&&(!choices.shrineGenre||choices.shrineGenre==='歴史散策')?[['historic','castle'],['historic','monument'],['historic','memorial'],['historic','ruins'],['historic','archaeological_site'],['historic','fort'],['historic','manor']]:mood==='イベント'&&eventGenre==='おまかせ'?[['tourism','theme_park'],['amenity','arts_centre'],['amenity','theatre'],['amenity','cinema'],['amenity','marketplace'],['leisure','amusement_arcade'],['leisure','bowling_alley']]:[];
+  const clauses=definition.clauses.concat(extra.map(([key,value])=>({type:'node',predicates:[{key,op:'=',value}]})) as typeof definition.clauses);
+  return { mood, clauses };
 }
 const inactiveSnapshotIds=new Set(exclusions.sourceSha256===manifest.dataset.sha256?exclusions.ids:[]);
 export function matchesStaticCondition(row: Row, clauses: ReturnType<typeof resolveStaticCondition>['clauses']) {
-  return !inactiveSnapshotIds.has(row.type+':'+row.id) && !hasInactiveFacilitySignal(row.tags) && clauses.some(clause => row.type === clause.type && clause.predicates.every(p => p.op === 'exists' ? row.tags[p.key] !== undefined : p.op === '=' ? row.tags[p.key] === ('value' in p ? p.value : '') : typeof row.tags[p.key] === 'string' && new RegExp(('value' in p ? p.value : '') || '').test(row.tags[p.key])));
+  return !inactiveSnapshotIds.has(row.type+':'+row.id) && !hasInactiveFacilitySignal(row.tags) && clauses.some(clause => (row.type === clause.type || kantoStaticEnabled()&&kantoManifest.preferTiles&&clause.type==='node'&&['way','relation'].includes(row.type)) && clause.predicates.every(p => p.op === 'exists' ? row.tags[p.key] !== undefined : p.op === '=' ? row.tags[p.key] === ('value' in p ? p.value : '') : typeof row.tags[p.key] === 'string' && new RegExp(('value' in p ? p.value : '') || '').test(row.tags[p.key])));
 }
 
 // Shared edges between Tokyo/Kanagawa are internal, not limits of their combined dataset.
@@ -111,7 +114,7 @@ function legacyCircleCovered(point:Point,radius:number,data:Region){
 async function queryRegional(point:Point,radius:number,clauses:ReturnType<typeof resolveStaticCondition>['clauses']){
  if(!kantoStaticEnabled())return isInsideStaticRegion(point,await region())?queryStaticIndex(point,radius,clauses):null;
  const oldBox=manifest.boxes.some(([w,s,e,n])=>point.longitude>=w&&point.longitude<=e&&point.latitude>=s&&point.latitude<=n);
- if(oldBox&&legacyCircleCovered(point,radius,await region()))return queryStaticIndex(point,radius,clauses);
+ if(!kantoManifest.preferTiles&&oldBox&&legacyCircleCovered(point,radius,await region()))return queryStaticIndex(point,radius,clauses);
  loadingStage.coverage='requesting'; loadingStage.dataset='requesting';
  try{const result=await queryKantoFacilities(point,radius,isInsideStaticRegion,r=>matchesStaticCondition(r,clauses));loadingStage.coverage='loaded';loadingStage.dataset='ready';return result;}catch{loadingStage.dataset='failed';throw new StaticFacilityError();}
 }

@@ -47,7 +47,7 @@ beforeEach(() => {
   vi.stubEnv('DEV', true); vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'on'); resetStaticFacilityCache();
   latitude=35.681236; longitude=139.767125;
   vi.mocked(searchWalkingTrial).mockResolvedValue({spot:{type:'node',id:123,lat:latitude+.01,lon:longitude,tags:{name:'試験用目的地'}},treasure:null,distance:{roadMeters:1100,estimated:true,origin:'unknown',quality:'block-estimate'},report:'徒歩検索・試験版：施設到達未確認'});
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => { if(!url.startsWith('/facilities-local-v1/')) throw Error('Forbidden external API '+url); return { ok:true, json:async()=>JSON.parse(readFileSync(resolve(process.cwd(),'public',url.slice(1)),'utf8')) }; }));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => { if(!/^\/facilities-(local-v1|kanto-v[23])\//.test(url)) throw Error('Forbidden external API '+url); return { ok:true, json:async()=>JSON.parse(readFileSync(resolve(process.cwd(),'public',url.slice(1)),'utf8')) }; }));
   vi.mocked(incrementTreasureDiscovery).mockResolvedValue(1);
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); vi.stubGlobal('alert', vi.fn());
   window.scrollTo = vi.fn();

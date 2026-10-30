@@ -8,13 +8,19 @@ const cache=new Map<string,{task:Promise<Map<string,KantoRow[]>>;bytes:number;us
 const MAX_CACHE_BYTES=24*1024*1024,MAX_CACHE_TILES=48,CONCURRENCY=3;
 export const kantoStaticEnabled=()=>import.meta.env.VITE_KANTO_STATIC_SEARCH!=='off';
 export function kantoLookupBounds(point:Point){return kanto.boxes.some(([w,s,e,n])=>point.longitude>=w&&point.longitude<=e&&point.latitude>=s&&point.latitude<=n);}
-async function read(asset:Asset){const response=await fetch(asset.url,{integrity:'sha256-'+btoa(asset.sha256.match(/../g)!.map(h=>String.fromCharCode(parseInt(h,16))).join(''))});if(!response.ok)throw Error('KANTO_DATA_LOAD_FAILED');return response.json();}
-export function resetKantoFacilityCache(){generation++;cache.clear();regionTask=null;}
+const transport={asset:'none',failure:'none',httpStatus:0};
+export function kantoTransportDiagnostic(){return {...transport};}
+async function read(asset:Asset){
+ const kind=asset.url.includes('/coverage-')?'coverage':'tile';let status=0,phase='network-or-integrity';
+ try{const response=await fetch(asset.url,{integrity:'sha256-'+btoa(asset.sha256.match(/../g)!.map(h=>String.fromCharCode(parseInt(h,16))).join(''))});status=response.status||200;if(!response.ok){phase='http';throw Error('KANTO_DATA_LOAD_FAILED');}phase='json';const data=await response.json();if(transport.failure==='none'){transport.asset=kind;transport.httpStatus=status;}return data;}
+ catch(error){Object.assign(transport,{asset:kind,failure:phase,httpStatus:status});throw error;}
+}
+export function resetKantoFacilityCache(){generation++;cache.clear();regionTask=null;Object.assign(transport,{asset:'none',failure:'none',httpStatus:0});}
 export function kantoFacilityCacheStats(){return{tiles:cache.size,decodedBytes:[...cache.values()].reduce((s,e)=>s+e.bytes,0),maxBytes:MAX_CACHE_BYTES};}
 function prune(pinned:Set<string>){let bytes=[...cache.values()].reduce((s,e)=>s+e.bytes,0);for(const[key,e]of [...cache].sort((a,b)=>a[1].used-b[1].used)){if(cache.size<=MAX_CACHE_TILES&&bytes<=MAX_CACHE_BYTES)break;if(e.ready&&!pinned.has(key)){cache.delete(key);bytes-=e.bytes;}}}
 function tile(key:string,asset:Asset,pinned:Set<string>){let e=cache.get(key);if(e){e.used=++clock;return e.task;}const epoch=generation;const entry={task:Promise.resolve(new Map<string,KantoRow[]>()),bytes:asset.bytes??0,used:++clock,ready:false};entry.task=read(asset).then(data=>{if(data.version!==kanto.version||!Array.isArray(data.records)||data.records.length!==asset.count)throw Error('KANTO_DATA_INVALID');const index=new Map<string,KantoRow[]>(),ids=new Set<string>();for(const r of data.records as KantoRow[]){if(!['node','way','relation'].includes(r.type)||!Number.isSafeInteger(r.id)||r.id<=0||!Number.isFinite(r.lat)||Math.abs(r.lat)>90||!Number.isFinite(r.lon)||Math.abs(r.lon)>180||!r.tags?.name?.trim()||typeof r.canonical!=='string'||[Math.floor(r.lat*(1/kanto.gridDegrees)),Math.floor(r.lon*(1*(1/kanto.gridDegrees)))].join(':')!==key||ids.has(r.type+':'+r.id))throw Error('KANTO_DATA_INVALID');ids.add(r.type+':'+r.id);const cell=[Math.floor(r.lat*100),Math.floor(r.lon*100)].join(':');const bucket=index.get(cell)||[];bucket.push(r);index.set(cell,bucket);}entry.ready=true;if(epoch===generation)prune(pinned);return index;}).catch(error=>{if(cache.get(key)===entry)cache.delete(key);throw error;});cache.set(key,entry);return entry.task;}
 export async function queryKantoFacilities(point:Point,radius:number,inside:(p:Point,r:Region)=>boolean,accept:(r:KantoRow)=>boolean):Promise<KantoRow[]|null>{
- if(!Number.isFinite(radius)||radius<0)throw Error('KANTO_RADIUS_INVALID');
+ Object.assign(transport,{asset:'none',failure:'none',httpStatus:0});if(!Number.isFinite(radius)||radius<0)throw Error('KANTO_RADIUS_INVALID');
  if(!regionTask)regionTask=read(kanto.region).then(data=>{if(!Array.isArray(data.features)||data.features.length!==7)throw Error('KANTO_COVERAGE_INVALID');return data as Region;}).catch(error=>{regionTask=null;throw error;});
  if(!inside(point,await regionTask))return null;
  const dy=radius/110000,dx=radius/(110000*Math.cos(point.latitude*Math.PI/180)),keys:string[]=[];

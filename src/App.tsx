@@ -36,7 +36,7 @@ import { getWalkingDistances } from './services/walkingDistance';
 import { loadLocalStaticFacilities, loadStaticDateSpots, staticFacilityLoadStage, StaticFacilityError, type DateSpotKind } from './services/staticFacilities';
 import { withDateDeadline, DateSearchTimeout } from './features/dateSearchDeadline';
 import { chooseDateCourse } from './features/dateCourse';
-import { chooseFoodWalk, isFoodShop, isFoodCafe } from './features/foodWalk';
+import { chooseFoodWalk, foodWalkIsShort, isFoodShop, isFoodCafe } from './features/foodWalk';
 import { saveDiagnostic, saveFailureMessage, type TreasureSaveStage } from './features/treasureSaveDiagnostics';
 import { createTreasure, getTreasures, requireAdditionalImageSupport, incrementTreasureDiscovery, type Treasure } from './services/treasures';
 import { TreasureCollection } from './components/TreasureCollection';
@@ -1146,7 +1146,7 @@ const shops = getNamedSpots(await lookup('food')).filter(isFoodShop);
 if (!isCurrent()) return;
 const cafes = getNamedSpots(await lookup('cafe')).filter(isFoodCafe);
 if (!isCurrent()) return;
-const course = await chooseFoodWalk({ latitude, longitude }, shops, cafes, isCurrent);
+const course = await chooseFoodWalk({ latitude, longitude }, shops, cafes, isCurrent, Math.random, targetDistanceKm);
 if (!isCurrent()) return;
 if (course) {
 setNearbySpot(course.waypoint); setDateFinalSpot(course.finalSpot); setSpotDistance(course.totalDistance);
@@ -1154,7 +1154,7 @@ console.info('[date-search] succeeded', { mode: '食べ歩き', shopCount: shops
 } else {
 setNearbySpot(null); setDateFinalSpot(null); setSpotDistance(null);
 setSearchFailureReason('empty');
-setSearchFailureMessage(shops.length === 0 ? 'パン・ケーキ・お菓子などの買い物スポットが、この検索範囲に見つかりませんでした。' : cafes.length === 0 ? '2軒目に立ち寄れるカフェ・喫茶店が、この検索範囲に見つかりませんでした。' : '買い物スポットの近くに、組み合わせられるカフェが見つかりませんでした。');
+setSearchFailureMessage(shops.length === 0 ? 'パン・ケーキ・お菓子などの買い物スポットが、この検索範囲に見つかりませんでした。' : cafes.length === 0 ? '2軒目に立ち寄れるカフェ・喫茶店が、この検索範囲に見つかりませんでした。' : '選択距離の上限内で組み合わせられるカフェが見つかりませんでした。距離条件は変更していません。');
 setSearchFailed(true);
 console.info('[date-search] stopped', { reason: 'food-shop-cafe-shortage', shopCount: shops.length, cafeCount: cafes.length });
 }
@@ -1256,7 +1256,7 @@ if(matchesApproximateScope(choices)) {
  const result=await searchApproximate(fresh,{...choices},()=>withWalkingTrialDeadline(getTreasures(),controller.signal),controller.signal);if(!isCurrent()||controller.signal.aborted)return;
  const resetReady=resetNormalAdventure();activeNormalSearchIdRef.current=searchId;if(!resetReady)throw Error('冒険の保存状態を更新できませんでした。再試行してください。');
  setNearbySpot(result.spot);setSelectedGachaTreasure(result.treasure);setSpotDistance(result.distanceKm);setApproximateSelection(true);setTrialReport(result.report+'\nGPS前のログイン確認：'+Math.max(0,gpsMs-(freshPositionTiming(fresh)?.totalMs??gpsMs)).toFixed(1)+'ms\n'+freshPositionReport(fresh)+'\nGPS取得・ログイン確認：'+gpsMs.toFixed(1)+'ms\nGPS開始から結果準備：'+(performance.now()-gpsStarted).toFixed(1)+'ms');
- }catch(error){if(!isCurrent()||controller.signal.aborted)return;if(error instanceof StartupLocationFailure){setLocationMessage(locationFailureMessage(error));setLocationDiagnostic(error.report);setIsSearching(false);setScreen('coin');return;}setSearchFailureReason('static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setTrialReport(error instanceof StartupLocationFailure?error.report:error instanceof Error&&'report'in error&&typeof error.report==='string'?error.report:'直線距離検索\n停止段階：ログイン状態確認またはGPS開始前');setSearchFailed(true);}
+ }catch(error){if(!isCurrent()||controller.signal.aborted)return;if(error instanceof StartupLocationFailure){setLocationMessage(locationFailureMessage(error));setLocationDiagnostic(error.report);setIsSearching(false);setScreen('coin');return;}setSearchFailureReason(error instanceof Error&&'code'in error&&error.code==='CANDIDATE_EMPTY'?'empty':'static');setSearchFailureMessage(error instanceof Error?error.message:'静的施設検索を完了できませんでした。');setTrialReport(error instanceof StartupLocationFailure?error.report:error instanceof Error&&'report'in error&&typeof error.report==='string'?error.report:'直線距離検索\n停止段階：ログイン状態確認またはGPS開始前');setSearchFailed(true);}
  return;
 }
 
@@ -2230,7 +2230,7 @@ return (
 
 {screen === 'my-page' ? (
 <>
-<MyPage adventurerName={name} onNameChange={setName} onAccountChanged={() => { cancelWalkingTrial(); trialAbortRef.current?.abort(); locationFetchedAt.current = 0; setCurrentLocation(null); if (!isWalkingAdventure(adventureSession.current) && !(dateSession.current && !dateSession.current.rewardClaimed)) { setName(''); setHasStarted(false); } }} adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
+<MyPage showOwnPosts={Boolean(registeredTreasure)} adventurerName={name} onNameChange={setName} onAccountChanged={() => { cancelWalkingTrial(); trialAbortRef.current?.abort(); locationFetchedAt.current = 0; setCurrentLocation(null); if (!isWalkingAdventure(adventureSession.current) && !(dateSession.current && !dateSession.current.rewardClaimed)) { setName(''); setHasStarted(false); } }} adventureInProgress={isWalkingAdventure(adventureSession.current) || Boolean(dateSession.current && !dateSession.current.rewardClaimed)} onBack={() => { window.history.replaceState(null, '', window.location.pathname); if (dateSession.current) { resumeWalkingAdventure(); } else setScreen(adventureRestoreScreen(adventureSession.current)); }} />
 </>
 ) : !hasStarted ? (
 <div
@@ -2476,6 +2476,8 @@ discoveryMessage={personalDiscoveryMessage}
 <div className="treasure-registration-complete">
 <div className="treasure-registration-icon" aria-hidden="true"><IconText text="✨💎✨" /></div>
 <h3>宝物を登録しました！</h3>
+<p>投稿は「自分が投稿した宝物」で確認できます。宝物図鑑にはGPS到着で発見した宝物だけが追加されます。</p>
+<button type="button" onClick={()=>setScreen('my-page')}>自分の投稿を見る</button>
 <p className="treasure-registration-note">
 宝物の情報を保存しました。
 {photoSizeReport&&<span>{photoSizeReport}</span>}
@@ -2901,6 +2903,7 @@ setScreen('condition');
 {choices.mood === 'デート' ? (
 <>
 <p className="result-label"><IconText text="❤️ 今日のデートコース" /></p>
+{choices.dateGenre==='食べ歩き'&&spotDistance!==null&&<p role="status">{foodWalkIsShort(spotDistance,getRadius()/1000)?'この範囲では短めのコースになりました。遠方への自動拡張はしていません。':'選択距離を上限の目安に、2地点の組み合わせを抽選しました。'} 距離は直線合計です。実際の徒歩距離・所要時間はGoogleマップで確認してください。</p>}
 
 <div className="spot-card-list">
 <div className="spot-card">

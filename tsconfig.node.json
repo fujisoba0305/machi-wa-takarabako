@@ -15,6 +15,7 @@
     "api/overpass.ts",
     "api/walking-trial-access.ts",
     "api/treasure-post.ts",
+    "api/my-treasures.ts",
     "src/features/onsitePosting.ts",
     "src/features/distance.ts",
     "src/features/treasureCategories.ts"

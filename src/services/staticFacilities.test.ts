@@ -8,7 +8,7 @@ export function localFileFetch(url: string) {
   if (!url.startsWith('/facilities-local-v1/') && !url.startsWith('/facilities-kanto-v2/')) throw Error('Unexpected network request ' + url);
   return { ok: true, json: async () => JSON.parse(readFileSync(resolve(process.cwd(), 'public', url.slice(1)), 'utf8')) };
 }
-beforeEach(() => { vi.stubEnv('DEV', true); vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'on'); resetStaticFacilityCache(); vi.stubGlobal('fetch', vi.fn(localFileFetch)); });
+beforeEach(() => { vi.stubEnv('DEV', true); vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'on'); resetStaticFacilityCache(); vi.stubGlobal('fetch', vi.fn(localFileFetch)); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); resetStaticFacilityCache(); });
 describe('local static facility provider', () => {
   it('reads actual local cafe candidates with valid OSM identity and no Overpass/Routes', async () => { const rows = await loadLocalStaticFacilities(gps, choices, 3000); expect(rows!.length).toBeGreaterThan(0); expect(rows!.every(r => r.type === 'node' && r.tags?.amenity === 'cafe')).toBe(true); expect(fetch).toHaveBeenCalledTimes(2); expect(new Set(rows!.map(r => r.type + ':' + r.id)).size).toBe(rows!.length); expect(vi.mocked(fetch).mock.calls.every(([url]) => String(url).startsWith('/facilities-local-v1/'))).toBe(true); expect(vi.mocked(fetch).mock.calls[1][1]?.integrity).toMatch(/^sha256-/); });

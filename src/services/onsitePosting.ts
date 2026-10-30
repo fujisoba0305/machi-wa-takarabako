@@ -35,7 +35,8 @@ export async function saveOnsiteTreasure(value:PostingValue,context:PostingConte
  if(ready.id){localStorage.removeItem(pendingPostingKey(context.uid));return;}
  if(!ready.token)throw new PostingError('POST_NETWORK','投稿確認情報を受け取れませんでした。',true);
  validatePostingFix(context.fix,v);
- await call({action:'commit',...body,token:ready.token},context.uid,true);
+ const committed=await call({action:'commit',...body,token:ready.token},context.uid,true);
+ if(!Number.isSafeInteger(committed.id)||committed.id!<=0)throw new PostingError('POST_NETWORK','保存完了を確認できません。同じ投稿の保存を再確認してください。',true);
  localStorage.removeItem(pendingPostingKey(context.uid));
  }catch(e){if(pending&&e instanceof PostingError)throw new PostingError(e.code,e.message,true);if(e instanceof PostingError&&!e.uncertain){try{localStorage.removeItem(pendingPostingKey(context.uid));}catch{/* Keep a conservative recovery record if removal fails. */}}throw e;}
 }

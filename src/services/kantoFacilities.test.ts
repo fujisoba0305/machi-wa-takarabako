@@ -6,12 +6,12 @@ import legacy from '../data/staticFacilityManifest.json';
 import definitions from '../data/staticFacilityConditions.json';
 import {calculateDistance} from '../features/distance';
 import {isInsideStaticRegion,loadLocalStaticFacilities,loadStaticDateSpots,matchesStaticCondition,resetStaticFacilityCache} from './staticFacilities';
-import {queryKantoFacilities,kantoFacilityCacheStats} from './kantoFacilities';
+import {queryKantoFacilities,kantoFacilityCacheStats,kantoTransportDiagnostic} from './kantoFacilities';
 const json=(url:string)=>JSON.parse(readFileSync('public'+url,'utf8'));
 const coverage=json(manifest.region.url);
 const all=Object.values(manifest.tiles).flatMap(a=>json(a.url).records);
-const places=[['東京',35.681236,139.767125],['神奈川',35.575,139.658],['埼玉',35.9063,139.6238],['千葉',35.6132,140.1137],['茨城',36.3709,140.4768],['栃木',36.5594,139.8987],['群馬',36.3895,139.0634],['都県境・和光',35.7886,139.6128],['区画境界',35.8,139.7],['山間・草津',36.6206,138.5969]] as const;
-function fixture(url:unknown){const u=String(url);if(!/^\/facilities-(local-v1|kanto-v2)\//.test(u))throw Error('External network forbidden');return {ok:true,json:async()=>json(u)} as Response;}
+const places=[['東京',35.681236,139.767125],['神奈川',35.575,139.658],['埼玉',35.9063,139.6238],['千葉',35.6132,140.1137],['茨城',36.3709,140.4768],['栃木',36.5594,139.8987],['群馬',36.3832125,139.0726408],['都県境・和光',35.7886,139.6128],['区画境界',35.8,139.7],['山間・草津',36.6206,138.5969]] as const;
+function fixture(url:unknown){const u=String(url);if(!/^\/facilities-(local-v1|kanto-v[23])\//.test(u))throw Error('External network forbidden');return {ok:true,json:async()=>json(u)} as Response;}
 beforeEach(()=>{vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');vi.stubEnv('VITE_KANTO_STATIC_SEARCH',undefined);resetStaticFacilityCache();vi.stubGlobal('fetch',vi.fn(async url=>fixture(url)));});
 afterEach(()=>{resetStaticFacilityCache();vi.unstubAllGlobals();vi.unstubAllEnvs();});
 it('verifies every asset hash, count, old record preservation and seven boundaries',()=>{
@@ -30,10 +30,10 @@ it.each(places)('%s: every distance and existing genre agrees with an independen
  expect(actual!.every(r=>calculateDistance(latitude,longitude,r.lat,r.lon)*1000<=radius)).toBe(true);
  }
 },30000);
-it('keeps the original Tokyo/Kanagawa two-file fast path and identical result order',async()=>{
+it('keeps the original Tokyo/Kanagawa two-file fallback and uses reviewed tiles by default',async()=>{
  const p={latitude:35.575,longitude:139.658},c={mood:'カフェ',distance:'？km'};
- const current=await loadLocalStaticFacilities(p,c,9000);expect(fetch).toHaveBeenCalledTimes(2);
- resetStaticFacilityCache();vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');const before=await loadLocalStaticFacilities(p,c,9000);expect(current).toEqual(before);
+ const current=await loadLocalStaticFacilities(p,c,9000);expect(vi.mocked(fetch).mock.calls.some(([u])=>String(u).startsWith('/facilities-kanto-v3/'))).toBe(true);
+ resetStaticFacilityCache();vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');vi.mocked(fetch).mockClear();const before=await loadLocalStaticFacilities(p,c,9000);expect(fetch).toHaveBeenCalledTimes(2);expect(before!.every(old=>current!.some(r=>r.type===old.type&&r.id===old.id))).toBe(true);
 });
 it('uses static data for unknown distance and all six date categories in Saitama',async()=>{
  const p={latitude:35.9063,longitude:139.6238};expect((await loadLocalStaticFacilities(p,{mood:'カフェ',distance:'？km'},3000))!.length).toBeGreaterThan(0);
@@ -69,3 +69,5 @@ it('includes facilities on both sides of the Tokyo/Saitama border',async()=>{
  expect(rows.some(r=>isInsideStaticRegion({latitude:r.lat!,longitude:r.lon!},oldRegion))).toBe(true);
  expect(rows.some(r=>!isInsideStaticRegion({latitude:r.lat!,longitude:r.lon!},oldRegion))).toBe(true);
 });
+
+it('retains the failing HTTP status when another parallel tile succeeds',async()=>{let failed=false;vi.mocked(fetch).mockImplementation(async url=>{if(!failed&&String(url).includes('/tile-')){failed=true;return {ok:false,status:503} as Response;}return fixture(url);});await expect(queryKantoFacilities({latitude:35.7886,longitude:139.6128},9000,isInsideStaticRegion,()=>true)).rejects.toThrow('KANTO_DATA_LOAD_FAILED');expect(kantoTransportDiagnostic()).toMatchObject({asset:'tile',failure:'http',httpStatus:503});});

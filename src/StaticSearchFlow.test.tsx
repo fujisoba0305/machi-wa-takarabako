@@ -43,7 +43,7 @@ beforeEach(() => {
   vi.useFakeTimers(); vi.clearAllMocks(); localStorage.clear();
   vi.stubEnv('DEV', true); vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'on'); resetStaticFacilityCache();
   latitude=35.681236; longitude=139.767125;
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => { if(!url.startsWith('/facilities-local-v1/')) throw Error('Forbidden external API '+url); return { ok:true, json:async()=>JSON.parse(readFileSync(resolve(process.cwd(),'public',url.slice(1)),'utf8')) }; }));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => { if(!/^\/facilities-(local-v1|kanto-v[23])\//.test(url)) throw Error('Forbidden external API '+url); return { ok:true, json:async()=>JSON.parse(readFileSync(resolve(process.cwd(),'public',url.slice(1)),'utf8')) }; }));
   vi.mocked(incrementTreasureDiscovery).mockResolvedValue(1);
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); vi.stubGlobal('alert', vi.fn());
   window.scrollTo = vi.fn();
@@ -98,7 +98,7 @@ it('keeps data failure distinct and does not fall back to public API', async () 
 it('fixed-distance standard search uses static facilities and no walking API', async () => {
   vi.mocked(getNearbyParks).mockResolvedValue([{ ...spot, lat: latitude + .007, lon: longitude }]);
   await enterGacha('1km'); await click('ガチャのハンドルを回す'); await advance(4000); await advance(1500);
-  expect(getNearbyParks).not.toHaveBeenCalled();expect(getWalkingDistances).not.toHaveBeenCalled();expect(fetch).toHaveBeenCalledTimes(2);expect(container.textContent).toContain('現在地から直線距離');
+  expect(getNearbyParks).not.toHaveBeenCalled();expect(getWalkingDistances).not.toHaveBeenCalled();expect(vi.mocked(fetch).mock.calls.length).toBeGreaterThan(1);expect(new Set(vi.mocked(fetch).mock.calls.map(([u])=>u)).size).toBe(vi.mocked(fetch).mock.calls.length);expect(container.textContent).toContain('現在地から直線距離');
 });
 it('explicit off switch restores the original random-distance provider', async () => {
   vi.stubEnv('VITE_LOCAL_STATIC_SEARCH', 'off');

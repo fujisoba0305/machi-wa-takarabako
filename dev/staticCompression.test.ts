@@ -13,3 +13,6 @@ it('handles HEAD without transferring a body',()=>{const r=request(manifest.data
 it.each(['/api/overpass','/.local-https/mobile-key.pem','/facilities-local-v1/../../.env'])('does not intercept private or API path %s',path=>{const r=request(path);expect(r.next).toHaveBeenCalledOnce();expect(r.res.end).not.toHaveBeenCalled();});
 it('honors clients that disallow gzip',()=>{expect(request(manifest.dataset.url,'GET','gzip;q=0, br').next).toHaveBeenCalledOnce();});
 it('is a development-only plugin',()=>{expect(staticCompression().apply).toBe('serve');});
+
+const kanto=JSON.parse(readFileSync('src/data/kantoFacilityManifest.json','utf8'));
+it.each([kanto.region,Object.values(kanto.tiles)[0]])('compresses Kanto coverage/tiles without changing integrity %o',(asset:any)=>{const r=request(asset.url);const b=r.res.end.mock.calls[0][0]!;expect(r.headers['Content-Encoding']).toBe('gzip');expect(createHash('sha256').update(gunzipSync(b)).digest('hex')).toBe(asset.sha256);expect(b.length).toBeLessThan(readFileSync('public'+asset.url).length);});

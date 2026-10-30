@@ -1,0 +1,36 @@
+{
+  "source": {
+    "url": "https://download.geofabrik.de/asia/japan/kanto-latest.osm.pbf",
+    "snapshotUTC": "2026-10-11T20:21:06Z",
+    "license": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors"
+  },
+  "baseline": 88948,
+  "reviewed": 39054,
+  "adopted": 19562,
+  "count": 108510,
+  "held": {
+    "historical-public-access-unconfirmed": 5721,
+    "mountain-access-unconfirmed": 1294,
+    "bar-pub-review": 10467,
+    "indoor-or-floor": 1972,
+    "restricted-or-unknown-access": 6,
+    "large-footprint": 27,
+    "site-relation": 5
+  },
+  "byPref": {
+    "埼玉県": 2763,
+    "千葉県": 2809,
+    "東京都": 5119,
+    "神奈川県": 4409,
+    "茨城県": 1580,
+    "群馬県": 1532,
+    "栃木県": 1350
+  },
+  "byGroup": {
+    "history": 7488,
+    "culture": 2320,
+    "food": 7203,
+    "nature": 2551
+  }
+}

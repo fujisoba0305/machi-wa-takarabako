@@ -18,7 +18,7 @@ function button(label:string){const b=[...box.querySelectorAll('button')].find(b
 async function click(s:string){await act(async()=>button(s).click());}
 async function advance(ms:number){await act(async()=>{await vi.advanceTimersByTimeAsync(ms);});}
 beforeEach(()=>{vi.useFakeTimers();localStorage.clear();vi.clearAllMocks();vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);window.scrollTo=vi.fn();window.open=vi.fn();vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');statics.resetStaticFacilityCache();
-vi.stubGlobal('fetch',vi.fn(async(url:string)=>{if(!url.startsWith('/facilities-local-v1/'))throw Error('Forbidden API');return{ok:true,json:async()=>JSON.parse(readFileSync('public'+url,'utf8'))};}));
+vi.stubGlobal('fetch',vi.fn(async(url:string)=>{if(!/^\/facilities-(local-v1|kanto-v[23])\//.test(url))throw Error('Forbidden API');return{ok:true,json:async()=>JSON.parse(readFileSync('public'+url,'utf8'))};}));
 Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(success:PositionCallback){success({coords:{latitude:35.681236,longitude:139.767125,accuracy:10},timestamp:Date.now()} as GeolocationPosition);}}});
 box=document.createElement('div');document.body.append(box);root=createRoot(box);});
 afterEach(async()=>{await act(async()=>root.unmount());box.remove();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();vi.unstubAllEnvs();statics.resetStaticFacilityCache();});

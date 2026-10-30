@@ -1,0 +1,7 @@
+import {it,expect,vi,beforeEach,afterEach} from 'vitest';
+const session=vi.hoisted(()=>vi.fn());vi.mock('./accountAuth',()=>({getAccountClient:()=>({auth:{getSession:session}})}));import {loadMyPosts} from './myPosts';
+beforeEach(()=>{session.mockReset();session.mockResolvedValue({data:{session:{user:{id:'own'},access_token:'fixture'}},error:null});});afterEach(()=>vi.unstubAllGlobals());
+it('loads only the own endpoint and rechecks account after response',async()=>{const fetcher=vi.fn(async(_url:string)=>Response.json({items:[],next:null}));vi.stubGlobal('fetch',fetcher);expect(await loadMyPosts('own')).toEqual({items:[],next:null});expect(fetcher.mock.calls[0][0]).toBe('/api/my-treasures');expect(session).toHaveBeenCalledTimes(2);});
+it('does not return an old account response after switching',async()=>{vi.stubGlobal('fetch',vi.fn(async()=>{session.mockResolvedValue({data:{session:{user:{id:'other'}}},error:null});return Response.json({items:[],next:null});}));await expect(loadMyPosts('own')).rejects.toThrow('ログイン');});
+it('distinguishes a failed load from a valid empty result',async()=>{vi.stubGlobal('fetch',vi.fn(async()=>new Response('',{status:503})));await expect(loadMyPosts('own')).rejects.toThrow('再試行');});
+it('does not issue a request for a mismatched account',async()=>{const f=vi.fn();vi.stubGlobal('fetch',f);await expect(loadMyPosts('other')).rejects.toThrow('ログイン');expect(f).not.toHaveBeenCalled();});

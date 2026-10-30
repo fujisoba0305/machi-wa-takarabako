@@ -18,3 +18,6 @@
 .my-page button:focus-visible { outline: 3px solid #1976c5; outline-offset: 3px; }
 
 .app-shell.account-mode { padding: 0; }
+
+.my-posts article { border-top: 1px solid #dbcdb6; padding: 16px 0; overflow-wrap: anywhere; }
+.my-posts button { min-height: 44px; }

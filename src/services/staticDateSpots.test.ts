@@ -2,7 +2,7 @@ import { beforeEach,afterEach,expect,it,vi } from 'vitest';
 import {readFileSync} from 'node:fs';
 import {loadStaticDateSpots,resetStaticFacilityCache,type DateSpotKind} from './staticFacilities';
 const cases:DateSpotKind[]=['cafe','relax','food','view','event','park'];
-beforeEach(()=>{vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');resetStaticFacilityCache();vi.stubGlobal('fetch',vi.fn(async(url:string)=>{if(!url.startsWith('/facilities-local-v1/'))throw Error('External API forbidden');return{ok:true,json:async()=>JSON.parse(readFileSync('public'+url,'utf8'))};}));});
+beforeEach(()=>{vi.stubEnv('VITE_KANTO_STATIC_SEARCH','off');vi.stubEnv('VITE_LOCAL_STATIC_SEARCH','on');resetStaticFacilityCache();vi.stubGlobal('fetch',vi.fn(async(url:string)=>{if(!url.startsWith('/facilities-local-v1/'))throw Error('External API forbidden');return{ok:true,json:async()=>JSON.parse(readFileSync('public'+url,'utf8'))};}));});
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();resetStaticFacilityCache();});
 it.each(cases)('uses the same kind=%s tags and OSM types as legacy queries',async kind=>{
 const rows=(await loadStaticDateSpots({latitude:35.681236,longitude:139.767125},kind,3000))!;expect(rows.length).toBeGreaterThan(0);expect(new Set(rows.map(r=>r.type+':'+r.id)).size).toBe(rows.length);

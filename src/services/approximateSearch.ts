@@ -1,16 +1,19 @@
+import { kantoTransportDiagnostic } from './kantoFacilities';
 import { authorizeStandardSearch } from './walkingTrial';
 import { loadLocalStaticFacilities, resolveStaticCondition, resetStaticFacilityCache } from './staticFacilities';
 import { calculateDistance } from '../features/distance';
 import { getEligibleRegisteredTreasures } from '../features/normalTreasureCandidates';
 import { selectApproximateSearchCandidate } from '../features/approximateCandidateWeighting';
 import type { Treasure } from './treasures';
+export type ApproximateFailureCode='CANDIDATE_EMPTY'|'DATA_LOAD_FAILED'|'DATA_TIMEOUT'|'CANCELLED'|'AUTH_REQUIRED'|'OUTSIDE_COVERAGE'|'TREASURE_LOAD_FAILED'|'UNEXPECTED';
+export class ApproximateSearchFailure extends Error { constructor(public readonly code:ApproximateFailureCode,message:string){super(message);this.name='ApproximateSearchFailure';} }
 function waitForStatic<T>(task:Promise<T>,signal:AbortSignal):Promise<T> {
  return new Promise((resolve,reject)=>{
  let done=false;
  const finish=(value:T|undefined,error?:Error)=>{if(done)return;done=true;clearTimeout(timer);signal.removeEventListener('abort',abort);if(error)reject(error);else resolve(value as T);};
- const abort=()=>finish(undefined,Error('検索を中止しました。条件を保って再試行できます。'));
- const timer=setTimeout(()=>finish(undefined,Error('静的施設データの読み込みに時間がかかっています。条件を保って再試行してください。')),20000);
- signal.addEventListener('abort',abort,{once:true});task.then(v=>finish(v),()=>finish(undefined,Error('静的施設データを読み込めませんでした。条件を保って再試行してください。')));if(signal.aborted)abort();
+ const abort=()=>finish(undefined,new ApproximateSearchFailure('CANCELLED','検索を中止しました。条件を保って再試行できます。'));
+ const timer=setTimeout(()=>finish(undefined,new ApproximateSearchFailure('DATA_TIMEOUT','静的施設データの読み込みに時間がかかっています。条件を保って再試行してください。')),20000);
+ signal.addEventListener('abort',abort,{once:true});task.then(v=>finish(v),()=>finish(undefined,new ApproximateSearchFailure('DATA_LOAD_FAILED','静的施設データを読み込めませんでした。条件を保って再試行してください。')));if(signal.aborted)abort();
  });
 }
 export const approximateRanges: Record<string,{min:number;max:number}> = {'1km':{min:0.5,max:1.5},'3km':{min:2,max:3},'5km':{min:3.5,max:4.5},'10km':{min:8,max:9}};
@@ -21,27 +24,27 @@ export async function searchApproximate(point:{latitude:number;longitude:number}
  const report=()=>['直線距離検索（座標・住所・氏名なし）','処理段階：'+stage,...Object.entries(times).map(([k,v])=>({authorization:'ログイン確認',facilities:'施設データ読込・条件検索',treasures:'登録宝物取得',selection:'距離判定・抽選',finalAuthorization:'結果のログイン確認'}[k]+': '+(v===null?'未完了・未実行':v.toFixed(1)+'ms'))),'検索合計：'+(performance.now()-started).toFixed(1)+'ms','道路データ取得・徒歩距離API呼び出し：なし'].join('\n');
  const timed=async<T>(key:keyof typeof times,task:()=>Promise<T>)=>{const at=performance.now();try{return await task();}finally{times[key]=performance.now()-at;}};
  try {
- const check=()=>{if(signal.aborted)throw Error('検索を中止しました。条件を保って再試行できます。');};check();
+ const check=()=>{if(signal.aborted)throw new ApproximateSearchFailure('CANCELLED','検索を中止しました。条件を保って再試行できます。');};check();
  if(!matchesApproximateScope(choices))throw Error('この条件は直線距離検索の対象外です。');
  if(!Number.isFinite(point.latitude)||Math.abs(point.latitude)>90||!Number.isFinite(point.longitude)||Math.abs(point.longitude)>180)throw Error('現在地を確認してください。');
- if(!await timed('authorization',()=>authorizeStandardSearch(signal)))throw Error('ログイン状態を確認できません。');check();
+ if(!await timed('authorization',()=>authorizeStandardSearch(signal)))throw new ApproximateSearchFailure('AUTH_REQUIRED','ログイン状態を確認できません。');check();
  const range=approximateRanges[choices.distance],conditionRandom=choices.mood==='おまかせ'?random():0,condition=resolveStaticCondition(choices,()=>conditionRandom);
  stage='施設・登録宝物の並行取得';
  const [rows,treasureRows]=await Promise.all([
- timed('facilities',()=>waitForStatic(loadLocalStaticFacilities(point,{...choices,distance:'？km'},range.max*1000,()=>conditionRandom),signal).catch(error=>{resetStaticFacilityCache();throw error;})),
+ timed('facilities',()=>waitForStatic(loadLocalStaticFacilities(point,{...choices,distance:'？km'},range.max*1000,()=>conditionRandom),signal).catch(error=>{const detail=kantoTransportDiagnostic();resetStaticFacilityCache();throw Object.assign(error,{facilityDiagnostic:JSON.stringify(detail)});})),
  timed('treasures',()=>typeof treasures==='function'?treasures():Promise.resolve(treasures))
  ]);check();
- if(treasureRows===null)throw Error('登録宝物を読み込めませんでした。条件を保って再試行してください。');
- if(rows===null)throw Error('この地域は静的施設検索の対象外です。条件を確認して再試行してください。');
+ if(treasureRows===null)throw new ApproximateSearchFailure('TREASURE_LOAD_FAILED','登録宝物を読み込めませんでした。条件を保って再試行してください。');
+ if(rows===null)throw new ApproximateSearchFailure('OUTSIDE_COVERAGE','この地域は静的施設検索の対象外です。条件を確認して再試行してください。');
  stage='距離判定・抽選';const selectionStarted=performance.now();
  const general=rows.flatMap(spot=>{const lat=spot.lat??spot.center?.lat,lon=spot.lon??spot.center?.lon;if(!Number.isFinite(lat)||!Number.isFinite(lon))return [];const distanceKm=calculateDistance(point.latitude,point.longitude,lat!,lon!);return distanceKm>=range.min&&distanceKm<=range.max?[{spot,distanceKm}]:[];});
  const registered=getEligibleRegisteredTreasures(treasureRows,point,choices.mood,range,choices.foodGenre).filter(c=>Math.abs(c.treasure.latitude)<=90&&Math.abs(c.treasure.longitude)<=180);
  times.selection=performance.now()-selectionStarted;stage='結果のログイン確認';
- if(!await timed('finalAuthorization',()=>authorizeStandardSearch(signal)))throw Error('ログイン状態が変更されました。');check();
+ if(!await timed('finalAuthorization',()=>authorizeStandardSearch(signal)))throw new ApproximateSearchFailure('AUTH_REQUIRED','ログイン状態が変更されました。');check();
  const weightedStarted=performance.now();
  const selected=selectApproximateSearchCandidate(general,registered,Number.parseInt(choices.distance,10),random);
  times.selection! += performance.now()-weightedStarted;
- if(!selected)throw Error('この直線距離・ジャンル条件に合う候補がありませんでした。条件は変更していません。');
+ if(!selected)throw new ApproximateSearchFailure('CANDIDATE_EMPTY','この直線距離・ジャンル条件に合う候補がありませんでした。条件は変更していません。');
  return {spot:selected.source==='overpass'?selected.candidate.spot:null,treasure:selected.source==='treasure'?selected.treasure:null,distanceKm:selected.source==='treasure'?selected.distanceKm:selected.candidate.distanceKm,report:[report(),'距離条件：'+choices.distance,'検索カテゴリ：'+condition.mood,'一般施設候補：'+general.length+'件','登録宝物候補：'+registered.length+'件','抽選元：'+(selected.source==='treasure'?'登録宝物':'OSM施設'),'実際の徒歩距離・所要時間はGoogleマップで確認してください。'].join('\n')};
- }catch(error){if(error instanceof Error)throw Object.assign(error,{report:report()});throw Object.assign(Error('検索を完了できませんでした。条件を保って再試行してください。'),{report:report()});}
+ }catch(error){if(error instanceof Error)throw Object.assign(error,{report:report()+'\n停止コード：'+(error instanceof ApproximateSearchFailure?error.code:'UNEXPECTED')+(error instanceof Error&&'facilityDiagnostic'in error?'\n通信診断：'+String(error.facilityDiagnostic):'')});throw Object.assign(Error('検索を完了できませんでした。条件を保って再試行してください。'),{report:report()});}
 }
