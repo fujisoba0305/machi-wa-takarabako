@@ -1,5 +1,5 @@
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
-import handler from './treasure-post';
+import handler from '../../api/treasure-post';
 import type {VercelRequest,VercelResponse} from '@vercel/node';
 const fetcher=vi.fn();let status:number,body:Record<string,unknown>;
 const value={name:'宝物',comment:'',category:'🍜 グルメ',latitude:35,longitude:139,image_url:null};

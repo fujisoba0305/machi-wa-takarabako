@@ -1,5 +1,5 @@
 import {it,expect,vi,beforeEach,afterEach} from 'vitest';
-import handler from './my-treasures';import type {VercelRequest,VercelResponse} from '@vercel/node';
+import handler from '../../api/my-treasures';import type {VercelRequest,VercelResponse} from '@vercel/node';
 const uid='11111111-1111-4111-8111-111111111111',fetcher=vi.fn();let status=0,body:any,headers:Record<string,string>;
 const req=(query:any={})=>({method:'GET',query,headers:{authorization:'Bearer fixture'}} as VercelRequest);
 const res=()=>({setHeader(k:string,v:string){headers[k]=v;},status(n:number){status=n;return this;},json(b:any){body=b;return this;}} as unknown as VercelResponse);
