@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-export const productionApiEntrypoints = ['api/my-treasures.ts','api/overpass.ts','api/treasure-post.ts','api/walking-distance.ts','api/walking-trial-access.ts'];
+export const productionApiEntrypoints = ['api/my-treasures.ts','api/overpass.ts','api/treasure-card.ts','api/treasure-post.ts','api/walking-distance.ts','api/walking-trial-access.ts'];
 // api/ is a routing directory. Test suffixes do NOT make files private on Vercel.
 export function inspectApiLayout(root){
  const dir=path.join(root,'api'),found=[];

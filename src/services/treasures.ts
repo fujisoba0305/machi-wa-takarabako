@@ -1,3 +1,4 @@
+import {excludeOwnRegisteredTreasures} from './verifiedGrowth';
 import {saveOnsiteTreasure,type PostingContext} from './onsitePosting';
 import { getSupabaseClient } from './supabase';
 import { saveDiagnostic, TreasureSaveError } from '../features/treasureSaveDiagnostics';
@@ -55,7 +56,7 @@ hint: error.hint,
 throw new Error('Treasure list fetch failed');
 }
 
-return (data ?? []) as Treasure[];
+return excludeOwnRegisteredTreasures((data ?? []) as Treasure[]);
 }
 
 export async function incrementTreasureDiscovery(treasureId: number) {

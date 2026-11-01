@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build --config vite.config.ts",
     "preview": "vite preview --config vite.config.ts",
     "test": "vitest run --config vite.config.ts",
-    "typecheck:api": "tsc --noEmit --target ES2020 --module ESNext --moduleResolution Bundler --skipLibCheck api/walking-distance.ts api/overpass.ts api/walking-trial-access.ts api/treasure-post.ts dev/localApi.ts api/my-treasures.ts tests/api/my-treasures.test.ts tests/api/treasure-post.test.ts",
+    "typecheck:api": "tsc --noEmit --target ES2022 --module ESNext --moduleResolution Bundler --skipLibCheck api/walking-distance.ts api/overpass.ts api/walking-trial-access.ts api/treasure-post.ts dev/localApi.ts api/my-treasures.ts tests/api/my-treasures.test.ts tests/api/treasure-post.test.ts api/treasure-card.ts tests/api/treasure-card.test.ts tests/api/card-growth-release-lock.test.ts",
     "prebuild": "node scripts-verify-api-layout.mjs && node scripts-prepare-walking-v30.mjs",
     "predev": "node scripts-prepare-walking-v30.mjs",
     "postbuild": "node scripts-finalize-walking-v30.mjs",

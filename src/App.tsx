@@ -1,3 +1,5 @@
+import {VerifiedTreasureCard} from './components/VerifiedTreasureCard';
+import {verifiedGrowthEnabled} from './services/verifiedGrowth';
 import {PostingError,validatePostingFix,type PostingFix,type PostingMode} from './features/onsitePosting';
 import {postingAccount,readPendingPosting} from './services/onsitePosting';
 import {HomeLocationStatus,type HomeLocationState} from './components/HomeLocationStatus';
@@ -1933,7 +1935,7 @@ const displayedTreasureRatingSummary = treasureRatingSummary ?? {
 averageRating: 0,
 ratingCount: 0,
 };
-const displayedTreasureRank = getTreasureRankForResult(
+const displayedTreasureRank = verifiedGrowthEnabled() ? null : getTreasureRankForResult(
 selectedGachaTreasure,
 displayedTreasureRatingSummary
 );
@@ -2046,7 +2048,7 @@ return nextHistory;
 });
 
 const treasureId = getTreasureDiscoveryTargetId(arrivedTreasure);
-if (treasureId !== null) {
+if (treasureId !== null && !verifiedGrowthEnabled()) {
 void updateTreasureDiscoveryWithoutBlocking(
 () => incrementTreasureDiscovery(treasureId),
 (discoveryCount) => {
@@ -2225,6 +2227,7 @@ setIsTreasureRatingSubmitting(false);
 
 return (
 <main className={`app-shell ${screen === 'my-page' ? 'account-mode' : !hasStarted ? 'title-mode' : screen === 'arrival' ? 'arrival-mode' : screen === 'walking' ? 'walking-mode' : screen === 'home' || screen === 'condition' || (screen === 'result' && choices.mood !== 'デート') ? 'explore-mode' : ''}`}>
+{selectedGachaTreasure?.id && profileIdentity.current && verifiedGrowthEnabled() && (screen === 'result' || screen === 'arrival') && <VerifiedTreasureCard key={profileIdentity.current+':'+selectedGachaTreasure.id} uid={profileIdentity.current} id={selectedGachaTreasure.id} arrived={hasArrivedAtNormalSpot}/>}
 {trialReport && (screen === 'result' || screen === 'searching') && <WalkingTrialReport report={trialReport} failed={searchFailed} />}
 
 
@@ -3001,7 +3004,8 @@ setScreen('condition');
 </div>
 </article>
 
-{selectedGachaTreasure && displayedTreasureRank && (
+
+{!verifiedGrowthEnabled() && selectedGachaTreasure && displayedTreasureRank && (
 <section
 className={`treasure-status-card treasure-status-card--${displayedTreasureRank.key}`}
 aria-labelledby="treasure-status-rank"
@@ -3074,7 +3078,7 @@ aria-live="polite"
 </div>
 </dl>
 </section>
-{canRateTreasure(selectedGachaTreasure, hasArrivedAtNormalSpot) && (
+{!verifiedGrowthEnabled() && canRateTreasure(selectedGachaTreasure, hasArrivedAtNormalSpot) && (
 <section className="treasure-rating-panel" aria-labelledby="treasure-rating-title">
 {hasSubmittedTreasureRating ? (
 <div className="treasure-rating-thanks" role="status">

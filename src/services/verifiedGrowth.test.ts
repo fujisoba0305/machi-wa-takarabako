@@ -1,0 +1,12 @@
+import {it,expect,vi,afterEach} from 'vitest';
+import {excludeOwnRegisteredTreasures,verifiedCardRequest,readPublicCardProfile} from './verifiedGrowth';
+let current='A';const session=vi.hoisted(()=>vi.fn());
+vi.mock('./accountAuth',()=>({getAccountClient:()=>({auth:{getSession:session}})}));
+const ready=()=>{vi.stubEnv('VITE_CARD_GROWTH_UI_ENABLED','on');vi.stubEnv('VITE_SUPABASE_URL','http://127.0.0.1:54321');current='A';session.mockImplementation(async()=>({data:{session:{access_token:'private',user:{id:current,is_anonymous:false,identities:[{provider:'google'}]},expires_at:Date.now()/1000+60}}}));};
+afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();vi.clearAllMocks();});
+it('OFF preserves the exact source and makes no request',async()=>{vi.stubEnv('VITE_CARD_GROWTH_UI_ENABLED','');const f=vi.fn();vi.stubGlobal('fetch',f);const rows=[{id:1},{id:2}];expect(await excludeOwnRegisteredTreasures(rows)).toBe(rows);expect(f).not.toHaveBeenCalled();});
+it('excludes only authoritative own IDs before drawing without rewriting other candidates',async()=>{ready();vi.stubEnv('VITE_CARD_GROWTH_UI_ENABLED','on');vi.stubGlobal('fetch',vi.fn(async()=>Response.json({nickname:'',ownedIds:[1]})));const other={id:2},unknown={};expect(await excludeOwnRegisteredTreasures([{id:1},other,unknown])).toEqual([other,unknown]);});
+it('does not fall back to possibly own cards if ownership request fails',async()=>{ready();vi.stubEnv('VITE_CARD_GROWTH_UI_ENABLED','on');vi.stubGlobal('fetch',vi.fn(async()=>new Response('',{status:503})));await expect(excludeOwnRegisteredTreasures([{id:1}])).rejects.toThrow();});
+it('ignores another account response and does not trust browser UID',async()=>{ready();vi.stubGlobal('fetch',vi.fn(async()=>{current='B';return Response.json({nickname:'',ownedIds:[1]});}));await expect(readPublicCardProfile('A')).rejects.toThrow();});
+it('rejects malformed ownership data',async()=>{ready();vi.stubGlobal('fetch',vi.fn(async()=>Response.json({nickname:'',ownedIds:['1']})));await expect(readPublicCardProfile('A')).rejects.toThrow();});
+it('uses Bearer, no URL identity and no browser-side service credentials',async()=>{ready();const f=vi.fn(async(_url:string,_options:RequestInit)=>Response.json({nickname:'',ownedIds:[]}));vi.stubGlobal('fetch',f);await verifiedCardRequest({action:'profile'},'A');expect(f.mock.calls[0][0]).toBe('/api/treasure-card');expect(f.mock.calls[0]?.[1].body).toBe(JSON.stringify({action:'profile'}));expect(new Headers(f.mock.calls[0]?.[1].headers).get('Authorization')).toBe('Bearer private');});
